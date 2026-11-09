@@ -113,6 +113,31 @@ Every change to behaviour ships with its tests in the same commit.
 - Secondary text uses `c="dimmed"`, which the theme darkens to pass WCAG AA (Mantine's default
   does not). Chords use `var(--chord-color)`.
 
+## Deployment and production
+
+Live at **https://zpevnak.tadeaspetak.com** (testing it at a Christmas carol gig, early December
+2026; `zpevnak.cz` to be bought if it works out). Everything on personal accounts.
+
+- **Deploy:** `yarn deploy` (`scripts/deploy.sh`): builds the current commit on Cloud Build and
+  deploys it; refuses uncommitted work. Push and deploy only when the owner asks (batch commits
+  locally in between).
+- **GCP:** project `zpevnak`, gcloud configuration `zpevnak` (never activate it; the machine's
+  default config is work). Cloud Run service `zpevnak` in **europe-west4** (custom domains aren't
+  offered in europe-west3), at most 2 instances; service account
+  `zpevnak-run@zpevnak.iam.gserviceaccount.com`; images in Artifact Registry `zpevnak`
+  (europe-west4, cleanup keeps the newest 3). Domain mapping to the CNAME `zpevnak` →
+  `ghs.googlehosted.com.` at Namecheap. Budget: 50 SEK/month (the billing account is in SEK),
+  alerts only.
+- **Secrets** (Secret Manager): `database-url` (Neon, pooled), `resend-api-key`.
+- **Database:** Neon project `wild-sun-64413204` (org `org-dawn-hill-52311853`), aws-eu-central-1.
+  `.env.local` (git-ignored, from `neon init`) holds `DATABASE_URL` and `DATABASE_URL_UNPOOLED`;
+  the app never loads it, so local work can't touch production. Migrations run on boot in the
+  container. To act on production by hand, pass the unpooled URL explicitly, e.g.
+  `DATABASE_URL="$(…UNPOOLED…)" node src/server/cli/set-role.ts <email> admin`. Never print it.
+- **Email:** Resend, sending from `noreply@zpevnak.tadeaspetak.com`.
+- **Users:** the owner (`tadeaspetak@gmail.com`) is admin in production.
+- **Free tier:** Cloud Build ~3 min a build (2,500 free min/month), images within 0.5 GB.
+
 ## Guard rails
 
 `.claude/hooks/bash-guard.ts` (tested in its spec) blocks force pushes, remote `psql`, and
