@@ -39,26 +39,37 @@ test('a player goes through a playlist, takes a detour, and comes back', async (
   await expect(page).toHaveURL(/\/p\/\d+\/2$/);
   await expect(heading).toHaveText('Lajla tov (Dobrou noc)');
 
-  // A request from the crowd: search for something else, play it, then return.
-  await page.getByRole('link', { name: 'Search songs' }).click();
+  // A request from the crowd: search over the song, play another, then return.
+  await page.getByRole('button', { name: 'Search songs' }).click();
   await searchFor(page, 'zkusebni');
   await page.getByRole('link', { name: /Zkušební písnička/ }).click();
   await expect(heading).toHaveText('Zkušební písnička');
 
-  await page.getByRole('link', { name: 'Back to Vršek 2026' }).click();
+  // The toolbar's back arrow (the playlist pill below says the same, and goes there too).
+  await page
+    .getByRole('banner')
+    .getByRole('link', { name: 'Back to Vršek 2026' })
+    .click();
   await expect(page).toHaveURL(/\/p\/\d+\/2$/);
   await expect(heading).toHaveText('Lajla tov (Dobrou noc)');
 });
 
 test('songs stay searchable and playable offline', async ({ page, context }) => {
   await page.goto('/');
-  await expect(page.getByRole('link', { name: /Lajla tov/ })).toBeVisible();
+  await expect(page.getByRole('link', { name: /Lajla tov/ }).first()).toBeVisible();
 
   await context.setOffline(true);
-  await searchFor(page, 'lajla');
-  await page.getByRole('link', { name: /Lajla tov/ }).click();
-  await expect(page.getByRole('heading', { level: 1, name: /Lajla tov/ })).toBeVisible();
-  await expect(page.getByText('Offline')).toHaveCount(0); // the badge lives on the overview
-  await page.getByRole('link', { name: 'Search songs' }).click();
   await expect(page.getByText('Offline')).toBeVisible();
+  await searchFor(page, 'lajla');
+  await page
+    .getByRole('link', { name: /Lajla tov/ })
+    .first()
+    .click();
+  await expect(page.getByRole('heading', { level: 1, name: /Lajla tov/ })).toBeVisible();
+
+  // And the search overlay, from the song.
+  await page.getByRole('button', { name: 'Search songs' }).click();
+  await searchFor(page, 'andelska');
+  await page.getByRole('link', { name: /Andělská/ }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Andělská' })).toBeVisible();
 });

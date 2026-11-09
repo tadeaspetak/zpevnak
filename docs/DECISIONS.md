@@ -68,6 +68,29 @@ entry that says which it replaces and what changed.
   would throw the keyboard over the playlists the player may have come for. The search icon
   (D30) focuses it everywhere: there, searching was asked for. (2026-11-09)
 
+## Revisions (2026-11-09, second round)
+
+- **D50. The search icon opens a search overlay** over the current page, finding songs and
+  playlists (playlists first). Closing it leaves you exactly where you were; a result's back
+  arrow returns there. Replaces D30's "opens the overview": the icon's place (last at top right,
+  past a divider) stands. `/` opens it anywhere but the overview, whose own box takes it.
+- **D51. A "Display" popover** (sliders icon) holds text size, two columns and chord diagrams:
+  everything a reader tunes, in one place. Replaces D22's text-size popover and moves D23's
+  diagrams switch out of the ⋯ menu. The two-columns switch ("Dva sloupce na širokém displeji")
+  shows only on screens wide enough for columns, per device, on by default (D25).
+- **D52. The key control is compact and carries a treble clef** (`− 𝄞 A +`), so it reads as
+  the key at a glance.
+- **D53. Settings (language, theme) live behind a cogwheel** on the overview, in a dialog. Not on
+  the account page, not at the foot of the overview.
+- **D54. Every page header: page actions, a divider, search.** No ⋯ menu on the playlist page:
+  pencil (edit) and trash directly.
+- **D55. Playlists are reordered by drag and drop**, by a grip handle (touch and keyboard).
+- **D56. One page column (48rem) for every page but the song view.** The overview's sections have
+  bold headings on a rule, with more space between sections.
+- **D57. Back returns to the page that linked in** wherever a page is reachable from several
+  places (the queue from the overview or the account; a song from anywhere), and says so.
+- **D58. Full screen: a toolbar button on wide screens, a ⋯ menu item on phones.** Never both.
+
 ## Engineering
 
 - **D40. One developer; commit to `main`.** No branches, PRs or release process. (2026-11-09)

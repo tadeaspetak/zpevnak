@@ -4,13 +4,16 @@ import {
   Group,
   Menu,
   Popover,
+  Stack,
+  Switch,
   Text,
   Tooltip,
   UnstyledButton,
 } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
+import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 import {
   IconArrowLeft,
+  IconClef,
   IconDots,
   IconEdit,
   IconMaximize,
@@ -18,9 +21,8 @@ import {
   IconMinus,
   IconPlaylistAdd,
   IconPlus,
-  IconGrid3x3,
   IconRestore,
-  IconTypography,
+  IconAdjustmentsHorizontal,
 } from '@tabler/icons-react';
 import { Link } from 'react-router';
 import { AddToPlaylistModal } from '../components/AddToPlaylistModal.tsx';
@@ -41,6 +43,8 @@ type Props = {
   shownKey: string | null;
   semitones: number;
   hasDiagrams: boolean;
+  /** The song asks for columns ({columns: 2}): the reader may turn them off. */
+  hasColumns: boolean;
   canEdit: boolean;
   canAddToPlaylist: boolean;
 };
@@ -57,6 +61,7 @@ export function SongToolbar(props: Props) {
     shownKey,
     semitones,
     hasDiagrams,
+    hasColumns,
     canEdit,
     canAddToPlaylist,
   } = props;
@@ -64,6 +69,7 @@ export function SongToolbar(props: Props) {
   const [hidden] = useHideOnScroll();
   const prefs = usePrefs();
   const fullscreen = useFullscreen();
+  const wide = useMediaQuery('(min-width: 62em)');
   const [adding, { open: openAdd, close: closeAdd }] = useDisclosure(false);
 
   const keyLabel =
@@ -99,7 +105,7 @@ export function SongToolbar(props: Props) {
             <ActionIcon
               variant="subtle"
               color="gray"
-              size="xl"
+              size="lg"
               radius="xl"
               onClick={() => prefs.setTranspose(song.id, semitones - 1)}
               aria-label={t('song.transposeDown')}
@@ -113,6 +119,7 @@ export function SongToolbar(props: Props) {
                 onClick={() => prefs.setTranspose(song.id, 0)}
                 aria-label={`${keyLabel}: ${semitones === 0 ? t('song.transpose') : t('song.transposeReset')}`}
               >
+                <IconClef size={18} aria-hidden />
                 <Text fw={700} size="sm" span>
                   {keyLabel}
                 </Text>
@@ -121,7 +128,7 @@ export function SongToolbar(props: Props) {
             <ActionIcon
               variant="subtle"
               color="gray"
-              size="xl"
+              size="lg"
               radius="xl"
               onClick={() => prefs.setTranspose(song.id, semitones + 1)}
               aria-label={t('song.transposeUp')}
@@ -130,45 +137,75 @@ export function SongToolbar(props: Props) {
             </ActionIcon>
           </Group>
 
-          <Popover position="bottom" shadow="md" withArrow>
+          <Popover position="bottom-end" shadow="md" withArrow width={300}>
             <Popover.Target>
               <ActionIcon
                 variant="subtle"
                 color="gray"
                 size="xl"
-                aria-label={t('song.textSize')}
+                aria-label={t('song.display')}
+                aria-haspopup="dialog"
               >
-                <IconTypography size={22} />
+                <IconAdjustmentsHorizontal size={22} />
               </ActionIcon>
             </Popover.Target>
-            <Popover.Dropdown p={4}>
-              <Group gap={4} wrap="nowrap" role="group" aria-label={t('song.textSize')}>
-                <ActionIcon
-                  variant="subtle"
-                  color="gray"
-                  size="xl"
-                  onClick={() => prefs.stepFont(-1)}
-                  disabled={prefs.fontScale <= (FONT_SCALES[0] ?? 0)}
-                  aria-label={t('song.smaller')}
-                >
-                  <IconMinus size={18} />
-                </ActionIcon>
-                <Text size="sm" fw={600} w="3.5rem" ta="center" aria-live="polite">
-                  {t('song.textSizeValue', {
-                    percent: Math.round(prefs.fontScale * 100),
-                  })}
-                </Text>
-                <ActionIcon
-                  variant="subtle"
-                  color="gray"
-                  size="xl"
-                  onClick={() => prefs.stepFont(1)}
-                  disabled={prefs.fontScale >= (FONT_SCALES.at(-1) ?? 0)}
-                  aria-label={t('song.larger')}
-                >
-                  <IconPlus size={18} />
-                </ActionIcon>
-              </Group>
+            <Popover.Dropdown>
+              {/* How the song is shown, on this device: everything a reader tunes in one place. */}
+              <Stack gap="sm">
+                <Group justify="space-between" wrap="nowrap">
+                  <Text size="sm" fw={500} style={{ whiteSpace: 'nowrap' }}>
+                    {t('song.textSize')}
+                  </Text>
+                  <Group
+                    gap={0}
+                    wrap="nowrap"
+                    role="group"
+                    aria-label={t('song.textSize')}
+                  >
+                    <ActionIcon
+                      variant="subtle"
+                      color="gray"
+                      size="lg"
+                      onClick={() => prefs.stepFont(-1)}
+                      disabled={prefs.fontScale <= (FONT_SCALES[0] ?? 0)}
+                      aria-label={t('song.smaller')}
+                    >
+                      <IconMinus size={16} />
+                    </ActionIcon>
+                    <Text size="sm" fw={600} w="3rem" ta="center" aria-live="polite">
+                      {t('song.textSizeValue', {
+                        percent: Math.round(prefs.fontScale * 100),
+                      })}
+                    </Text>
+                    <ActionIcon
+                      variant="subtle"
+                      color="gray"
+                      size="lg"
+                      onClick={() => prefs.stepFont(1)}
+                      disabled={prefs.fontScale >= (FONT_SCALES.at(-1) ?? 0)}
+                      aria-label={t('song.larger')}
+                    >
+                      <IconPlus size={16} />
+                    </ActionIcon>
+                  </Group>
+                </Group>
+                {/* Columns only ever apply on a wide screen (D25); a phone has nothing to switch. */}
+                {hasColumns && wide && (
+                  <Switch
+                    label={t('song.columns')}
+                    checked={prefs.showColumns}
+                    onChange={(e) => prefs.setShowColumns(e.currentTarget.checked)}
+                  />
+                )}
+                {hasDiagrams && (
+                  <Switch
+                    label={t('song.diagrams')}
+                    checked={prefs.showDiagrams && semitones === 0}
+                    disabled={semitones !== 0}
+                    onChange={(e) => prefs.setShowDiagrams(e.currentTarget.checked)}
+                  />
+                )}
+              </Stack>
             </Popover.Dropdown>
           </Popover>
 
@@ -205,6 +242,7 @@ export function SongToolbar(props: Props) {
             <Menu.Dropdown>
               {fullscreen.supported ? (
                 <Menu.Item
+                  className={classes.narrowOnly}
                   leftSection={
                     fullscreen.active ? (
                       <IconMinimize size={16} />
@@ -222,16 +260,6 @@ export function SongToolbar(props: Props) {
                     {t('song.fullscreenHint')}
                   </Menu.Label>
                 )
-              )}
-              {hasDiagrams && (
-                <Menu.Item
-                  leftSection={<IconGrid3x3 size={16} />}
-                  onClick={() => prefs.setShowDiagrams(!prefs.showDiagrams)}
-                  rightSection={prefs.showDiagrams ? '✓' : null}
-                  disabled={semitones !== 0}
-                >
-                  {t('song.diagrams')}
-                </Menu.Item>
               )}
               {semitones !== 0 && (
                 <Menu.Item

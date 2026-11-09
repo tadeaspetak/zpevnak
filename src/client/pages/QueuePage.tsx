@@ -3,6 +3,7 @@ import { Navigate, Link, useSearchParams } from 'react-router';
 import { ErrorText } from '../components/ErrorText.tsx';
 import { Page } from '../components/Page.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
+import { useBack } from '../hooks/useBack.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc } from '../trpc.ts';
@@ -14,6 +15,7 @@ type Status = 'pending' | 'rejected';
 export function QueuePage() {
   const { t, locale } = useI18n();
   const { isEditor, known } = useMe();
+  const back = useBack({ to: url.home(), label: t('nav.backHome') });
   const [params, setParams] = useSearchParams();
   const status: Status = params.get('status') === 'rejected' ? 'rejected' : 'pending';
   const queue = trpc.songs.queue.useQuery({ status }, { enabled: isEditor });
@@ -33,11 +35,7 @@ export function QueuePage() {
 
   return (
     <>
-      <PageHeader
-        title={t('queue.title')}
-        backTo={url.home()}
-        backLabel={t('nav.backHome')}
-      />
+      <PageHeader title={t('queue.title')} backTo={back.to} backLabel={back.label} />
       <Page>
         <Tabs
           value={status}

@@ -1,0 +1,12 @@
+node_modules
+dist
+dev-dist
+.git
+.env
+.env.*
+.neon
+.ux-walk
+coverage
+test-results
+playwright-report
+.claude

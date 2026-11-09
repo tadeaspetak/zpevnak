@@ -9,6 +9,11 @@ const root = new URL('../..', import.meta.url).pathname;
 const app = createApp(db);
 
 if (isProduction) {
+  if (!env.RESEND_API_KEY) {
+    throw new Error(
+      'RESEND_API_KEY is required in production: nobody could verify an email',
+    );
+  }
   const dist = join(root, 'dist');
   if (!existsSync(join(dist, 'index.html'))) {
     throw new Error(`No client build in ${dist}: run "yarn build" first`);

@@ -3,8 +3,6 @@ import { slugify } from '#shared/text.ts';
 /** Every path in the app. Build links with these, never by hand. */
 export const url = {
   home: () => '/',
-  /** Home with the search box focused, from anywhere in one tap. */
-  search: () => '/?search',
   song: (song: { id: number; title: string; artist: string | null }) =>
     `/s/${song.id}-${slugify(`${song.title} ${song.artist ?? ''}`)}`,
   editSong: (id: number) => `/s/${id}/edit`,

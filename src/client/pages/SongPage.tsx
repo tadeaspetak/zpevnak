@@ -190,6 +190,7 @@ function SongPlayer({
         shownKey={shown.meta.key}
         semitones={semitones}
         hasDiagrams={(parsed?.definitions.length ?? 0) > 0}
+        hasColumns={(parsed?.columns ?? 1) > 1}
         canEdit={Boolean(canEdit)}
         canAddToPlaylist={Boolean(me?.emailVerified)}
       />
@@ -209,6 +210,7 @@ function SongPlayer({
         song={shown}
         fontScale={prefs.fontScale}
         showDiagrams={prefs.showDiagrams && semitones === 0}
+        showColumns={prefs.showColumns}
       />
       {song.status === 'pending' && (
         <Text size="sm" c="dimmed" px="md" pb="md">
@@ -237,6 +239,7 @@ function SongPlayer({
 function useBack(playlist: PlaylistContext | null) {
   const { t } = useI18n();
   const location = useLocation();
+  const { playlists } = useCatalog();
   if (playlist) {
     return {
       to: url.playlist(playlist.id),
@@ -252,6 +255,12 @@ function useBack(playlist: PlaylistContext | null) {
   }
   if (from === url.account()) {
     return { to: from, label: t('nav.backTo', { name: t('account.title') }) };
+  }
+  // Opened from a playlist (its page or one of its songs), e.g. through the search overlay.
+  const fromPlaylist = /^\/p\/(\d+)/.exec(from);
+  const playlistName = fromPlaylist && playlists.get(Number(fromPlaylist[1]))?.name;
+  if (playlistName) {
+    return { to: from, label: t('nav.backTo', { name: playlistName }) };
   }
   return { to: from, label: t('common.back') };
 }

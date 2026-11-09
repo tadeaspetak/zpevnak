@@ -25,15 +25,18 @@
 .transpose {
   border: 1px solid var(--mantine-color-default-border);
   border-radius: 999px;
+  padding: 2px;
   margin-right: var(--mantine-spacing-xs);
 }
 
 .key {
   min-width: 2.5rem;
-  height: 2.75rem;
+  height: 2.25rem;
+  padding: 0 0.25rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 2px;
   border-radius: var(--mantine-radius-sm);
   /* The key reads as what it is: a chord, in the chords' colour. */
   color: var(--chord-color);
@@ -55,9 +58,18 @@
   line-height: 1.4;
 }
 
-/* On a phone the toolbar is full; full screen waits in the ⋯ menu. */
+/* On a phone the toolbar is full: full screen moves from its button into the ⋯ menu.
+   Exactly one of the two shows at any width. */
+.narrowOnly {
+  display: none;
+}
+
 @media (max-width: 30em) {
   .wideOnly {
     display: none;
+  }
+
+  .narrowOnly {
+    display: flex;
   }
 }

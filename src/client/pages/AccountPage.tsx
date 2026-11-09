@@ -1,16 +1,4 @@
-import {
-  Alert,
-  Anchor,
-  Badge,
-  Button,
-  Group,
-  SegmentedControl,
-  Stack,
-  Text,
-  Title,
-  useMantineColorScheme,
-  type MantineColorScheme,
-} from '@mantine/core';
+import { Alert, Anchor, Badge, Button, Group, Stack, Text, Title } from '@mantine/core';
 import { useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router';
@@ -21,11 +9,11 @@ import { SongRow } from '../components/SongRow.tsx';
 import { syncCatalog, useCatalog } from '../data/catalog.ts';
 import { writeLocalJson } from '../data/local.ts';
 import { sortByTitle } from '../data/search.ts';
+import type { BackState } from '../hooks/useBack.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc } from '../trpc.ts';
 import { url } from '../urls.ts';
-import type { Locale } from '#shared/validators/index.ts';
 
 export function AccountPage() {
   const { t, locale } = useI18n();
@@ -43,6 +31,10 @@ export function AccountPage() {
         : [],
     [songs, me, locale],
   );
+  const backToAccount: BackState = {
+    backTo: url.account(),
+    backLabel: t('nav.backTo', { name: t('account.title') }),
+  };
   const resend = trpc.auth.resendVerification.useMutation();
   const logOut = trpc.auth.logOut.useMutation({
     onSuccess: async () => {
@@ -103,19 +95,17 @@ export function AccountPage() {
             <Text c="dimmed">{me.email}</Text>
             <Group gap="md" mt="sm">
               {isEditor && (
-                <Anchor component={Link} to={url.queue()}>
+                <Anchor component={Link} to={url.queue()} state={backToAccount}>
                   {t('nav.queue')}
                 </Anchor>
               )}
               {isAdmin && (
-                <Anchor component={Link} to={url.adminUsers()}>
+                <Anchor component={Link} to={url.adminUsers()} state={backToAccount}>
                   {t('nav.users')}
                 </Anchor>
               )}
             </Group>
           </section>
-
-          <Settings />
 
           <section>
             <Title order={2} size="h5" mb={4}>
@@ -156,47 +146,5 @@ export function AccountPage() {
         </Stack>
       </Page>
     </>
-  );
-}
-
-/** Language and theme, per device. Also at the foot of the overview, for visitors without an account. */
-export function Settings() {
-  const { t, locale, setLocale } = useI18n();
-  const { colorScheme, setColorScheme } = useMantineColorScheme();
-  return (
-    <section>
-      <Title order={2} size="h5" mb="xs">
-        {t('account.settings')}
-      </Title>
-      <Stack gap="sm">
-        <div>
-          <Text size="sm" fw={500} mb={4}>
-            {t('account.language')}
-          </Text>
-          <SegmentedControl
-            value={locale}
-            onChange={(v) => setLocale(v as Locale)}
-            data={[
-              { value: 'cs', label: 'Čeština' },
-              { value: 'en', label: 'English' },
-            ]}
-          />
-        </div>
-        <div>
-          <Text size="sm" fw={500} mb={4}>
-            {t('account.theme')}
-          </Text>
-          <SegmentedControl
-            value={colorScheme}
-            onChange={(v) => setColorScheme(v as MantineColorScheme)}
-            data={[
-              { value: 'auto', label: t('account.themeAuto') },
-              { value: 'light', label: t('account.themeLight') },
-              { value: 'dark', label: t('account.themeDark') },
-            ]}
-          />
-        </div>
-      </Stack>
-    </section>
   );
 }

@@ -2,7 +2,7 @@ import MiniSearch from 'minisearch';
 import { useMemo } from 'react';
 import { lyricsText, parseSong } from '#shared/chordpro/parse.ts';
 import { fold } from '#shared/text.ts';
-import type { SongRecord } from './store.ts';
+import type { PlaylistRecord, SongRecord } from './store.ts';
 
 type Indexed = { id: number; title: string; artist: string; lyrics: string };
 
@@ -96,4 +96,16 @@ export function sortByTitle(songs: Iterable<SongRecord>, locale: string): SongRe
     sensitivity: 'base',
   });
   return [...songs].sort((a, b) => collator.compare(a.title, b.title));
+}
+
+/** Playlists whose name holds every word of the query, diacritics and case aside. */
+export function searchPlaylists(playlists: Iterable<PlaylistRecord>, query: string) {
+  const words = fold(query).split(/\s+/).filter(Boolean);
+  if (words.length === 0) {
+    return [];
+  }
+  return [...playlists].filter((p) => {
+    const name = fold(p.name);
+    return words.every((w) => name.includes(w));
+  });
 }

@@ -5,6 +5,8 @@ import { readLocalJson, writeLocalJson } from './local.ts';
 type Prefs = {
   fontScale: number;
   showDiagrams: boolean;
+  /** Two columns for songs that ask for them. Off means a long song just scrolls down. */
+  showColumns: boolean;
   /** Song id → semitones, for the songs someone transposed. */
   transpose: Record<number, number>;
 };
@@ -14,6 +16,7 @@ export const FONT_SCALES = [0.8, 0.9, 1, 1.15, 1.3, 1.5, 1.75, 2];
 let prefs: Prefs = {
   fontScale: readLocalJson('fontScale', 1),
   showDiagrams: readLocalJson('showDiagrams', true),
+  showColumns: readLocalJson('showColumns', true),
   transpose: readLocalJson('transpose', {}),
 };
 const listeners = new Set<() => void>();
@@ -46,6 +49,11 @@ export function usePrefs() {
     update({ showDiagrams });
   }, []);
 
+  const setShowColumns = useCallback((showColumns: boolean) => {
+    writeLocalJson('showColumns', showColumns);
+    update({ showColumns });
+  }, []);
+
   const setTranspose = useCallback((songId: number, semitones: number) => {
     // Kept between -11 and +11; 0 is not stored at all.
     const normalized = semitones % 12;
@@ -59,5 +67,5 @@ export function usePrefs() {
     update({ transpose });
   }, []);
 
-  return { ...state, stepFont, setShowDiagrams, setTranspose };
+  return { ...state, stepFont, setShowDiagrams, setShowColumns, setTranspose };
 }

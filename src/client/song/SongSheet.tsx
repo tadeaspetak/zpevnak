@@ -10,6 +10,8 @@ type Props = {
   /** 1 = the default size. */
   fontScale: number;
   showDiagrams: boolean;
+  /** Lay the song in its columns where they fit; false for one long column. */
+  showColumns?: boolean;
 };
 
 function chordLabel(chord: string) {
@@ -72,7 +74,7 @@ function SectionView({
   );
 }
 
-export function SongSheet({ song, fontScale, showDiagrams }: Props) {
+export function SongSheet({ song, fontScale, showDiagrams, showColumns = true }: Props) {
   const { t } = useI18n();
   const style = { '--song-scale': fontScale } as CSSProperties;
   const meta = [
@@ -94,7 +96,9 @@ export function SongSheet({ song, fontScale, showDiagrams }: Props) {
           ))}
         </div>
       )}
-      <div className={song.columns > 1 ? classes.bodyColumns : classes.body}>
+      <div
+        className={song.columns > 1 && showColumns ? classes.bodyColumns : classes.body}
+      >
         {song.blocks.map((block, i) => {
           if (block.type === 'columnBreak') {
             return <div key={i} className={classes.columnBreak} aria-hidden />;

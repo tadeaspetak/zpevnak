@@ -1,0 +1,30 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  max-height: 80dvh;
+}
+
+@media (max-width: 48em) {
+  .body {
+    max-height: none;
+    height: 100dvh;
+  }
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: var(--mantine-spacing-xs);
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
+  padding-top: max(var(--mantine-spacing-xs), env(safe-area-inset-top));
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.input {
+  flex: 1;
+}
+
+.results {
+  overflow-y: auto;
+  padding: var(--mantine-spacing-md);
+}

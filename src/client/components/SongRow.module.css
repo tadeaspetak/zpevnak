@@ -17,3 +17,9 @@
   min-width: 0;
   flex: 1;
 }
+
+.playlistIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--mantine-primary-color-filled);
+}

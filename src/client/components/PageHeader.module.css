@@ -4,13 +4,8 @@
   z-index: 10;
   background: var(--mantine-color-body);
   border-bottom: 1px solid var(--mantine-color-default-border);
-  padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
+  padding: var(--mantine-spacing-xs) 0;
   padding-top: max(var(--mantine-spacing-xs), env(safe-area-inset-top));
-}
-
-.inner {
-  max-width: 48rem;
-  margin: 0 auto;
 }
 
 .title {

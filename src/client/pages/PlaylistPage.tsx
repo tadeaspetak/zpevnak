@@ -1,23 +1,39 @@
 import {
+  closestCenter,
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import {
   ActionIcon,
   Badge,
   Button,
   Center,
   Group,
-  Menu,
   Modal,
   Stack,
   Switch,
   Text,
   TextInput,
+  Tooltip,
   UnstyledButton,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import {
-  IconArrowDown,
-  IconArrowUp,
-  IconDots,
-  IconEdit,
+  IconCheck,
+  IconGripVertical,
+  IconPencil,
   IconPlayerPlayFilled,
   IconPlus,
   IconTrash,
@@ -29,10 +45,12 @@ import { ErrorText } from '../components/ErrorText.tsx';
 import { Page } from '../components/Page.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
 import { SongRow } from '../components/SongRow.tsx';
-import { putPlaylist, useCatalog } from '../data/catalog.ts';
+import { StatusBadge } from '../components/StatusBadge.tsx';
+import { putPlaylist, syncCatalog, useCatalog } from '../data/catalog.ts';
 import { useSongSearch } from '../data/search.ts';
 import { leavePlaylist, usePlayer } from '../data/session.ts';
-import type { PlaylistRecord } from '../data/store.ts';
+import type { PlaylistRecord, SongRecord } from '../data/store.ts';
+import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc } from '../trpc.ts';
 import { url } from '../urls.ts';
@@ -44,6 +62,7 @@ export function PlaylistPage() {
   const id = Number(useParams().id);
   const { playlists, songs, loaded } = useCatalog();
   const { session } = usePlayer();
+  const { me } = useMe();
   const playlist = playlists.get(id);
   const [editing, setEditing] = useState(false);
   const [adding, { open: openAdd, close: closeAdd }] = useDisclosure(false);
@@ -52,6 +71,8 @@ export function PlaylistPage() {
 
   const update = trpc.playlists.update.useMutation({
     onSuccess: (p) => putPlaylist(p.id, p),
+    // The device showed the change before the server had it; take the server's word again.
+    onError: () => void syncCatalog(me?.id ?? null),
   });
   const remove = trpc.playlists.delete.useMutation({
     onSuccess: () => {
@@ -66,13 +87,14 @@ export function PlaylistPage() {
   if (!loaded) {
     return null;
   }
+  const backLabel = t('nav.backTo', { name: t('playlists.title') });
   if (!playlist) {
     return (
       <>
         <PageHeader
           title={t('playlists.title')}
           backTo={url.playlists()}
-          backLabel={t('nav.backTo', { name: t('playlists.title') })}
+          backLabel={backLabel}
         />
         <Page>
           <Text>{t('playlists.notFound')}</Text>
@@ -81,12 +103,10 @@ export function PlaylistPage() {
     );
   }
 
-  const setSongIds = (songIds: number[]) => update.mutate({ id, songIds });
-  const move = (index: number, by: -1 | 1) => {
-    const next = [...playlist.songIds];
-    const [item] = next.splice(index, 1);
-    next.splice(index + by, 0, item as number);
-    setSongIds(next);
+  /** Shows the new order at once and saves it behind the scenes. */
+  const setSongIds = (songIds: number[]) => {
+    putPlaylist(id, { ...playlist, songIds });
+    update.mutate({ id, songIds });
   };
   const currentPosition = session?.playlistId === id ? session.position : null;
 
@@ -95,36 +115,34 @@ export function PlaylistPage() {
       <PageHeader
         title={playlist.name}
         backTo={url.playlists()}
-        backLabel={t('nav.backTo', { name: t('playlists.title') })}
+        backLabel={backLabel}
         actions={
           playlist.isMine && (
-            <Menu position="bottom-end">
-              <Menu.Target>
+            <>
+              <Tooltip label={editing ? t('playlists.done') : t('playlists.edit')}>
+                <ActionIcon
+                  variant={editing ? 'filled' : 'subtle'}
+                  color={editing ? undefined : 'gray'}
+                  size="lg"
+                  onClick={() => setEditing((e) => !e)}
+                  aria-label={editing ? t('playlists.done') : t('playlists.edit')}
+                  aria-pressed={editing}
+                >
+                  {editing ? <IconCheck size={20} /> : <IconPencil size={20} />}
+                </ActionIcon>
+              </Tooltip>
+              <Tooltip label={t('common.delete')}>
                 <ActionIcon
                   variant="subtle"
                   color="gray"
                   size="lg"
-                  aria-label={t('song.more')}
-                >
-                  <IconDots size={20} />
-                </ActionIcon>
-              </Menu.Target>
-              <Menu.Dropdown>
-                <Menu.Item
-                  leftSection={<IconEdit size={16} />}
-                  onClick={() => setEditing(true)}
-                >
-                  {t('playlists.edit')}
-                </Menu.Item>
-                <Menu.Item
-                  color="red"
-                  leftSection={<IconTrash size={16} />}
                   onClick={confirmDelete}
+                  aria-label={t('common.delete')}
                 >
-                  {t('common.delete')}
-                </Menu.Item>
-              </Menu.Dropdown>
-            </Menu>
+                  <IconTrash size={20} />
+                </ActionIcon>
+              </Tooltip>
+            </>
           )
         }
       />
@@ -149,21 +167,16 @@ export function PlaylistPage() {
                 {t('playlists.play')}
               </Button>
             )}
-            {editing && (
-              <Button variant="light" onClick={() => setEditing(false)}>
-                {t('playlists.done')}
-              </Button>
-            )}
           </Group>
 
           {editing && <PlaylistSettings playlist={playlist} />}
           <ErrorText error={update.error ?? remove.error} />
 
-          {playlist.songIds.length === 0 && !editing && (
+          {playlist.songIds.length === 0 && (
             <Center py="xl">
               <Stack align="center" gap="sm">
                 <Text c="dimmed">{t('playlists.empty')}</Text>
-                {playlist.isMine && (
+                {playlist.isMine && !editing && (
                   <Button
                     variant="light"
                     leftSection={<IconPlus size={16} />}
@@ -176,72 +189,29 @@ export function PlaylistPage() {
             </Center>
           )}
 
-          <Stack gap={0} mx="-md">
-            {playlist.songIds.map((songId, index) => {
-              const song = songs.get(songId);
-              const position = index + 1;
-              if (!song) {
-                return null;
-              }
-              return (
-                <Group key={`${songId}-${index}`} gap={0} wrap="nowrap">
-                  <div className={classes.grow}>
-                    <SongRow
-                      song={song}
-                      to={url.playlistSong(id, position)}
-                      active={currentPosition === position}
-                      leading={
-                        <Text
-                          c="dimmed"
-                          fw={600}
-                          w="1.75rem"
-                          ta="right"
-                          className={classes.number}
-                        >
-                          {position}
-                        </Text>
-                      }
-                    />
-                  </div>
-                  {editing && (
-                    <Group gap={0} wrap="nowrap" pr="xs">
-                      <ActionIcon
-                        variant="subtle"
-                        color="gray"
-                        size="lg"
-                        disabled={index === 0}
-                        onClick={() => move(index, -1)}
-                        aria-label={t('playlists.moveUp')}
-                      >
-                        <IconArrowUp size={18} />
-                      </ActionIcon>
-                      <ActionIcon
-                        variant="subtle"
-                        color="gray"
-                        size="lg"
-                        disabled={index === playlist.songIds.length - 1}
-                        onClick={() => move(index, 1)}
-                        aria-label={t('playlists.moveDown')}
-                      >
-                        <IconArrowDown size={18} />
-                      </ActionIcon>
-                      <ActionIcon
-                        variant="subtle"
-                        color="red"
-                        size="lg"
-                        onClick={() =>
-                          setSongIds(playlist.songIds.filter((_, i) => i !== index))
-                        }
-                        aria-label={t('playlists.remove')}
-                      >
-                        <IconX size={18} />
-                      </ActionIcon>
-                    </Group>
-                  )}
-                </Group>
-              );
-            })}
-          </Stack>
+          {editing ? (
+            <SortableSongs
+              songIds={playlist.songIds}
+              songs={songs}
+              onChange={setSongIds}
+            />
+          ) : (
+            <Stack gap={0} mx="-md">
+              {playlist.songIds.map((songId, index) => {
+                const song = songs.get(songId);
+                const position = index + 1;
+                return song ? (
+                  <SongRow
+                    key={`${songId}-${index}`}
+                    song={song}
+                    to={url.playlistSong(id, position)}
+                    active={currentPosition === position}
+                    leading={<Position n={position} />}
+                  />
+                ) : null;
+              })}
+            </Stack>
+          )}
 
           {editing && (
             <Button
@@ -279,6 +249,141 @@ export function PlaylistPage() {
         </Stack>
       </Modal>
     </>
+  );
+}
+
+function Position({ n }: { n: number }) {
+  return (
+    <Text c="dimmed" fw={600} miw="1.25rem" ta="right" className={classes.number}>
+      {n}
+    </Text>
+  );
+}
+
+/**
+ * Songs in their order, dragged by their grip. Only the grip starts a drag, so scrolling a long
+ * list on a phone never reorders it by accident; the keyboard reorders too (Space, arrows).
+ */
+function SortableSongs({
+  songIds,
+  songs,
+  onChange,
+}: {
+  songIds: number[];
+  songs: Map<number, SongRecord>;
+  onChange: (songIds: number[]) => void;
+}) {
+  // A song may appear twice; its nth appearance keeps the same key wherever it moves.
+  const keys = useMemo(() => {
+    const seen = new Map<number, number>();
+    return songIds.map((songId) => {
+      const n = (seen.get(songId) ?? 0) + 1;
+      seen.set(songId, n);
+      return `${songId}#${n}`;
+    });
+  }, [songIds]);
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+  const onDragEnd = ({ active, over }: DragEndEvent) => {
+    if (!over || active.id === over.id) {
+      return;
+    }
+    const from = keys.indexOf(String(active.id));
+    const to = keys.indexOf(String(over.id));
+    onChange(arrayMove(songIds, from, to));
+  };
+  return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={onDragEnd}
+    >
+      <SortableContext items={keys} strategy={verticalListSortingStrategy}>
+        <Stack gap={0} mx="-md">
+          {keys.map((key, index) => {
+            const song = songs.get(songIds[index] ?? -1);
+            return song ? (
+              <SortableRow
+                key={key}
+                id={key}
+                song={song}
+                position={index + 1}
+                onRemove={() => onChange(songIds.filter((_, i) => i !== index))}
+              />
+            ) : null;
+          })}
+        </Stack>
+      </SortableContext>
+    </DndContext>
+  );
+}
+
+function SortableRow({
+  id,
+  song,
+  position,
+  onRemove,
+}: {
+  id: string;
+  song: SongRecord;
+  position: number;
+  onRemove: () => void;
+}) {
+  const { t } = useI18n();
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+  return (
+    <div
+      ref={setNodeRef}
+      className={classes.sortableRow}
+      data-dragging={isDragging || undefined}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+    >
+      <ActionIcon
+        ref={setActivatorNodeRef}
+        variant="subtle"
+        color="gray"
+        size="xl"
+        className={classes.grip}
+        aria-label={t('playlists.drag', { title: song.title })}
+        {...attributes}
+        {...listeners}
+      >
+        <IconGripVertical size={20} />
+      </ActionIcon>
+      <Position n={position} />
+      <div className={classes.grow}>
+        <Group gap={6} wrap="nowrap">
+          <Text fw={600} truncate>
+            {song.title}
+          </Text>
+          <StatusBadge status={song.status} />
+        </Group>
+        {song.artist && (
+          <Text size="sm" c="dimmed" truncate>
+            {song.artist}
+          </Text>
+        )}
+      </div>
+      <ActionIcon
+        variant="subtle"
+        color="red"
+        size="xl"
+        onClick={onRemove}
+        aria-label={t('playlists.remove')}
+      >
+        <IconX size={18} />
+      </ActionIcon>
+    </div>
   );
 }
 
