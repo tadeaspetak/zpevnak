@@ -1,4 +1,23 @@
-import { Alert, createTheme, type CSSVariablesResolver } from '@mantine/core';
+import {
+  Alert,
+  createTheme,
+  defaultVariantColorsResolver,
+  type CSSVariablesResolver,
+  type VariantColorsResolver,
+} from '@mantine/core';
+
+/**
+ * Outline buttons take their colour's text shade, which Mantine picks per colour scheme. Its
+ * own outline in dark mode is the palest shade (red.0): a red outline read as white.
+ */
+const variantColorResolver: VariantColorsResolver = (input) => {
+  const colors = defaultVariantColorsResolver(input);
+  if (input.variant === 'outline' && input.color && !input.color.includes('.')) {
+    const text = `var(--mantine-color-${input.color}-text)`;
+    return { ...colors, color: text, border: `1px solid ${text}` };
+  }
+  return colors;
+};
 
 export const theme = createTheme({
   primaryColor: 'orange',
@@ -7,6 +26,7 @@ export const theme = createTheme({
     'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
   defaultRadius: 'md',
   cursorType: 'pointer',
+  variantColorResolver,
   components: {
     // An alert's colour says what kind of message it is: never the brand orange, which in dark
     // mode reads as an error and matches the buttons. Neutral unless a call site says otherwise.

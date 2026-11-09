@@ -17,7 +17,6 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import {
   ActionIcon,
-  Badge,
   Button,
   Center,
   Group,
@@ -27,7 +26,6 @@ import {
   Text,
   TextInput,
   Tooltip,
-  UnstyledButton,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import {
@@ -44,14 +42,15 @@ import { Link, useNavigate, useParams } from 'react-router';
 import { ErrorText } from '../components/ErrorText.tsx';
 import { Page } from '../components/Page.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
+import { SongPicker } from '../components/SongPicker.tsx';
 import { SongRow } from '../components/SongRow.tsx';
 import { StatusBadge } from '../components/StatusBadge.tsx';
 import { putPlaylist, syncCatalog, useCatalog } from '../data/catalog.ts';
-import { useSongSearch } from '../data/search.ts';
 import { leavePlaylist, usePlayer } from '../data/session.ts';
 import type { PlaylistRecord, SongRecord } from '../data/store.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
+import { toggleSong } from '../song/toggleSong.ts';
 import { trpc } from '../trpc.ts';
 import { url } from '../urls.ts';
 import classes from './PlaylistPage.module.css';
@@ -225,11 +224,11 @@ export function PlaylistPage() {
         </Stack>
       </Page>
 
-      <AddSongsModal
+      <SongPicker
         opened={adding}
         onClose={closeAdd}
         songIds={playlist.songIds}
-        onAdd={(songId) => setSongIds([...playlist.songIds, songId])}
+        onToggle={(songId) => setSongIds(toggleSong(playlist.songIds, songId))}
       />
       <Modal opened={confirmingDelete} onClose={cancelDelete} title={t('common.delete')}>
         <Stack>
@@ -414,61 +413,5 @@ function PlaylistSettings({ playlist }: { playlist: PlaylistRecord }) {
       />
       <ErrorText error={update.error} />
     </Stack>
-  );
-}
-
-function AddSongsModal({
-  opened,
-  onClose,
-  songIds,
-  onAdd,
-}: {
-  opened: boolean;
-  onClose: () => void;
-  songIds: number[];
-  onAdd: (songId: number) => void;
-}) {
-  const { t } = useI18n();
-  const { songs } = useCatalog();
-  const search = useSongSearch(songs);
-  const [query, setQuery] = useState('');
-  const hits = useMemo(() => search(query).slice(0, 30), [search, query]);
-  return (
-    <Modal opened={opened} onClose={onClose} title={t('playlists.addSongs')} size="lg">
-      <Stack gap="sm">
-        <TextInput
-          data-autofocus
-          type="search"
-          placeholder={t('home.searchPlaceholder')}
-          value={query}
-          onChange={(e) => setQuery(e.currentTarget.value)}
-        />
-        <Stack gap={0}>
-          {hits.map(({ song }) => (
-            <UnstyledButton
-              key={song.id}
-              className={classes.addRow}
-              onClick={() => onAdd(song.id)}
-            >
-              <Group justify="space-between" wrap="nowrap">
-                <div className={classes.grow}>
-                  <Text fw={600} truncate>
-                    {song.title}
-                  </Text>
-                  <Text size="sm" c="dimmed" truncate>
-                    {song.artist}
-                  </Text>
-                </div>
-                {songIds.includes(song.id) ? (
-                  <Badge variant="default">✓</Badge>
-                ) : (
-                  <IconPlus size={18} />
-                )}
-              </Group>
-            </UnstyledButton>
-          ))}
-        </Stack>
-      </Stack>
-    </Modal>
   );
 }

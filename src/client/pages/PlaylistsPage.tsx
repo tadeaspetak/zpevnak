@@ -90,10 +90,13 @@ export function PlaylistsPage() {
           )}
           <section>
             <Title order={2} size="h5" mb={4}>
-              {t('playlists.public')}
+              {/* Signed in, your own public playlists are under "mine": this is everyone else's. */}
+              {me ? t('playlists.others') : t('playlists.public')}
             </Title>
             {others.length === 0 ? (
-              <Text c="dimmed">{t('playlists.none')}</Text>
+              <Text c="dimmed">
+                {me ? t('playlists.noneOthers') : t('playlists.none')}
+              </Text>
             ) : (
               <PlaylistList playlists={others} />
             )}

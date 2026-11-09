@@ -35,12 +35,3 @@
   cursor: grab;
   flex-shrink: 0;
 }
-
-.addRow {
-  padding: 0.5rem 0.25rem;
-  border-radius: var(--mantine-radius-sm);
-
-  @mixin hover {
-    background: var(--mantine-color-default-hover);
-  }
-}

@@ -1,0 +1,42 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--mantine-radius-md);
+
+  &:focus-visible {
+    outline: 2px solid var(--mantine-primary-color-filled);
+    outline-offset: 2px;
+  }
+}
+
+.row {
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--mantine-radius-md);
+  cursor: pointer;
+
+  &[data-highlighted] {
+    background: var(--mantine-color-default-hover);
+  }
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+}
+
+/* In the playlist: a filled check. Not in: a quiet plus. */
+.mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  flex-shrink: 0;
+  color: var(--mantine-color-dimmed);
+
+  &[data-selected] {
+    color: var(--mantine-color-white);
+    background: var(--mantine-primary-color-filled);
+  }
+}

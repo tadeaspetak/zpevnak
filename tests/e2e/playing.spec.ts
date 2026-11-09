@@ -73,3 +73,60 @@ test('songs stay searchable and playable offline', async ({ page, context }) => 
   await page.getByRole('link', { name: /Andělská/ }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Andělská' })).toBeVisible();
 });
+
+test('an owner adds and removes songs from the keyboard', async ({ page }) => {
+  await page.request.post('/trpc/auth.logIn', {
+    data: { email: 'user@zpevnak.test', password: 'zpevnak-dev-password' },
+  });
+  // A playlist of its own, holding every song, so the shared seed playlist stays as it is.
+  const sync = await page.request.get(
+    `/trpc/songs.sync?input=${encodeURIComponent(JSON.stringify({ since: null }))}`,
+  );
+  const songIds = ((await sync.json()).result.data.songs as { id: number }[]).map(
+    (s) => s.id,
+  );
+  const created = await page.request.post('/trpc/playlists.create', {
+    data: { name: `Keyboard ${Date.now()}`, isPublic: false, songIds },
+  });
+  const playlistId: number = (await created.json()).result.data.id;
+
+  await page.goto(`/p/${playlistId}`);
+  await expect(page.getByText('3 songs')).toBeVisible();
+  await page.getByRole('button', { name: 'Edit playlist' }).click();
+  await page.getByRole('button', { name: 'Add songs' }).click();
+
+  const box = page.getByRole('combobox', { name: 'Add songs' });
+  await box.fill('andelska');
+  // Already in the playlist: Enter takes it out, a second Enter puts it back.
+  await expect(page.getByRole('option', { name: /Andělská/ })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  await box.press('Enter');
+  await expect(page.getByRole('option', { name: /Andělská/ })).toHaveAttribute(
+    'aria-selected',
+    'false',
+  );
+  // The search text is selected: typing replaces it.
+  expect(
+    await box.evaluate(
+      (el: HTMLInputElement) => (el.selectionEnd ?? 0) - (el.selectionStart ?? 0),
+    ),
+  ).toBe('andelska'.length);
+  await box.press('Enter');
+  await expect(page.getByRole('option', { name: /Andělská/ })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+
+  // ↓ moves the highlight, and Enter toggles the highlighted song: the second result here,
+  // which (like every seed song) is in the playlist, so it comes out.
+  await box.pressSequentially('la');
+  const second = page.getByRole('option').nth(1);
+  await expect(second).toHaveAttribute('aria-selected', 'true');
+  await box.press('ArrowDown');
+  await box.press('Enter');
+  await expect(second).toHaveAttribute('aria-selected', 'false');
+  await page.keyboard.press('Escape');
+  await expect(page.getByText('2 songs')).toBeVisible();
+});

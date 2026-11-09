@@ -97,8 +97,10 @@ export const cs = {
 
   'playlists.title': 'Playlisty',
   'playlists.mine': 'Moje',
-  'playlists.public': 'Veřejné',
+  'playlists.public': 'Veřejné playlisty',
   'playlists.none': 'Zatím žádné playlisty.',
+  'playlists.others': 'Od ostatních',
+  'playlists.noneOthers': 'Nikdo jiný zatím žádný veřejný playlist nemá.',
   'playlists.noneMine': 'Zatím nemáš žádný playlist.',
   'playlists.new': 'Nový playlist',
   'playlists.name': 'Název',

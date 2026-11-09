@@ -118,6 +118,19 @@ entry that says which it replaces and what changed.
 - **D63. The queue icon shows how many songs wait**, counted from the device's catalog (no
   request; right offline). (2026-11-09)
 
+- **D64. Picking songs for a playlist is a checklist.** Each result is in the playlist or not
+  (✓ or +). ↑ ↓ move the highlight (the first result is highlighted as you type), Enter
+  toggles: adding and removing are symmetric, and a second Enter undoes the first. Removing
+  takes out the song's last appearance. Space stays a space in the search box (searches have
+  several words); on the list, reached by Tab, Space toggles. After a toggle the search text is
+  selected, so typing starts the next search and the arrows carry on: the same whatever the
+  number of results. (2026-11-09)
+- **D65. Playlists page: "Moje" and "Od ostatních"** when signed in (your public playlists are
+  yours, marked with a globe, not repeated under the public ones); "Veřejné playlisty" signed
+  out. (2026-11-09)
+- **D66. Outline buttons use their colour's text shade** (scheme-aware): Mantine's dark-mode
+  outline is the palest shade, so a red outline read as white. (2026-11-09)
+
 ## Engineering
 
 - **D40. One developer; commit to `main`.** No branches, PRs or release process. (2026-11-09)

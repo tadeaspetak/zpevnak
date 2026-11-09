@@ -94,8 +94,10 @@ export const en: Record<keyof typeof cs, string> = {
 
   'playlists.title': 'Playlists',
   'playlists.mine': 'Mine',
-  'playlists.public': 'Public',
+  'playlists.public': 'Public playlists',
   'playlists.none': 'No playlists yet.',
+  'playlists.others': 'From others',
+  'playlists.noneOthers': 'Nobody else has a public playlist yet.',
   'playlists.noneMine': "You don't have a playlist yet.",
   'playlists.new': 'New playlist',
   'playlists.name': 'Name',
