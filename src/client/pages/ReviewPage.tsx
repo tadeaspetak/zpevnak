@@ -103,7 +103,7 @@ export function ReviewPage() {
         backLabel={t('nav.backTo', { name: t('queue.title') })}
         actions={
           position > 0 && (
-            <Badge variant="light" size="lg">
+            <Badge variant="default" size="lg">
               {position} / {pending.data?.length}
             </Badge>
           )
@@ -124,7 +124,7 @@ export function ReviewPage() {
           <ChordProEditor value={current} onChange={setSource} />
           <Group justify="space-between" mt="xs">
             <Button
-              variant="light"
+              variant="outline"
               color="red"
               leftSection={<IconX size={16} />}
               onClick={openReject}

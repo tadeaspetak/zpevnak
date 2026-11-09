@@ -11,7 +11,7 @@ export function NotFoundPage() {
         <Title order={1} size="h3" ta="center">
           {t('notFound.title')}
         </Title>
-        <Button component={Link} to={url.home()} variant="light">
+        <Button component={Link} to={url.home()}>
           {t('notFound.home')}
         </Button>
       </Stack>

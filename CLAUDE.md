@@ -99,6 +99,8 @@ Every change to behaviour ships with its tests in the same commit.
   2026"); history is the browser's back (D60). **Search is
   the last icon at top right on every page**, song view included, so it is always in one place.
 - Buttons inside a row or card are `size="sm"`; `md` is for page-level calls to action.
+- **One orange (D61):** filled = primary, `variant="default"` = secondary, never `light` on
+  buttons or badges. Alerts are coloured by meaning (green/yellow/red) or neutral.
 - Secondary text uses `c="dimmed"`, which the theme darkens to pass WCAG AA (Mantine's default
   does not). Chords use `var(--chord-color)`.
 

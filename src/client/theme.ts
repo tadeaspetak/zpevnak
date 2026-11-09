@@ -1,4 +1,4 @@
-import { createTheme, type CSSVariablesResolver } from '@mantine/core';
+import { Alert, createTheme, type CSSVariablesResolver } from '@mantine/core';
 
 export const theme = createTheme({
   primaryColor: 'orange',
@@ -7,6 +7,11 @@ export const theme = createTheme({
     'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
   defaultRadius: 'md',
   cursorType: 'pointer',
+  components: {
+    // An alert's colour says what kind of message it is: never the brand orange, which in dark
+    // mode reads as an error and matches the buttons. Neutral unless a call site says otherwise.
+    Alert: Alert.extend({ defaultProps: { color: 'gray' } }),
+  },
 });
 
 /**

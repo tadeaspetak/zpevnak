@@ -266,7 +266,7 @@ function Missing({ text }: { text: string }) {
     <Center h="100dvh" p="md">
       <Stack align="center">
         <Text ta="center">{text}</Text>
-        <Button component={Link} to={url.home()} variant="light">
+        <Button component={Link} to={url.home()}>
           {t('notFound.home')}
         </Button>
       </Stack>

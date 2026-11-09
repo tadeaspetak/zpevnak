@@ -74,14 +74,14 @@ export function PlaylistsPage() {
               )}
             </section>
           ) : (
-            <Alert variant="light">
+            <Alert variant="light" color="gray">
               <Group justify="space-between">
                 <Text size="sm">{t('playlists.signInToCreate')}</Text>
                 <Button
                   component={Link}
                   to={url.logIn(url.playlists())}
                   size="sm"
-                  variant="light"
+                  variant="default"
                 >
                   {t('nav.logIn')}
                 </Button>

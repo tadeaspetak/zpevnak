@@ -104,6 +104,13 @@ entry that says which it replaces and what changed.
   overlay (D50). The queue has one entry, the overview's checklist icon. The tooltip still says
   where the arrow goes. (2026-11-09)
 
+- **D61. One orange.** Filled orange is the primary action (the only one on a page is
+  primary too); secondary actions are the neutral outline; destructive secondaries the red
+  outline. No light (tinted) orange anywhere: in dark mode it turns rust brown, reads as an
+  error and clashes with the filled orange. Alerts take the colour of their meaning (green
+  success, yellow warning, red error) and default to neutral grey; badges are neutral unless
+  they mean something. (2026-11-09)
+
 ## Engineering
 
 - **D40. One developer; commit to `main`.** No branches, PRs or release process. (2026-11-09)

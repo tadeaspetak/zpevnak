@@ -67,7 +67,7 @@ export function AccountPage() {
                 ) : (
                   <Button
                     size="xs"
-                    variant="light"
+                    variant="default"
                     w="fit-content"
                     loading={resend.isPending}
                     onClick={() => resend.mutate()}
@@ -85,7 +85,7 @@ export function AccountPage() {
               <Title order={2} size="h4">
                 {me.displayName}
               </Title>
-              <Badge variant="light">{t(`account.role.${me.role}`)}</Badge>
+              <Badge variant="default">{t(`account.role.${me.role}`)}</Badge>
             </Group>
             <Text c="dimmed">{me.email}</Text>
             <Group gap="md" mt="sm">

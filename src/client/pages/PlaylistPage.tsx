@@ -178,7 +178,7 @@ export function PlaylistPage() {
                 <Text c="dimmed">{t('playlists.empty')}</Text>
                 {playlist.isMine && !editing && (
                   <Button
-                    variant="light"
+                    variant="default"
                     leftSection={<IconPlus size={16} />}
                     onClick={openAdd}
                   >
@@ -215,7 +215,7 @@ export function PlaylistPage() {
 
           {editing && (
             <Button
-              variant="light"
+              variant="default"
               leftSection={<IconPlus size={16} />}
               onClick={openAdd}
             >
@@ -460,7 +460,7 @@ function AddSongsModal({
                   </Text>
                 </div>
                 {songIds.includes(song.id) ? (
-                  <Badge variant="light">✓</Badge>
+                  <Badge variant="default">✓</Badge>
                 ) : (
                   <IconPlus size={18} />
                 )}

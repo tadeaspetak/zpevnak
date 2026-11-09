@@ -29,7 +29,7 @@ export function PlaylistBar({
     <nav className={classes.bar} aria-label={name}>
       <Group gap="xs" wrap="nowrap" className={classes.inner}>
         <ActionIcon
-          variant="light"
+          variant="default"
           size={48}
           radius="xl"
           onClick={onPrev}

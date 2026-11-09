@@ -10,6 +10,7 @@ import {
   TextInput,
 } from '@mantine/core';
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { IconCircleCheck, IconMailCheck } from '@tabler/icons-react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { PASSWORD_MIN } from '#shared/validators/index.ts';
 import { ErrorText } from '../components/ErrorText.tsx';
@@ -117,10 +118,10 @@ export function SignUpPage() {
   if (signUp.data) {
     return (
       <AuthPage title={t('auth.signUpTitle')}>
-        <Alert variant="light">
+        <Alert variant="light" color="green" icon={<IconMailCheck size={20} />}>
           {signUp.data.signedIn ? t('auth.signedUp') : t('auth.signUpPending')}
         </Alert>
-        <Button component={Link} to={url.home()} variant="light">
+        <Button component={Link} to={url.home()}>
           {t('notFound.home')}
         </Button>
       </AuthPage>
@@ -181,7 +182,9 @@ export function ForgotPasswordPage() {
   return (
     <AuthPage title={t('auth.forgotTitle')}>
       {request.isSuccess ? (
-        <Alert variant="light">{t('auth.linkSent', { email })}</Alert>
+        <Alert variant="light" color="green" icon={<IconMailCheck size={20} />}>
+          {t('auth.linkSent', { email })}
+        </Alert>
       ) : (
         <form
           onSubmit={(e) => {
@@ -274,7 +277,7 @@ export function VerifyEmailPage() {
     <AuthPage title={t('auth.verifyTitle')}>
       {verify.isSuccess ? (
         <>
-          <Alert variant="light" color="green">
+          <Alert variant="light" color="green" icon={<IconCircleCheck size={20} />}>
             {t('auth.verified')}
           </Alert>
           <Button component={Link} to={url.home()}>

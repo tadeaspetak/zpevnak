@@ -50,7 +50,7 @@ export function QueuePage() {
               value="pending"
               rightSection={
                 pendingCount.data?.length ? (
-                  <Badge size="sm" variant="light" circle>
+                  <Badge size="sm" circle>
                     {pendingCount.data.length}
                   </Badge>
                 ) : null
