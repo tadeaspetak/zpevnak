@@ -1,8 +1,9 @@
 import { Anchor, Group } from '@mantine/core';
-import { IconBrandGithub, IconMail } from '@tabler/icons-react';
+import { IconBrandGithub } from '@tabler/icons-react';
 import { mailtoAuthor, REPOSITORY } from '../contact.ts';
 import { useI18n } from '../i18n/index.tsx';
 import classes from './Footer.module.css';
+import { OwlIcon } from './OwlIcon.tsx';
 
 /** Where the app comes from and how to reach its author. Every page but a song's. */
 export function Footer() {
@@ -18,7 +19,7 @@ export function Footer() {
         </Anchor>
         <Anchor href={mailtoAuthor(t('app.name'))} size="sm" c="dimmed">
           <Group gap={6} wrap="nowrap">
-            <IconMail size={16} aria-hidden />
+            <OwlIcon size={16} />
             {t('about.contact')}
           </Group>
         </Anchor>
