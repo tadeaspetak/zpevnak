@@ -24,29 +24,30 @@ test('a player finds a song, plays it, and gets back to the results', async ({
   await expect(page.getByRole('link', { name: /Andělská/ })).toBeVisible();
 });
 
+// The e2e seed's playlist "Vršek 2026" holds the seed songs in order: Andělská, Lajla tov,
+// Zkušební písnička (src/server/db/seed.ts).
 test('a player goes through a playlist, takes a detour, and comes back', async ({
   page,
 }) => {
+  const heading = page.getByRole('heading', { level: 1 });
   await page.goto('/playlists');
   await page.getByRole('link', { name: /Vršek 2026/ }).click();
   await page.getByRole('link', { name: 'Play', exact: true }).click();
-  await expect(page).toHaveURL(/\/p\/\d+\/1$/);
+  await expect(heading).toHaveText('Andělská');
 
   await page.getByRole('button', { name: 'Next song' }).click();
   await expect(page).toHaveURL(/\/p\/\d+\/2$/);
-  const second = await page.getByRole('heading', { level: 1 }).textContent();
+  await expect(heading).toHaveText('Lajla tov (Dobrou noc)');
 
   // A request from the crowd: search for something else, play it, then return.
   await page.getByRole('link', { name: 'Search songs' }).click();
   await searchFor(page, 'zkusebni');
   await page.getByRole('link', { name: /Zkušební písnička/ }).click();
-  await expect(
-    page.getByRole('heading', { level: 1, name: 'Zkušební písnička' }),
-  ).toBeVisible();
+  await expect(heading).toHaveText('Zkušební písnička');
 
   await page.getByRole('link', { name: 'Back to Vršek 2026' }).click();
   await expect(page).toHaveURL(/\/p\/\d+\/2$/);
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText(second ?? '');
+  await expect(heading).toHaveText('Lajla tov (Dobrou noc)');
 });
 
 test('songs stay searchable and playable offline', async ({ page, context }) => {
