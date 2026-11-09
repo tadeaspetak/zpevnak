@@ -33,8 +33,29 @@ let cursor: string | null = null;
 let viewerId: number | null = null;
 const listeners = new Set<() => void>();
 
+/**
+ * What components see: each playlist holding only the songs this device has. A song hidden
+ * from the viewer (rejected, D76) is already left out by the server; this keeps the count, the
+ * list and the player in agreement in the moment between a song leaving the catalog and its
+ * playlists being fetched again.
+ */
+function playable(raw: Catalog): Catalog {
+  const playlists = new Map(
+    [...raw.playlists].map(([id, p]) => [
+      id,
+      p.songIds.every((songId) => raw.songs.has(songId))
+        ? p
+        : { ...p, songIds: p.songIds.filter((songId) => raw.songs.has(songId)) },
+    ]),
+  );
+  return { ...raw, playlists };
+}
+
+let view: Catalog = playable(state);
+
 function update(patch: Partial<Catalog>) {
   state = { ...state, ...patch };
+  view = playable(state);
   listeners.forEach((l) => l());
 }
 
@@ -123,5 +144,5 @@ function subscribe(listener: () => void) {
 }
 
 export function useCatalog(): Catalog {
-  return useSyncExternalStore(subscribe, () => state);
+  return useSyncExternalStore(subscribe, () => view);
 }

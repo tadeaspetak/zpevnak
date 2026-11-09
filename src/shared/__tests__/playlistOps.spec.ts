@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyOp, nearestIndex } from '../playlistOps.ts';
+import { applyOp, applyOpAround, nearestIndex } from '../playlistOps.ts';
 
 describe('applyOp', () => {
   it('adds to the end', () => {
@@ -63,5 +63,46 @@ describe('nearestIndex', () => {
 
   it('is -1 when the song is not there', () => {
     expect(nearestIndex([1, 2], 3, 0)).toBe(-1);
+  });
+});
+
+describe('applyOpAround (an editor who cannot see every song)', () => {
+  // 9 is a rejected song this editor can't see; it sat after 2.
+  const hidden = (id: number) => id !== 9;
+
+  it('keeps a hidden song after the song it followed when others move', () => {
+    // The editor sees [1, 2, 3] and moves 3 to the top.
+    expect(
+      applyOpAround([1, 2, 9, 3], hidden, { type: 'move', songId: 3, from: 2, to: 0 }),
+    ).toEqual([3, 1, 2, 9]);
+  });
+
+  it('moves a song with its own index space, not the full list', () => {
+    // Seen as [1, 2, 3]: move 1 to the end, after 3.
+    expect(
+      applyOpAround([1, 2, 9, 3], hidden, { type: 'move', songId: 1, from: 0, to: 2 }),
+    ).toEqual([2, 9, 3, 1]);
+  });
+
+  it("hands a removed song's hidden follower to the song before it", () => {
+    expect(
+      applyOpAround([1, 2, 9, 3], hidden, { type: 'remove', songId: 2, index: 1 }),
+    ).toEqual([1, 9, 3]);
+  });
+
+  it('keeps a hidden song at the top when it was first', () => {
+    expect(
+      applyOpAround([9, 1, 2], hidden, { type: 'remove', songId: 1, index: 0 }),
+    ).toEqual([9, 2]);
+    expect(applyOpAround([9, 1, 2], hidden, { type: 'add', songId: 4 })).toEqual([
+      9, 1, 2, 4,
+    ]);
+  });
+
+  it('is applyOp when every song is visible', () => {
+    const all = () => true;
+    expect(
+      applyOpAround([1, 2, 3], all, { type: 'move', songId: 1, from: 0, to: 2 }),
+    ).toEqual(applyOp([1, 2, 3], { type: 'move', songId: 1, from: 0, to: 2 }));
   });
 });

@@ -178,6 +178,16 @@ entry that says which it replaces and what changed.
   updates when someone taps ↻, and the reload comes when it was asked for. Verified on a local
   production build: ↻ moved an open page from one version to the next. (2026-11-09)
 
+- **D76. A rejected song is hidden, not deleted**, in playlists too: to everyone but its author
+  it isn't in the list, the count or the player (numbers close up: 1 → 2 → 3, no gaps). It stays
+  in the playlist's data, in its place, and comes back there once fixed and approved. Its author
+  sees it, marked rejected. The server leaves hidden songs out of the playlist it sends, and
+  applies a person's edits to the list as they see it, keeping hidden songs after the song they
+  followed. The device's catalog hands out playlists of playable songs only, so the count, list
+  and player always agree. No "a song is hidden" note for others (the owner's call). Removing a
+  rejected song from every playlist was rejected: it would rewrite others' setlists for good.
+  (2026-11-09)
+
 ## Engineering
 
 - **D40. One developer; commit to `main`.** No branches, PRs or release process. (2026-11-09)

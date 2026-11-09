@@ -320,3 +320,60 @@ describe('sharing', () => {
     ).toBe(0);
   });
 });
+
+describe('a rejected song in a playlist', () => {
+  /** Owner's playlist [a, b, c, d]; c is the stranger's song, rejected. */
+  async function withRejected() {
+    const s = await setup();
+    const d = await callerFor(s.owner).songs.create({ source: SONG('D') });
+    const playlist = await callerFor(s.owner).playlists.create({
+      name: 'Gig',
+      isPublic: true,
+      songIds: [s.a.id, s.b.id, s.c.id, d.id],
+    });
+    await callerFor(s.editor).songs.reject({ id: s.c.id, reason: 'totally_wrong' });
+    return { ...s, d, playlist };
+  }
+
+  it('is hidden from everyone but its author: not in the list, not in the count', async () => {
+    const { owner, stranger, a, b, c, d, playlist } = await withRejected();
+    expect((await callerFor(owner).playlists.byId({ id: playlist.id })).songIds).toEqual([
+      a.id,
+      b.id,
+      d.id,
+    ]);
+    expect((await callerFor(null).playlists.byId({ id: playlist.id })).songIds).toEqual([
+      a.id,
+      b.id,
+      d.id,
+    ]);
+    // Its author sees it, in its place.
+    expect(
+      (await callerFor(stranger).playlists.byId({ id: playlist.id })).songIds,
+    ).toEqual([a.id, b.id, c.id, d.id]);
+  });
+
+  it('keeps its place while others edit around it', async () => {
+    const { owner, stranger, a, b, c, d, playlist } = await withRejected();
+    // The owner sees [a, b, d] and moves d to the top.
+    await callerFor(owner).playlists.edit({
+      id: playlist.id,
+      op: { type: 'move', songId: d.id, from: 2, to: 0 },
+    });
+    expect(
+      (await callerFor(stranger).playlists.byId({ id: playlist.id })).songIds,
+    ).toEqual([d.id, a.id, b.id, c.id]);
+  });
+
+  it('comes back in its place once fixed and approved', async () => {
+    const { owner, stranger, editor, a, b, c, d, playlist } = await withRejected();
+    await callerFor(stranger).songs.update({ id: c.id, source: SONG('C, fixed') });
+    await callerFor(editor).songs.verify({ id: c.id });
+    expect((await callerFor(owner).playlists.byId({ id: playlist.id })).songIds).toEqual([
+      a.id,
+      b.id,
+      c.id,
+      d.id,
+    ]);
+  });
+});
