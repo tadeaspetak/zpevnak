@@ -204,8 +204,9 @@ entry that says which it replaces and what changed.
   briefly: its songs and whose it is ("3 písničky · od Tadeáš"), or the viewer's own role. The
   playlists page adds visibility, and for the playlist's own people how many souputníci it has;
   the server sends that count to nobody else. Replaces D70's "shared (n)". (2026-11-09)
-- **D80. Collaborators are souputníci** (bandmates in English): a songbook with attitude, not an
-  office. The role is Souputník / Bandmate, the people dialog is Souputníci, and an invite reads
+- **D80. Collaborators are souputníci** (listmates in English, made up on purpose: "bandmate"
+  would claim band membership): a songbook with attitude, not an
+  office. The role is Souputník / Listmate, the people dialog is Souputníci / Listmates, and an invite reads
   "{owner} tě zve, ať se přidáš k playlistu". (2026-11-09)
 
 ## Engineering

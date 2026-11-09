@@ -167,7 +167,7 @@ test('a bandmate opens an invite link, signs up there, and lands in the playlist
   await expect(
     page.getByRole('heading', { level: 1, name: playlist.name }),
   ).toBeVisible();
-  await expect(page.getByText(/Bandmate/)).toBeVisible();
+  await expect(page.getByText(/Listmate/)).toBeVisible();
   await expect(
     page.getByText('Confirm your email, then you can edit the playlist.'),
   ).toBeVisible();
