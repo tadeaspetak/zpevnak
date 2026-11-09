@@ -2,6 +2,8 @@ import MiniSearch from 'minisearch';
 import { useMemo } from 'react';
 import { lyricsText, parseSong } from '#shared/chordpro/parse.ts';
 import { fold } from '#shared/text.ts';
+import { inSearch } from '#shared/songs.ts';
+import { useMe } from '../hooks/useMe.ts';
 import type { PlaylistRecord, SongRecord } from './store.ts';
 
 type Indexed = { id: number; title: string; artist: string; lyrics: string };
@@ -82,12 +84,16 @@ function searchSongs(
   });
 }
 
-/** The search index for the current catalog, rebuilt when the songs change. */
+/**
+ * The search index for the current catalog, rebuilt when the songs change. Only songs that can
+ * be found: a rejected song is the author's alone to find (D77).
+ */
 export function useSongSearch(songs: Map<number, SongRecord>) {
+  const viewerId = useMe().me?.id ?? null;
   return useMemo(() => {
-    const index = buildIndex([...songs.values()]);
+    const index = buildIndex([...songs.values()].filter((s) => inSearch(s, viewerId)));
     return (query: string) => searchSongs(index, songs, query);
-  }, [songs]);
+  }, [songs, viewerId]);
 }
 
 /** A–Z by title, the way Czech sorts (Č after C, Ch after H). */

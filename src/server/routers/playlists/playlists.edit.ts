@@ -1,9 +1,8 @@
 import { z } from 'zod';
-import { applyOpAround } from '#shared/playlistOps.ts';
+import { applyOp } from '#shared/playlistOps.ts';
 import { idSchema } from '#shared/validators/index.ts';
 import { assertMember, loadVisiblePlaylist } from '../../playlists/load.ts';
 import { assertSongsUsable, writeSongs } from '../../playlists/writeSongs.ts';
-import { inCatalog, type SongRow } from '../../songs/record.ts';
 import { fail, verifiedProcedure } from '../../trpc/trpc.ts';
 
 const index = z.number().int().min(0).max(1000);
@@ -18,7 +17,7 @@ const MAX_SONGS = 500;
 /**
  * One change to the song order, by the owner or a collaborator, applied to the playlist as it
  * is now (`applyOp`): two people editing at once both keep their changes. The row lock makes
- * concurrent edits take turns. Songs hidden from the editor keep their place (D76).
+ * concurrent edits take turns.
  */
 export const edit = verifiedProcedure
   .input(z.object({ id: idSchema, op: opSchema }))
@@ -28,14 +27,9 @@ export const edit = verifiedProcedure
       await trx.raw(/* sql */ `SELECT 1 FROM playlists WHERE id = :id FOR UPDATE`, {
         id: input.id,
       });
-      const { rows } = await trx.raw<{
-        rows: ({ song_id: number } & Pick<SongRow, 'status' | 'created_by'>)[];
-      }>(
+      const { rows } = await trx.raw<{ rows: { song_id: number }[] }>(
         /* sql */ `
-          SELECT ps.song_id, s.status, s.created_by
-          FROM playlist_songs ps JOIN songs s ON s.id = ps.song_id
-          WHERE ps.playlist_id = :id
-          ORDER BY ps.position
+          SELECT song_id FROM playlist_songs WHERE playlist_id = :id ORDER BY position
         `,
         { id: input.id },
       );
@@ -45,14 +39,8 @@ export const edit = verifiedProcedure
           fail('BAD_REQUEST', 'FORBIDDEN');
         }
       }
-      // The editor saw the playlist without the songs hidden from them (D76): apply the edit
-      // to that view, and keep the hidden songs where they were.
-      const hiddenFromEditor = new Set(
-        rows.filter((r) => !inCatalog(r, ctx.user)).map((r) => Number(r.song_id)),
-      );
-      const next = applyOpAround(
+      const next = applyOp(
         rows.map((r) => Number(r.song_id)),
-        (songId) => !hiddenFromEditor.has(songId),
         input.op,
       );
       await writeSongs(trx, input.id, next);

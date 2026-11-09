@@ -178,7 +178,7 @@ entry that says which it replaces and what changed.
   updates when someone taps ↻, and the reload comes when it was asked for. Verified on a local
   production build: ↻ moved an open page from one version to the next. (2026-11-09)
 
-- **D76. A rejected song is hidden, not deleted**, in playlists too: to everyone but its author
+- **D76 (replaced by D77).** ~~A rejected song is hidden, not deleted~~, in playlists too: to everyone but its author
   it isn't in the list, the count or the player (numbers close up: 1 → 2 → 3, no gaps). It stays
   in the playlist's data, in its place, and comes back there once fixed and approved. Its author
   sees it, marked rejected. The server leaves hidden songs out of the playlist it sends, and
@@ -187,6 +187,18 @@ entry that says which it replaces and what changed.
   and player always agree. No "a song is hidden" note for others (the owner's call). Removing a
   rejected song from every playlist was rejected: it would rewrite others' setlists for good.
   (2026-11-09)
+
+- **D77. Rejected means "out of search, marked everywhere else".** A rejected song can't be
+  found (search, the song lists, adding to a playlist) except by its author, who has to fix it.
+  It stays in every playlist, in its place, counted and playable, marked "Zamítnuto" in the list
+  and in the song view; anyone can open it by its link. The reason is for the author and
+  editors; others see that it waits to be fixed. Nobody's playlist changes. Replaces D2's
+  "leaves the catalog" and D76. (2026-11-09)
+- **D78. Deleting a song is real and final:** the row, its place in every playlist, and every
+  device's copy (through `song_deletions` on the next sync). Editors delete any song; an author
+  their own until it is approved. The one change to others' playlists that isn't theirs, so the
+  confirmation says how many playlists lose the song. In the song's ⋯ menu and on the review
+  screen. (2026-11-09)
 
 ## Engineering
 

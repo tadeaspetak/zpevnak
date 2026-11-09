@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { idSchema, rejectionReasonSchema } from '#shared/validators/index.ts';
-import { loadSongRow, loadVisibleSong } from '../../songs/load.ts';
+import { loadSongRow, loadSong } from '../../songs/load.ts';
 import { editorProcedure } from '../../trpc/trpc.ts';
 
 export const reject = editorProcedure
@@ -27,5 +27,5 @@ export const reject = editorProcedure
         userId: ctx.user.id,
       },
     );
-    return loadVisibleSong(ctx.db, input.id, ctx.user);
+    return loadSong(ctx.db, input.id, ctx.user);
   });

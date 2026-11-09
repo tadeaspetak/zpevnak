@@ -1,4 +1,5 @@
 import {
+  ActionIcon,
   Badge,
   Button,
   Container,
@@ -8,13 +9,15 @@ import {
   Stack,
   Text,
   Textarea,
+  Tooltip,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
-import { IconCheck, IconX } from '@tabler/icons-react';
+import { IconCheck, IconTrash, IconX } from '@tabler/icons-react';
 import { useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router';
 import { REJECTION_REASONS, type RejectionReason } from '#shared/validators/index.ts';
+import { DeleteSongModal } from '../components/DeleteSongModal.tsx';
 import { ErrorText } from '../components/ErrorText.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
 import { StatusBadge } from '../components/StatusBadge.tsx';
@@ -40,6 +43,7 @@ export function ReviewPage() {
   const pending = trpc.songs.queue.useQuery({ status: 'pending' }, { enabled: isEditor });
   const [source, setSource] = useState<string | null>(null);
   const [rejecting, { open: openReject, close: closeReject }] = useDisclosure(false);
+  const [deleting, { open: openDelete, close: closeDelete }] = useDisclosure(false);
 
   const goToNext = async () => {
     setSource(null);
@@ -105,12 +109,31 @@ export function ReviewPage() {
         backTo={url.queue()}
         backLabel={t('nav.backTo', { name: t('queue.title') })}
         actions={
-          position > 0 && (
-            <Badge variant="default" size="lg">
-              {position} / {pending.data?.length}
-            </Badge>
-          )
+          <>
+            {position > 0 && (
+              <Badge variant="default" size="lg">
+                {position} / {pending.data?.length}
+              </Badge>
+            )}
+            <Tooltip label={t('song.delete')}>
+              <ActionIcon
+                variant="subtle"
+                color="gray"
+                size="lg"
+                onClick={openDelete}
+                aria-label={t('song.delete')}
+              >
+                <IconTrash size={20} />
+              </ActionIcon>
+            </Tooltip>
+          </>
         }
+      />
+      <DeleteSongModal
+        song={song.data}
+        opened={deleting}
+        onClose={closeDelete}
+        then={url.queue()}
       />
       <Container size="80rem" px="md" py="md">
         <Stack gap="sm">

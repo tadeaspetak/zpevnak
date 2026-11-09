@@ -185,6 +185,8 @@ export function PlaylistPage() {
                 component={Link}
                 to={url.playlistSong(playlist, currentPosition ?? 1)}
                 leftSection={<IconPlayerPlayFilled size={16} />}
+                // The details beside it wrap; the button never shrinks.
+                style={{ flexShrink: 0 }}
               >
                 {t('playlists.play')}
               </Button>

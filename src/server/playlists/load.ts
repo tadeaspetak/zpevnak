@@ -18,13 +18,8 @@ type PlaylistRow = {
 
 const PLAYLIST_SELECT = /* sql */ `
   SELECT p.id, p.owner_id, u.display_name AS owner_name, p.name, p.is_public, p.updated_at,
-         -- Only the songs in the viewer's catalog: a rejected song is hidden from all but its
-         -- author (D2), in a playlist too (D76). It stays in playlist_songs, in its place.
          coalesce(
-           array_agg(ps.song_id ORDER BY ps.position) FILTER (
-             WHERE ps.song_id IS NOT NULL
-               AND (s.status <> 'rejected' OR s.created_by IS NOT DISTINCT FROM :viewerId)
-           ),
+           array_agg(ps.song_id ORDER BY ps.position) FILTER (WHERE ps.song_id IS NOT NULL),
            '{}'
          ) AS song_ids,
          (SELECT count(*)::int FROM playlist_collaborators c WHERE c.playlist_id = p.id)
@@ -36,7 +31,6 @@ const PLAYLIST_SELECT = /* sql */ `
   FROM playlists p
   JOIN users u ON u.id = p.owner_id
   LEFT JOIN playlist_songs ps ON ps.playlist_id = p.id
-  LEFT JOIN songs s ON s.id = ps.song_id
 `;
 
 function roleOf(row: PlaylistRow, viewer: SessionUser | null): PlaylistRole | null {

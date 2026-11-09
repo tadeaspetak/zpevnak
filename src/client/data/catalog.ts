@@ -34,10 +34,9 @@ let viewerId: number | null = null;
 const listeners = new Set<() => void>();
 
 /**
- * What components see: each playlist holding only the songs this device has. A song hidden
- * from the viewer (rejected, D76) is already left out by the server; this keeps the count, the
- * list and the player in agreement in the moment between a song leaving the catalog and its
- * playlists being fetched again.
+ * What components see: each playlist holding only the songs this device has. A deleted song
+ * (D78) leaves the catalog before its playlists are fetched again; this keeps the count, the
+ * list and the player in agreement meanwhile.
  */
 function playable(raw: Catalog): Catalog {
   const playlists = new Map(
@@ -121,6 +120,17 @@ export function putSong(song: SongRecord) {
   update({ songs });
   void storeSongs(
     { songs: [song], removedIds: [], replaceAll: false },
+    { cursor, viewerId },
+  );
+}
+
+/** Drops a song deleted on this device, without waiting for the next sync. */
+export function dropSong(id: number) {
+  const songs = new Map(state.songs);
+  songs.delete(id);
+  update({ songs });
+  void storeSongs(
+    { songs: [], removedIds: [id], replaceAll: false },
     { cursor, viewerId },
   );
 }

@@ -24,26 +24,6 @@ export function isEditor(user: SessionUser | null): boolean {
   return user?.role === 'editor' || user?.role === 'admin';
 }
 
-/**
- * Rejected songs leave the catalog. Their author still sees them, with the reason, so they
- * can fix and resubmit; editors see them in the queue.
- */
-export function canSeeSong(
-  song: { status: SongStatus; created_by: number | null },
-  viewer: SessionUser | null,
-): boolean {
-  return song.status !== 'rejected' || song.created_by === viewer?.id || isEditor(viewer);
-}
-
-/** Whether the song belongs in this viewer's catalog (search, offline copy). Editors meet
- * rejected songs in the queue, not in search. */
-export function inCatalog(
-  song: { status: SongStatus; created_by: number | null },
-  viewer: SessionUser | null,
-): boolean {
-  return song.status !== 'rejected' || song.created_by === viewer?.id;
-}
-
 /** The song as the client gets it. An allow-list: never spread a row here. */
 export function toSongRecord(row: SongRow, viewer: SessionUser | null) {
   const seesRejection = row.created_by === viewer?.id || isEditor(viewer);

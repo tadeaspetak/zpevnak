@@ -252,6 +252,11 @@ function SongPlayer({
           <Text size="sm">{t('song.rejectedFix')}</Text>
         </Alert>
       )}
+      {song.status === 'rejected' && !song.rejection && (
+        <Alert color="gray" variant="light" mx="md" mt="xs">
+          {t('song.rejectedWaiting')}
+        </Alert>
+      )}
       <SongSheet
         song={shown}
         fontScale={prefs.fontScale}

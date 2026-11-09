@@ -1,9 +1,10 @@
 import type { Knex } from 'knex';
 import type { SessionUser } from '../auth/sessions.ts';
-import { inCatalog, type SongRow } from '../songs/record.ts';
+import { inSearch } from '#shared/songs.ts';
+import type { SongRow } from '../songs/record.ts';
 import { fail } from '../trpc/trpc.ts';
 
-/** Refuses songs the user can't find in their catalog (unknown, or someone else's rejected). */
+/** Refuses songs the user can't find (unknown, or someone else's rejected: D77). */
 export async function assertSongsUsable(
   trx: Knex | Knex.Transaction,
   songIds: number[],
@@ -18,7 +19,10 @@ export async function assertSongsUsable(
   }>(/* sql */ `SELECT id, status, created_by FROM songs WHERE id = ANY(:ids)`, {
     ids: unique,
   });
-  if (rows.filter((r) => inCatalog(r, user)).length !== unique.length) {
+  const findable = rows.filter((r) =>
+    inSearch({ status: r.status, createdBy: r.created_by }, user.id),
+  );
+  if (findable.length !== unique.length) {
     fail('BAD_REQUEST', 'NOT_FOUND');
   }
 }

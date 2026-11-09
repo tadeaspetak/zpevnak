@@ -73,6 +73,11 @@ export const en: Record<keyof typeof cs, string> = {
   'song.fullscreenHint':
     'On iPhone, add Zpěvňák to your home screen (Share → Add to Home Screen). It then opens without the browser bars.',
   'song.edit': 'Edit',
+  'song.delete': 'Delete song',
+  'song.deleteConfirm': 'Delete “{title}” for good? This cannot be undone.',
+  'song.deleteImpact': 'It also leaves the playlists it is in ({count}).',
+  'song.deleted': 'The song is deleted.',
+  'song.rejectedWaiting': 'This song was rejected and is waiting to be fixed.',
   'song.reportMistake': 'Report a mistake',
   'song.reportSubject': 'Mistake in a song: {title}',
   'song.reportBody': 'Song: {link}\n\nWhat is wrong:\n',

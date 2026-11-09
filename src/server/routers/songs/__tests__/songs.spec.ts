@@ -115,7 +115,7 @@ describe('review', () => {
     expect(verified).toMatchObject({ status: 'verified', artist: 'Nerez & Co' });
   });
 
-  it('rejects with a reason and note that the author and editors see, nobody else', async () => {
+  it('rejects with a reason and note for the author and editors; others see only that', async () => {
     const { author, other, editor, song } = await setup();
     await callerFor(editor).songs.reject({
       id: song.id,
@@ -129,12 +129,13 @@ describe('review', () => {
     expect((await callerFor(editor).songs.byId({ id: song.id })).rejection).toEqual(
       rejection,
     );
-    await expect(callerFor(other).songs.byId({ id: song.id })).rejects.toThrow(
-      'NOT_FOUND',
-    );
-    await expect(callerFor(null).songs.byId({ id: song.id })).rejects.toThrow(
-      'NOT_FOUND',
-    );
+    // Anyone can still open it (it stays in playlists, D77), marked, without the reason.
+    for (const viewer of [other, null]) {
+      expect(await callerFor(viewer).songs.byId({ id: song.id })).toMatchObject({
+        status: 'rejected',
+        rejection: null,
+      });
+    }
   });
 
   it('is for editors and admins only', async () => {
@@ -185,25 +186,23 @@ describe('songs.sync', () => {
     expect(Date.parse(cursor)).not.toBeNaN();
   });
 
-  it("keeps rejected songs out of everyone's catalog but the author's, editors included", async () => {
+  it('sends rejected songs to everyone, marked: they stay in playlists (D77)', async () => {
     const { author, editor, song } = await setup();
     await callerFor(editor).songs.reject({ id: song.id, reason: 'other' });
-
-    const ids = async (user: Parameters<typeof callerFor>[0]) =>
-      (await callerFor(user).songs.sync({ since: null })).songs.map((s) => s.id);
-    expect(await ids(null)).toEqual([]);
-    expect(await ids(editor)).toEqual([]);
-    expect(await ids(author)).toEqual([song.id]);
+    for (const viewer of [null, editor, author]) {
+      const { songs } = await callerFor(viewer).songs.sync({ since: null });
+      expect(songs.map((s) => [s.id, s.status])).toEqual([[song.id, 'rejected']]);
+    }
   });
 
-  it('since a cursor, sends what changed and the ids that left the catalog', async () => {
+  it('since a cursor, sends what changed, and the ids of deleted songs', async () => {
     const { author, editor, song } = await setup();
     const kept = await callerFor(author).songs.create({ source: SONG('Kept') });
     // Pretend both were synced long ago.
     await db.raw(`UPDATE songs SET updated_at = now() - interval '1 day'`);
     const { cursor } = await callerFor(null).songs.sync({ since: null });
 
-    await callerFor(editor).songs.reject({ id: song.id, reason: 'duplicate' });
+    await callerFor(editor).songs.delete({ id: song.id });
     await callerFor(author).songs.update({ id: kept.id, source: SONG('Kept, fixed') });
 
     const delta = await callerFor(null).songs.sync({ since: cursor });
@@ -228,5 +227,58 @@ describe('songs.sync', () => {
       ].sort(),
     );
     expect(songs.find((s) => s.id === song.id)?.rejection).toBeNull();
+  });
+});
+
+describe('songs.delete', () => {
+  it('lets an editor delete any song, approved too; it is gone', async () => {
+    const { editor, song } = await setup();
+    await callerFor(editor).songs.verify({ id: song.id });
+    await callerFor(editor).songs.delete({ id: song.id });
+    await expect(callerFor(editor).songs.byId({ id: song.id })).rejects.toThrow(
+      'NOT_FOUND',
+    );
+  });
+
+  it('lets an author delete their own song until it is approved', async () => {
+    const { author, editor, song } = await setup();
+    const second = await callerFor(author).songs.create({ source: SONG('Second') });
+    await expect(callerFor(author).songs.delete({ id: second.id })).resolves.toEqual({
+      ok: true,
+    });
+    await callerFor(editor).songs.verify({ id: song.id });
+    await expect(callerFor(author).songs.delete({ id: song.id })).rejects.toThrow(
+      'FORBIDDEN',
+    );
+  });
+
+  it('refuses a regular user deleting a song that is not theirs', async () => {
+    const { other, song } = await setup();
+    await expect(callerFor(other).songs.delete({ id: song.id })).rejects.toThrow(
+      'FORBIDDEN',
+    );
+  });
+
+  it('takes the song out of every playlist, and says how many first', async () => {
+    const { author, other, editor, song } = await setup();
+    const keep = await callerFor(author).songs.create({ source: SONG('Keep') });
+    const p1 = await callerFor(author).playlists.create({
+      name: 'One',
+      isPublic: false,
+      songIds: [song.id, keep.id, song.id],
+    });
+    await callerFor(other).playlists.create({
+      name: 'Two',
+      isPublic: true,
+      songIds: [song.id],
+    });
+    expect(await callerFor(editor).songs.deleteImpact({ id: song.id })).toEqual({
+      playlists: 2,
+    });
+
+    await callerFor(editor).songs.delete({ id: song.id });
+    expect((await callerFor(author).playlists.byId({ id: p1.id })).songIds).toEqual([
+      keep.id,
+    ]);
   });
 });

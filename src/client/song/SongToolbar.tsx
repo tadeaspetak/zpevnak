@@ -22,11 +22,13 @@ import {
   IconMinus,
   IconPlaylistAdd,
   IconPlus,
+  IconTrash,
   IconRestore,
   IconAdjustmentsHorizontal,
 } from '@tabler/icons-react';
 import { Link } from 'react-router';
 import { AddToPlaylistModal } from '../components/AddToPlaylistModal.tsx';
+import { DeleteSongModal, useCanDelete } from '../components/DeleteSongModal.tsx';
 import { mailtoAuthor } from '../contact.ts';
 import { SearchButton } from '../components/SearchButton.tsx';
 import { FONT_SCALES, usePrefs } from '../data/prefs.ts';
@@ -73,6 +75,8 @@ export function SongToolbar(props: Props) {
   const fullscreen = useFullscreen();
   const wide = useMediaQuery('(min-width: 62em)');
   const [adding, { open: openAdd, close: closeAdd }] = useDisclosure(false);
+  const [deleting, { open: openDelete, close: closeDelete }] = useDisclosure(false);
+  const canDelete = useCanDelete(song);
 
   const keyLabel =
     shownKey ??
@@ -299,6 +303,15 @@ export function SongToolbar(props: Props) {
                   {t('song.edit')}
                 </Menu.Item>
               )}
+              {canDelete && (
+                <Menu.Item
+                  color="red"
+                  leftSection={<IconTrash size={16} />}
+                  onClick={openDelete}
+                >
+                  {t('song.delete')}
+                </Menu.Item>
+              )}
             </Menu.Dropdown>
           </Menu>
           {/* Song controls to the left, the whole app to the right: search sits last on
@@ -308,6 +321,9 @@ export function SongToolbar(props: Props) {
         </Group>
       </header>
       <AddToPlaylistModal songId={adding ? song.id : null} onClose={closeAdd} />
+      {canDelete && (
+        <DeleteSongModal song={song} opened={deleting} onClose={closeDelete} />
+      )}
     </>
   );
 }

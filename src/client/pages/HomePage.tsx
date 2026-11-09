@@ -31,6 +31,7 @@ import { SearchResults, useSearchResults } from '../components/SearchResults.tsx
 import { RefreshButton } from '../components/RefreshButton.tsx';
 import { SettingsButton } from '../components/SettingsModal.tsx';
 import { SongRow } from '../components/SongRow.tsx';
+import { inSearch } from '#shared/songs.ts';
 import { useCatalog } from '../data/catalog.ts';
 import { sortByTitle } from '../data/search.ts';
 import { usePlayer } from '../data/session.ts';
@@ -70,7 +71,12 @@ export function HomePage() {
     () => [...songs.values()].filter((s) => s.status === 'pending').length,
     [songs],
   );
-  const allSongs = useMemo(() => sortByTitle(songs.values(), locale), [songs, locale]);
+  // Song lists show what can be found: a rejected song only to its author (D77).
+  const findable = useMemo(
+    () => [...songs.values()].filter((s) => inSearch(s, me?.id ?? null)),
+    [songs, me],
+  );
+  const allSongs = useMemo(() => sortByTitle(findable, locale), [findable, locale]);
   const recentPlaylistList = useMemo(
     () =>
       Object.entries(recentPlaylists)
@@ -81,6 +87,7 @@ export function HomePage() {
   );
   const recentSongList = recentSongs
     .flatMap((id) => songs.get(id) ?? [])
+    .filter((s) => inSearch(s, me?.id ?? null))
     .slice(0, RECENT_SONGS);
 
   return (

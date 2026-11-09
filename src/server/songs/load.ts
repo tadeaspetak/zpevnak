@@ -1,7 +1,7 @@
 import type { Knex } from 'knex';
 import type { SessionUser } from '../auth/sessions.ts';
 import { fail } from '../trpc/trpc.ts';
-import { canSeeSong, SONG_COLUMNS, toSongRecord } from './record.ts';
+import { SONG_COLUMNS, toSongRecord } from './record.ts';
 
 export async function loadSongRow(db: Knex, id: number) {
   const { rows } = await db.raw(
@@ -17,11 +17,7 @@ export async function loadSongRow(db: Knex, id: number) {
   return row;
 }
 
-/** The song as `viewer` may see it; NOT_FOUND when they may not, so its existence doesn't leak. */
-export async function loadVisibleSong(db: Knex, id: number, viewer: SessionUser | null) {
-  const row = await loadSongRow(db, id);
-  if (!canSeeSong(row, viewer)) {
-    fail('NOT_FOUND', 'NOT_FOUND');
-  }
-  return toSongRecord(row, viewer);
+/** The song as `viewer` gets it. Anyone may open any song, a rejected one too (D77). */
+export async function loadSong(db: Knex, id: number, viewer: SessionUser | null) {
+  return toSongRecord(await loadSongRow(db, id), viewer);
 }

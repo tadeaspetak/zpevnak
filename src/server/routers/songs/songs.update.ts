@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import { idSchema, songSourceSchema } from '#shared/validators/index.ts';
 import { readHeader } from '../../songs/header.ts';
-import { loadSongRow, loadVisibleSong } from '../../songs/load.ts';
-import { canSeeSong, isEditor } from '../../songs/record.ts';
+import { loadSongRow, loadSong } from '../../songs/load.ts';
+import { isEditor } from '../../songs/record.ts';
 import { fail, verifiedProcedure } from '../../trpc/trpc.ts';
 
 /**
@@ -13,9 +13,6 @@ export const update = verifiedProcedure
   .input(z.object({ id: idSchema, source: songSourceSchema }))
   .mutation(async ({ ctx, input }) => {
     const row = await loadSongRow(ctx.db, input.id);
-    if (!canSeeSong(row, ctx.user)) {
-      fail('NOT_FOUND', 'NOT_FOUND');
-    }
     const editor = isEditor(ctx.user);
     if (!editor) {
       if (row.created_by !== ctx.user.id) {
@@ -36,5 +33,5 @@ export const update = verifiedProcedure
       `,
       { id: input.id, source: input.source, title, artist },
     );
-    return loadVisibleSong(ctx.db, input.id, ctx.user);
+    return loadSong(ctx.db, input.id, ctx.user);
   });

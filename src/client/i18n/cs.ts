@@ -76,6 +76,11 @@ export const cs = {
   'song.fullscreenHint':
     'Na iPhonu přidej Zpěvňák na plochu (Sdílet → Přidat na plochu). Pak se otevře bez lišt prohlížeče.',
   'song.edit': 'Upravit',
+  'song.delete': 'Smazat písničku',
+  'song.deleteConfirm': 'Smazat „{title}“ navždy? Vrátit to nejde.',
+  'song.deleteImpact': 'Zmizí i z playlistů, ve kterých je ({count}).',
+  'song.deleted': 'Písnička je smazaná.',
+  'song.rejectedWaiting': 'Tahle písnička byla zamítnuta a čeká na opravu.',
   'song.reportMistake': 'Nahlásit chybu',
   'song.reportSubject': 'Chyba v písničce: {title}',
   'song.reportBody': 'Písnička: {link}\n\nCo je špatně:\n',
