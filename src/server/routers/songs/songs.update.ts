@@ -6,8 +6,9 @@ import { isEditor } from '../../songs/record.ts';
 import { fail, verifiedProcedure } from '../../trpc/trpc.ts';
 
 /**
- * Editors edit any song, and the song keeps its status. An author edits their own song only
- * while it is pending or rejected; editing a rejected song resubmits it as pending.
+ * Editors edit any song; an author their own song while it is pending or rejected. An edit keeps
+ * a verified or pending song's status, but a rejected song, once changed, goes back for review
+ * as pending, whoever changed it: the rejection was of the old text (D81).
  */
 export const update = verifiedProcedure
   .input(z.object({ id: idSchema, source: songSourceSchema }))
@@ -23,7 +24,7 @@ export const update = verifiedProcedure
       }
     }
     const { title, artist } = readHeader(input.source);
-    const resubmit = !editor && row.status === 'rejected';
+    const resubmit = row.status === 'rejected';
     await ctx.db.raw(
       /* sql */ `
         UPDATE songs

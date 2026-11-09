@@ -15,6 +15,7 @@ import { useSwipe } from '../hooks/useSwipe.ts';
 import { useWakeLock } from '../hooks/useWakeLock.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { SongSheet } from '../song/SongSheet.tsx';
+import { SongStatusBanner } from '../song/SongStatusBanner.tsx';
 import { SongToolbar } from '../song/SongToolbar.tsx';
 import { PlaylistBar } from '../song/PlaylistBar.tsx';
 import { trpc } from '../trpc.ts';
@@ -240,23 +241,7 @@ function SongPlayer({
         canEdit={Boolean(canEdit)}
         canAddToPlaylist={Boolean(me?.emailVerified)}
       />
-      {song.status === 'rejected' && song.rejection && (
-        <Alert
-          color="red"
-          variant="light"
-          mx="md"
-          mt="xs"
-          title={t('song.rejectedNote', { reason: t(`reason.${song.rejection.reason}`) })}
-        >
-          {song.rejection.note && <Text size="sm">{song.rejection.note}</Text>}
-          <Text size="sm">{t('song.rejectedFix')}</Text>
-        </Alert>
-      )}
-      {song.status === 'rejected' && !song.rejection && (
-        <Alert color="gray" variant="light" mx="md" mt="xs">
-          {t('song.rejectedWaiting')}
-        </Alert>
-      )}
+      <SongStatusBanner song={song} />
       <SongSheet
         song={shown}
         fontScale={prefs.fontScale}
@@ -267,11 +252,6 @@ function SongPlayer({
         <Alert color="gray" variant="light" mx="md" mt="xs">
           {t('song.removedFromPlaylist')}
         </Alert>
-      )}
-      {song.status === 'pending' && (
-        <Text size="sm" c="dimmed" px="md" pb="md">
-          {t('song.unverifiedNote')}
-        </Text>
       )}
       {playlist && (
         <PlaylistBar

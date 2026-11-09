@@ -146,7 +146,7 @@ export function HomePage() {
                   icon={<IconUserCircle />}
                 />
               ) : (
-                <Button component={Link} to={url.logIn()} variant="subtle" size="sm">
+                <Button component={Link} to={url.logIn()} variant="default" size="sm">
                   {t('nav.logIn')}
                 </Button>
               )}

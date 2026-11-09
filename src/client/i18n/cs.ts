@@ -16,8 +16,8 @@ export const cs = {
   'common.offlineHint':
     'Jsi offline. Písničky máš v zařízení, změny se uloží, až budeš online.',
   'common.somethingWrong': 'Něco se pokazilo. Zkus to znovu.',
-  'common.unverified': 'Neověřeno',
-  'common.verified': 'Ověřeno',
+  'common.unverified': 'Neschváleno',
+  'common.verified': 'Schváleno',
   'common.rejected': 'Zamítnuto',
   'common.public': 'Veřejný',
   'common.private': 'Soukromý',
@@ -92,7 +92,7 @@ export const cs = {
   'song.next': 'Další písnička',
   'song.nextUp': 'Další: {title}',
   'song.lastInPlaylist': 'Poslední v playlistu',
-  'song.unverifiedNote': 'Tuhle písničku zatím nikdo nezkontroloval.',
+  'song.unverifiedNote': 'Tuhle písničku zatím nikdo neschválil.',
   'song.rejectedNote': 'Zamítnuto: {reason}',
   'song.rejectedFix': 'Oprav ji a ulož, pošle se ke kontrole znovu.',
 

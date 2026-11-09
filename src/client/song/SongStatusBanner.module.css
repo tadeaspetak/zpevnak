@@ -1,0 +1,9 @@
+.quiet,
+.banner {
+  margin: var(--mantine-spacing-xs) var(--mantine-spacing-md) 0;
+}
+
+/* One line, little padding: noticed, without competing with the song. */
+.quiet {
+  padding-block: 0.4rem;
+}

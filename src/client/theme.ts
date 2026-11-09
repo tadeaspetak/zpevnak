@@ -12,6 +12,11 @@ import {
  */
 const variantColorResolver: VariantColorsResolver = (input) => {
   const colors = defaultVariantColorsResolver(input);
+  // A subtle button in the brand colour would hover in tinted orange, rust brown in dark mode
+  // (D61): it hovers neutral, like every other subtle control.
+  if (input.variant === 'subtle' && (!input.color || input.color === 'orange')) {
+    return { ...colors, hover: 'var(--mantine-color-default-hover)' };
+  }
   if (input.variant === 'outline' && input.color && !input.color.includes('.')) {
     const text = `var(--mantine-color-${input.color}-text)`;
     return { ...colors, color: text, border: `1px solid ${text}` };

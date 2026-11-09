@@ -14,8 +14,8 @@ export const en: Record<keyof typeof cs, string> = {
   'common.offlineHint':
     "You're offline. Your songs are on this device; changes save once you're back online.",
   'common.somethingWrong': 'Something went wrong. Try again.',
-  'common.unverified': 'Unverified',
-  'common.verified': 'Verified',
+  'common.unverified': 'Not approved',
+  'common.verified': 'Approved',
   'common.rejected': 'Rejected',
   'common.public': 'Public',
   'common.private': 'Private',
@@ -89,7 +89,7 @@ export const en: Record<keyof typeof cs, string> = {
   'song.next': 'Next song',
   'song.nextUp': 'Next: {title}',
   'song.lastInPlaylist': 'Last in the playlist',
-  'song.unverifiedNote': 'Nobody has checked this song yet.',
+  'song.unverifiedNote': 'Nobody has approved this song yet.',
   'song.rejectedNote': 'Rejected: {reason}',
   'song.rejectedFix': 'Fix it and save; it goes back for review.',
 

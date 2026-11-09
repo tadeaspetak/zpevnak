@@ -94,6 +94,18 @@ describe('songs.update', () => {
     expect(fixed).toMatchObject({ status: 'pending', rejection: null });
   });
 
+  it('sends a rejected song back for review when an editor fixes it, their own too', async () => {
+    const admin = await createUser({ role: 'admin' });
+    const editor = await createUser({ role: 'editor' });
+    const own = await callerFor(admin).songs.create({ source: SONG('Mine') });
+    await callerFor(editor).songs.reject({ id: own.id, reason: 'too_many_mistakes' });
+    const fixed = await callerFor(admin).songs.update({
+      id: own.id,
+      source: SONG('Mine, fixed'),
+    });
+    expect(fixed).toMatchObject({ status: 'pending', rejection: null });
+  });
+
   it('lets an editor edit any song, keeping its status', async () => {
     const { editor, song } = await setup();
     await callerFor(editor).songs.verify({ id: song.id });

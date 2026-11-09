@@ -112,7 +112,7 @@ entry that says which it replaces and what changed.
   they mean something. (2026-11-09)
 
 - **D62. Editors approve: "Schválit" / "Approve"**, not "Ověřit", which reads like sending a
-  song off to be verified. The song's status stays "Neověřeno" for players: nobody checked it yet.
+  song off to be verified. (Superseded in part by D83: the badge says "Neschváleno" too.)
   The review's actions sit together bottom right, primary last (Zamítnout · Uložit · Schválit),
   in a bar that stays on screen. (2026-11-09)
 - **D63. The queue icon shows how many songs wait**, counted from the device's catalog (no
@@ -208,6 +208,17 @@ entry that says which it replaces and what changed.
   would claim band membership): a songbook with attitude, not an
   office. The role is Souputník / Listmate, the people dialog is Souputníci / Listmates, and an invite reads
   "{owner} tě zve, ať se přidáš k playlistu". (2026-11-09)
+
+- **D81. Changing a rejected song sends it back for review**, whoever changes it, an editor or
+  admin too (their own song included): the rejection was of the old text. Edits keep a pending
+  or verified song's status. (2026-11-09)
+- **D82. A song's state sits at the top of the song, in two strengths:** not yet approved is a
+  quiet one-line grey banner; rejected is a red banner (the reason for its author and editors,
+  "waiting to be fixed" for others). It used to be a line at the foot of the song. (2026-11-09)
+- **D83. One verb: schválit / approve.** The banner says "Tuhle písničku zatím nikdo neschválil",
+  the badge "Neschváleno" / "Not approved", the opposite "Schváleno" / "Approved", matching the
+  editor's "Schválit" (D62). Subtle buttons hover neutral, never in tinted orange (D61): the
+  overview's Log in button is the neutral outline, like the icons around it. (2026-11-09)
 
 ## Engineering
 
