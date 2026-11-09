@@ -247,6 +247,7 @@ function SongPlayer({
         fontScale={prefs.fontScale}
         showDiagrams={prefs.showDiagrams && semitones === 0}
         showColumns={prefs.showColumns}
+        showChords={prefs.showChords}
       />
       {playlist?.removed && (
         <Alert color="gray" variant="light" mx="md" mt="xs">

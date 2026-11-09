@@ -1,6 +1,15 @@
+/* As wide as the song: the song's column (72rem) less its side padding, centred. */
 .quiet,
 .banner {
+  max-width: calc(72rem - 2 * var(--mantine-spacing-md));
   margin: var(--mantine-spacing-xs) var(--mantine-spacing-md) 0;
+}
+
+@media (min-width: 72rem) {
+  .quiet,
+  .banner {
+    margin-inline: auto;
+  }
 }
 
 /* One line, little padding: noticed, without competing with the song. */

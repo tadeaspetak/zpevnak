@@ -16,6 +16,7 @@ yarn seed               # the verified seed songs; on a local DB also the dev pe
 yarn dev                # http://localhost:3100 (server + Vite, port 3100 so deedmob's 3000 stays free)
 yarn test               # every Vitest project: unit, server (real Postgres), client (jsdom)
 yarn lint               # tsc, ESLint, knip, Prettier: the gates
+yarn verify             # the gates, every test and e2e; exits non-zero on any failure. Before every commit
 yarn build              # the client into dist/ (the server needs no build)
 yarn ux:probe --url /song/1 [--email user@zpevnak.test]   # measure one page state, see /ux
 node src/server/cli/set-role.ts <email> admin          # make the first admin

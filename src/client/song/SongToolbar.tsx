@@ -195,6 +195,11 @@ export function SongToolbar(props: Props) {
                     </ActionIcon>
                   </Group>
                 </Group>
+                <Switch
+                  label={t('song.chords')}
+                  checked={prefs.showChords}
+                  onChange={(e) => prefs.setShowChords(e.currentTarget.checked)}
+                />
                 {/* Columns only ever apply on a wide screen (D25); a phone has nothing to switch. */}
                 {hasColumns && wide && (
                   <Switch
@@ -206,8 +211,9 @@ export function SongToolbar(props: Props) {
                 {hasDiagrams && (
                   <Switch
                     label={t('song.diagrams')}
-                    checked={prefs.showDiagrams && semitones === 0}
-                    disabled={semitones !== 0}
+                    checked={prefs.showChords && prefs.showDiagrams && semitones === 0}
+                    // Diagrams draw chords: with chords hidden or transposed, there's nothing to draw.
+                    disabled={!prefs.showChords || semitones !== 0}
                     onChange={(e) => prefs.setShowDiagrams(e.currentTarget.checked)}
                   />
                 )}
@@ -280,20 +286,23 @@ export function SongToolbar(props: Props) {
                   {t('song.addToPlaylist')}
                 </Menu.Item>
               )}
-              <Menu.Item
-                component="a"
-                href={mailtoAuthor(
-                  t('song.reportSubject', {
-                    title: song.artist ? `${song.title} – ${song.artist}` : song.title,
-                  }),
-                  t('song.reportBody', {
-                    link: `${window.location.origin}${url.song(song)}`,
-                  }),
-                )}
-                leftSection={<IconMessageReport size={16} />}
-              >
-                {t('song.reportMistake')}
-              </Menu.Item>
+              {/* Who can edit the song fixes it; everyone else tells the author. */}
+              {!canEdit && (
+                <Menu.Item
+                  component="a"
+                  href={mailtoAuthor(
+                    t('song.reportSubject', {
+                      title: song.artist ? `${song.title} – ${song.artist}` : song.title,
+                    }),
+                    t('song.reportBody', {
+                      link: `${window.location.origin}${url.song(song)}`,
+                    }),
+                  )}
+                  leftSection={<IconMessageReport size={16} />}
+                >
+                  {t('song.reportMistake')}
+                </Menu.Item>
+              )}
               {canEdit && (
                 <Menu.Item
                   component={Link}

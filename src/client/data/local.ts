@@ -10,6 +10,7 @@ type LocalKey =
   | 'fontScale'
   | 'transpose'
   | 'showDiagrams'
+  | 'showChords'
   | 'showColumns'
   | 'me'
   | 'colorScheme';

@@ -1,6 +1,7 @@
 import {
   Alert,
   createTheme,
+  Modal,
   defaultVariantColorsResolver,
   type CSSVariablesResolver,
   type VariantColorsResolver,
@@ -36,6 +37,10 @@ export const theme = createTheme({
     // An alert's colour says what kind of message it is: never the brand orange, which in dark
     // mode reads as an error and matches the buttons. Neutral unless a call site says otherwise.
     Alert: Alert.extend({ defaultProps: { color: 'gray' } }),
+    // A dialog's subject is its title: a heading, not body text.
+    Modal: Modal.extend({
+      styles: { title: { fontWeight: 700, fontSize: 'var(--mantine-font-size-lg)' } },
+    }),
   },
 });
 

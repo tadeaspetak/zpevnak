@@ -27,7 +27,8 @@
     "ux:probe": "node tests/ux-walk/probe.ts",
     "test:guard": "node .claude/hooks/test-guard.js",
     "set-role": "node src/server/cli/set-role.ts",
-    "deploy": "bash scripts/deploy.sh"
+    "deploy": "bash scripts/deploy.sh",
+    "verify": "yarn lint && yarn test && yarn test:e2e"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

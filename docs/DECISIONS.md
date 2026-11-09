@@ -220,6 +220,15 @@ entry that says which it replaces and what changed.
   editor's "Schválit" (D62). Subtle buttons hover neutral, never in tinted orange (D61): the
   overview's Log in button is the neutral outline, like the icons around it. (2026-11-09)
 
+- **D84. Display: chords on, diagrams off by default.** A Chords switch (Akordy) hides the
+  chords to sing along: chord rows go, and sections with nothing to sing (an intro) go whole.
+  Diagrams are off by default, for the few who need an unusual voicing, and can't be on while
+  chords are hidden or transposed. (2026-11-09)
+- **D85. Small consistencies:** a song's status banner is as wide as the song; a dialog's title
+  is a real heading (set once in the theme); "Nahlásit chybu" shows only to people who can't
+  edit the song themselves; delete asks "Opravdu chceš smazat …? Nejde to vzít zpátky."
+  (2026-11-09)
+
 ## Engineering
 
 - **D40. One developer; commit to `main`.** No branches, PRs or release process. (2026-11-09)

@@ -10,6 +10,8 @@ type Props = {
   /** 1 = the default size. */
   fontScale: number;
   showDiagrams: boolean;
+  /** Chords above the lyrics; false shows the words alone, for singing along. */
+  showChords?: boolean;
   /** Lay the song in its columns where they fit; false for one long column. */
   showColumns?: boolean;
 };
@@ -19,7 +21,7 @@ function chordLabel(chord: string) {
   return chord.startsWith('*') ? chord.slice(1) : chord;
 }
 
-function LineView({ line }: { line: Line }) {
+function LineView({ line, showChords }: { line: Line; showChords: boolean }) {
   if (line.type === 'comment') {
     return <p className={classes[`comment_${line.style}`]}>{line.text}</p>;
   }
@@ -29,7 +31,11 @@ function LineView({ line }: { line: Line }) {
   if (line.segments.length === 0) {
     return <div className={classes.spacer} aria-hidden />;
   }
-  if (!hasChords(line.segments)) {
+  if (!showChords && isChordOnly(line.segments)) {
+    // An intro or a riff is nothing to sing.
+    return null;
+  }
+  if (!showChords || !hasChords(line.segments)) {
     return <p className={classes.line}>{line.segments.map((s) => s.text).join('')}</p>;
   }
   const chordOnly = isChordOnly(line.segments);
@@ -58,23 +64,38 @@ function LineView({ line }: { line: Line }) {
 function SectionView({
   block,
   recalled,
+  showChords,
 }: {
   block: Block & { type: 'section' };
   recalled?: boolean;
+  showChords: boolean;
 }) {
   const { t } = useI18n();
+  // With chords off, a section with nothing to sing (an intro: a label and chords) goes whole.
+  const sings = block.lines.some(
+    (line) => line.type === 'lyrics' && line.segments.some((seg) => seg.text.trim()),
+  );
+  if (!showChords && !sings) {
+    return null;
+  }
   const label = block.label ?? (recalled ? t('song.chorus') : null);
   return (
     <section className={classes[`section_${block.kind}`]} data-kind={block.kind}>
       {label && <div className={classes.label}>{label}</div>}
       {block.lines.map((line, i) => (
-        <LineView key={i} line={line} />
+        <LineView key={i} line={line} showChords={showChords} />
       ))}
     </section>
   );
 }
 
-export function SongSheet({ song, fontScale, showDiagrams, showColumns = true }: Props) {
+export function SongSheet({
+  song,
+  fontScale,
+  showDiagrams,
+  showColumns = true,
+  showChords = true,
+}: Props) {
   const { t } = useI18n();
   const style = { '--song-scale': fontScale } as CSSProperties;
   // The key isn't repeated here: the toolbar shows it, and changes it (D59). A capo is not
@@ -90,7 +111,7 @@ export function SongSheet({ song, fontScale, showDiagrams, showColumns = true }:
         {song.artist && <p className={classes.artist}>{song.artist}</p>}
         {meta.length > 0 && <p className={classes.meta}>{meta.join(' · ')}</p>}
       </header>
-      {showDiagrams && song.definitions.length > 0 && (
+      {showChords && showDiagrams && song.definitions.length > 0 && (
         <div className={classes.diagrams} aria-label={t('song.diagrams')}>
           {song.definitions.map((d) => (
             <ChordDiagram key={d.name} definition={d} />
@@ -110,10 +131,11 @@ export function SongSheet({ song, fontScale, showDiagrams, showColumns = true }:
                 key={i}
                 block={{ ...block.chorus, label: block.label ?? block.chorus.label }}
                 recalled
+                showChords={showChords}
               />
             ) : null;
           }
-          return <SectionView key={i} block={block} />;
+          return <SectionView key={i} block={block} showChords={showChords} />;
         })}
       </div>
     </article>

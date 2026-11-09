@@ -6,6 +6,11 @@ test.beforeEach(async ({ page }) => {
 
 async function searchFor(page: Page, query: string) {
   await page.getByRole('searchbox', { name: 'Search songs' }).fill(query);
+  // On the overview the query goes into the address as a low-priority update; until it lands,
+  // the full song list (same titles, no search to return to) is still on screen. Wait for it.
+  if (new URL(page.url()).pathname === '/') {
+    await expect(page).toHaveURL(new RegExp(`[?&]q=${encodeURIComponent(query)}`));
+  }
 }
 
 test('a player finds a song, plays it, and gets back to the results', async ({
