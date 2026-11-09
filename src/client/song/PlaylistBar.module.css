@@ -1,0 +1,22 @@
+.bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  background: var(--mantine-color-body);
+  border-top: 1px solid var(--mantine-color-default-border);
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
+  padding-bottom: max(var(--mantine-spacing-xs), env(safe-area-inset-bottom));
+}
+
+.inner {
+  max-width: 48rem;
+  margin: 0 auto;
+}
+
+.middle {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+}

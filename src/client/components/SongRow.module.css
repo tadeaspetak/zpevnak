@@ -1,0 +1,19 @@
+.row {
+  display: block;
+  width: 100%;
+  padding: 0.6rem var(--mantine-spacing-md);
+  border-radius: var(--mantine-radius-md);
+
+  @mixin hover {
+    background: var(--mantine-color-default-hover);
+  }
+
+  &[data-active] {
+    background: var(--mantine-color-default-hover);
+  }
+}
+
+.text {
+  min-width: 0;
+  flex: 1;
+}

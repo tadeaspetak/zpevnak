@@ -1,0 +1,24 @@
+.grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.number {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.settings {
+  padding: var(--mantine-spacing-md);
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-md);
+}
+
+.addRow {
+  padding: 0.5rem 0.25rem;
+  border-radius: var(--mantine-radius-sm);
+
+  @mixin hover {
+    background: var(--mantine-color-default-hover);
+  }
+}

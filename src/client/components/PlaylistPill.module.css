@@ -1,0 +1,43 @@
+.dock {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  padding: var(--mantine-spacing-sm);
+  padding-bottom: max(var(--mantine-spacing-sm), env(safe-area-inset-bottom));
+  pointer-events: none;
+}
+
+.pill {
+  pointer-events: auto;
+  width: 100%;
+  max-width: 28rem;
+  background: var(--mantine-color-body);
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: 999px;
+  box-shadow: var(--mantine-shadow-md);
+  padding-right: 0.35rem;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  padding: 0.5rem 0.5rem 0.5rem 1rem;
+  border-radius: 999px;
+}
+
+.icon {
+  color: var(--mantine-primary-color-filled);
+  flex-shrink: 0;
+}
+
+.text {
+  min-width: 0;
+}
+
+.close {
+  flex-shrink: 0;
+}

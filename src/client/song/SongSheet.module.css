@@ -1,0 +1,189 @@
+/*
+ * The song, set for reading at arm's length: large type, chords in the accent colour above
+ * their syllable, nothing else on the page competing for the eye.
+ */
+.sheet {
+  --song-size: calc(1.125rem * var(--song-scale, 1));
+  font-size: var(--song-size);
+  line-height: 1.35;
+  padding: 0 var(--mantine-spacing-md) var(--mantine-spacing-xl);
+  /* The same column as the toolbar above it, so the back arrow lines up with the title. */
+  max-width: 72rem;
+  margin: 0 auto;
+}
+
+.header {
+  margin: var(--mantine-spacing-sm) 0 var(--mantine-spacing-md);
+}
+
+.title {
+  font-size: 1.35em;
+  line-height: 1.2;
+  margin: 0;
+  font-weight: 700;
+}
+
+.artist {
+  margin: 0.15em 0 0;
+  color: var(--mantine-color-dimmed);
+}
+
+.meta {
+  margin: 0.15em 0 0;
+  font-size: 0.85em;
+  color: var(--mantine-color-dimmed);
+}
+
+.diagrams {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  margin-bottom: var(--mantine-spacing-md);
+}
+
+.diagram {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: calc(3.75rem * var(--song-scale, 1));
+}
+
+.diagram svg {
+  width: calc(3.75rem * var(--song-scale, 1));
+}
+
+/* A long name (F#m7+/F) widens its diagram's slot rather than wrapping. */
+.diagramName {
+  font-size: 0.8em;
+  font-weight: 700;
+  color: var(--chord-color);
+  white-space: nowrap;
+}
+
+.diagramDot {
+  fill: var(--mantine-color-text);
+}
+
+.body {
+  display: block;
+}
+
+/* Two columns only where they fit: a tablet in landscape or a laptop. */
+.bodyColumns {
+  display: block;
+}
+
+@media (min-width: 62em) {
+  .bodyColumns {
+    column-count: 2;
+    column-gap: 3rem;
+  }
+
+  .columnBreak {
+    break-after: column;
+  }
+}
+
+.section_verse,
+.section_chorus,
+.section_bridge,
+.section_other,
+.section_tab,
+.section_grid {
+  break-inside: avoid;
+  margin-bottom: 1em;
+}
+
+/* The chorus is set apart the way paper songbooks do it: a rule and an indent. */
+.section_chorus {
+  border-left: 3px solid var(--chord-color);
+  padding-left: 0.75em;
+}
+
+.section_bridge {
+  padding-left: 0.75em;
+  border-left: 3px dotted var(--mantine-color-default-border);
+}
+
+.label {
+  font-size: 0.75em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--mantine-color-dimmed);
+  margin-bottom: 0.15em;
+}
+
+.line,
+.chordLine {
+  margin: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.line + .line {
+  margin-top: 0.1em;
+}
+
+.word {
+  display: inline-flex;
+  white-space: pre;
+  vertical-align: bottom;
+}
+
+.col {
+  display: inline-flex;
+  flex-direction: column;
+}
+
+.chord {
+  color: var(--chord-color);
+  font-weight: 700;
+  font-size: 0.9em;
+  line-height: 1.2;
+  padding-right: 0.3em;
+  white-space: pre;
+}
+
+.chordLine .word + .word {
+  margin-left: 0.6em;
+}
+
+.lyric {
+  white-space: pre;
+}
+
+.spacer {
+  height: 0.6em;
+}
+
+.comment_plain,
+.comment_italic,
+.comment_box {
+  margin: 0 0 0.15em;
+  font-size: 0.85em;
+  color: var(--mantine-color-dimmed);
+}
+
+.comment_plain {
+  font-weight: 600;
+}
+
+.comment_italic {
+  font-style: italic;
+}
+
+.comment_box {
+  display: inline-block;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-sm);
+  padding: 0 0.4em;
+}
+
+.tab {
+  margin: 0;
+  font-size: 0.8em;
+  line-height: 1.25;
+  overflow-x: auto;
+}

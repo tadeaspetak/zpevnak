@@ -1,0 +1,54 @@
+.page {
+  min-height: 100dvh;
+  padding-bottom: var(--mantine-spacing-xl);
+
+  &[data-has-pill] {
+    padding-bottom: 6rem;
+  }
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--mantine-color-body);
+  padding: var(--mantine-spacing-sm) 0;
+  padding-top: max(var(--mantine-spacing-sm), env(safe-area-inset-top));
+  margin-bottom: var(--mantine-spacing-xs);
+}
+
+.inner {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 0 var(--mantine-spacing-sm);
+}
+
+.header .inner {
+  padding: 0 var(--mantine-spacing-md);
+}
+
+.brand {
+  letter-spacing: -0.01em;
+}
+
+.playlistGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: var(--mantine-spacing-xs);
+  padding: 0 var(--mantine-spacing-md);
+}
+
+.playlistCard {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-md);
+
+  @mixin hover {
+    background: var(--mantine-color-default-hover);
+  }
+}
+
+.playlistIcon {
+  color: var(--mantine-primary-color-filled);
+  flex-shrink: 0;
+}
