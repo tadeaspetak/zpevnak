@@ -1,6 +1,5 @@
 import { ActionIcon, Group, Text, UnstyledButton } from '@mantine/core';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
-import { Link } from 'react-router';
 import { useCatalog } from '../data/catalog.ts';
 import { useI18n } from '../i18n/index.tsx';
 import classes from './PlaylistBar.module.css';

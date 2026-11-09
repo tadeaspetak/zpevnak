@@ -12,7 +12,7 @@ import { readLocal, writeLocal } from '../data/local.ts';
 import { cs } from './cs.ts';
 import { en } from './en.ts';
 
-export type MessageKey = keyof typeof cs;
+type MessageKey = keyof typeof cs;
 type PluralKey = {
   [K in MessageKey]: K extends `${infer Base}_other` ? Base : never;
 }[MessageKey];

@@ -1,7 +1,7 @@
 import type { Segment } from '#shared/chordpro/types.ts';
 
 /** A chord and the text under it. */
-export type Column = { chord: string | null; text: string };
+type Column = { chord: string | null; text: string };
 /** Columns that must stay on one line: a word, even when a chord sits mid-word. */
 export type Word = Column[];
 

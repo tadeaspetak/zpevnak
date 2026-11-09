@@ -1,0 +1,18 @@
+{
+  "$schema": "https://unpkg.com/knip@latest/schema.json",
+  "entry": [
+    "src/server/cli/*.ts",
+    "migrations/*.ts",
+    "scripts/*.ts",
+    ".claude/hooks/bash-guard.ts",
+    "neon.ts"
+  ],
+  "project": [
+    "src/**/*.{ts,tsx}",
+    "migrations/**/*.ts",
+    "scripts/**/*.ts",
+    "tests/**/*.ts",
+    ".claude/**/*.ts"
+  ],
+  "ignore": ["tests/ux-walk/probes.ts"]
+}

@@ -82,7 +82,7 @@ function splitNote(note: string): [string, string | undefined] {
 }
 
 /** The pitch class (0–11) of a note name such as `F#`, `Bb` or `H`. */
-export function pitchOf(note: string, system: NoteSystem): number | null {
+function pitchOf(note: string, system: NoteSystem): number | null {
   const [letter, acc] = splitNote(note);
   return notePitch(letter, acc, system);
 }

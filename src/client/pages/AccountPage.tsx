@@ -159,7 +159,7 @@ export function AccountPage() {
   );
 }
 
-/** Language and theme. Per device; signed-out visitors get them from the home page footer. */
+/** Language and theme, per device. Also at the foot of the overview, for visitors without an account. */
 export function Settings() {
   const { t, locale, setLocale } = useI18n();
   const { colorScheme, setColorScheme } = useMantineColorScheme();

@@ -52,3 +52,9 @@
   color: var(--mantine-primary-color-filled);
   flex-shrink: 0;
 }
+
+.footer {
+  margin-top: var(--mantine-spacing-xl);
+  padding: var(--mantine-spacing-lg) var(--mantine-spacing-md) 0;
+  border-top: 1px solid var(--mantine-color-default-border);
+}

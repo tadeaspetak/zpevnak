@@ -222,7 +222,7 @@ export function parseSong(source: string): Song {
     return current;
   };
 
-  const lines = source.replace(/^﻿/, '').split(/\r\n|\r|\n/);
+  const lines = source.replace(/^\uFEFF/, '').split(/\r\n|\r|\n/);
 
   lines.forEach((rawLine, index) => {
     const lineNo = index + 1;

@@ -5,7 +5,7 @@
 import { useSyncExternalStore } from 'react';
 import { readLocalJson, writeLocalJson } from './local.ts';
 
-export type PlaylistSession = { playlistId: number; position: number };
+type PlaylistSession = { playlistId: number; position: number };
 
 type State = {
   session: PlaylistSession | null;

@@ -2,7 +2,7 @@
  * Error codes the server sends as a TRPCError's message. The client translates them; the
  * server never sends user-facing prose.
  */
-export const ERROR_CODES = [
+const ERROR_CODES = [
   'INVALID_CREDENTIALS',
   'EMAIL_NOT_VERIFIED',
   'INVALID_TOKEN',

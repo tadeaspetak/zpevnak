@@ -25,6 +25,7 @@ import {
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { PlaylistPill } from '../components/PlaylistPill.tsx';
+import { Settings } from './AccountPage.tsx';
 import { SongRow } from '../components/SongRow.tsx';
 import { useCatalog } from '../data/catalog.ts';
 import { sortByTitle, useSongSearch } from '../data/search.ts';
@@ -293,6 +294,9 @@ export function HomePage() {
                 </Stack>
               )}
             </section>
+            <footer className={classes.footer}>
+              <Settings />
+            </footer>
           </Stack>
         )}
       </main>

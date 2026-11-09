@@ -8,8 +8,7 @@ export const ROLES = ['user', 'editor', 'admin'] as const;
 export const roleSchema = z.enum(ROLES);
 export type Role = z.infer<typeof roleSchema>;
 
-export const SONG_STATUSES = ['pending', 'verified', 'rejected'] as const;
-export type SongStatus = (typeof SONG_STATUSES)[number];
+export type SongStatus = 'pending' | 'verified' | 'rejected';
 
 export const REJECTION_REASONS = [
   'too_many_mistakes',

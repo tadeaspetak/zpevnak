@@ -58,7 +58,7 @@ function matchingLine(lyrics: string, terms: string[]): string | null {
   );
 }
 
-export function searchSongs(
+function searchSongs(
   index: MiniSearch<Indexed>,
   songs: Map<number, SongRecord>,
   query: string,

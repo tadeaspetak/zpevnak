@@ -117,18 +117,21 @@ function SongPlayer({
   }, [songId]);
 
   const total = playlist?.songIds.length ?? 0;
-  const goTo = useMemo(
-    () => (position: number) => {
-      if (playlist && position >= 1 && position <= total) {
-        navigate(url.playlistSong(playlist.id, position), { replace: true });
-      }
-    },
-    [navigate, playlist, total],
-  );
-  const prev =
-    playlist && playlist.position > 1 ? () => goTo(playlist.position - 1) : undefined;
-  const next =
-    playlist && playlist.position < total ? () => goTo(playlist.position + 1) : undefined;
+  // Built from primitives: the playlist object is new on every render, and these feed the
+  // swipe and key listeners, which would otherwise re-attach on each one.
+  const playlistId = playlist?.id ?? null;
+  const position = playlist?.position ?? 0;
+  const { prev, next } = useMemo(() => {
+    if (playlistId === null) {
+      return { prev: undefined, next: undefined };
+    }
+    const go = (to: number) => () =>
+      navigate(url.playlistSong(playlistId, to), { replace: true });
+    return {
+      prev: position > 1 ? go(position - 1) : undefined,
+      next: position < total ? go(position + 1) : undefined,
+    };
+  }, [navigate, playlistId, position, total]);
 
   useSwipe(useMemo(() => ({ onLeft: next, onRight: prev }), [next, prev]));
   useKeys(
