@@ -38,6 +38,8 @@ export const en: Record<keyof typeof cs, string> = {
   'search.playlists': 'Playlists',
   'search.songs': 'Songs',
   'settings.open': 'Settings',
+  'about.source': 'Source on GitHub',
+  'about.contact': 'Write to me',
   'home.searchLabel': 'Search songs',
   'home.noResults': 'Nothing found for “{query}”.',
   'home.recentPlaylists': 'Recently played playlists',
@@ -69,6 +71,9 @@ export const en: Record<keyof typeof cs, string> = {
   'song.fullscreenHint':
     'On iPhone, add Zpěvňák to your home screen (Share → Add to Home Screen). It then opens without the browser bars.',
   'song.edit': 'Edit',
+  'song.reportMistake': 'Report a mistake',
+  'song.reportSubject': 'Mistake in a song: {title}',
+  'song.reportBody': 'Song: {link}\n\nWhat is wrong:\n',
   'song.addToPlaylist': 'Add to playlist',
   'song.diagrams': 'Chord diagrams',
   'song.textSizeValue': '{percent}%',

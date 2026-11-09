@@ -18,6 +18,7 @@ import {
   IconEdit,
   IconMaximize,
   IconMinimize,
+  IconMessageReport,
   IconMinus,
   IconPlaylistAdd,
   IconPlus,
@@ -26,6 +27,7 @@ import {
 } from '@tabler/icons-react';
 import { Link } from 'react-router';
 import { AddToPlaylistModal } from '../components/AddToPlaylistModal.tsx';
+import { mailtoAuthor } from '../contact.ts';
 import { SearchButton } from '../components/SearchButton.tsx';
 import { FONT_SCALES, usePrefs } from '../data/prefs.ts';
 import type { SongRecord } from '../data/store.ts';
@@ -274,6 +276,20 @@ export function SongToolbar(props: Props) {
                   {t('song.addToPlaylist')}
                 </Menu.Item>
               )}
+              <Menu.Item
+                component="a"
+                href={mailtoAuthor(
+                  t('song.reportSubject', {
+                    title: song.artist ? `${song.title} – ${song.artist}` : song.title,
+                  }),
+                  t('song.reportBody', {
+                    link: `${window.location.origin}${url.song(song)}`,
+                  }),
+                )}
+                leftSection={<IconMessageReport size={16} />}
+              >
+                {t('song.reportMistake')}
+              </Menu.Item>
               {canEdit && (
                 <Menu.Item
                   component={Link}

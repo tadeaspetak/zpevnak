@@ -41,6 +41,8 @@ export const cs = {
   'search.playlists': 'Playlisty',
   'search.songs': 'Písničky',
   'settings.open': 'Nastavení',
+  'about.source': 'Zdroják na GitHubu',
+  'about.contact': 'Napiš mi',
   'home.searchLabel': 'Hledat písničky',
   'home.noResults': 'Nic jsme nenašli pro „{query}“.',
   'home.recentPlaylists': 'Naposledy hrané playlisty',
@@ -72,6 +74,9 @@ export const cs = {
   'song.fullscreenHint':
     'Na iPhonu přidej Zpěvňák na plochu (Sdílet → Přidat na plochu). Pak se otevře bez lišt prohlížeče.',
   'song.edit': 'Upravit',
+  'song.reportMistake': 'Nahlásit chybu',
+  'song.reportSubject': 'Chyba v písničce: {title}',
+  'song.reportBody': 'Písnička: {link}\n\nCo je špatně:\n',
   'song.addToPlaylist': 'Přidat do playlistu',
   'song.diagrams': 'Diagramy akordů',
   'song.textSizeValue': '{percent} %',

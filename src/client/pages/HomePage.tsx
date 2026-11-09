@@ -23,6 +23,7 @@ import {
 } from '@tabler/icons-react';
 import { useMemo, useRef, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
+import { Footer } from '../components/Footer.tsx';
 import { PlaylistPill } from '../components/PlaylistPill.tsx';
 import { PlaylistRow } from '../components/PlaylistRow.tsx';
 import { SearchResults, useSearchResults } from '../components/SearchResults.tsx';
@@ -227,6 +228,7 @@ export function HomePage() {
             </Section>
           </Stack>
         )}
+        <Footer />
       </Container>
       <PlaylistPill />
     </div>
