@@ -36,7 +36,7 @@ test('a player goes through a playlist, takes a detour, and comes back', async (
   await expect(heading).toHaveText('Andělská');
 
   await page.getByRole('button', { name: 'Next song' }).click();
-  await expect(page).toHaveURL(/\/p\/\d+\/2$/);
+  await expect(page).toHaveURL(/\/playlist\/\d+-vrsek-2026\/2$/);
   await expect(heading).toHaveText('Lajla tov (Dobrou noc)');
 
   // A request from the crowd: search over the song, play another, then return.
@@ -50,7 +50,7 @@ test('a player goes through a playlist, takes a detour, and comes back', async (
     page.getByRole('banner').getByRole('link', { name: 'Back home' }),
   ).toBeVisible();
   await page.getByRole('link', { name: 'Back to Vršek 2026' }).click();
-  await expect(page).toHaveURL(/\/p\/\d+\/2$/);
+  await expect(page).toHaveURL(/\/playlist\/\d+-vrsek-2026\/2$/);
   await expect(heading).toHaveText('Lajla tov (Dobrou noc)');
 });
 
@@ -90,7 +90,9 @@ test('an owner adds and removes songs from the keyboard', async ({ page }) => {
   });
   const playlistId: number = (await created.json()).result.data.id;
 
-  await page.goto(`/p/${playlistId}`);
+  // A bare id opens the playlist, and the address gains its name.
+  await page.goto(`/playlist/${playlistId}`);
+  await expect(page).toHaveURL(new RegExp(`/playlist/${playlistId}-keyboard-\\d+$`));
   await expect(page.getByText('3 songs')).toBeVisible();
   await page.getByRole('button', { name: 'Edit playlist' }).click();
   await page.getByRole('button', { name: 'Add songs' }).click();
@@ -129,4 +131,44 @@ test('an owner adds and removes songs from the keyboard', async ({ page }) => {
   await expect(second).toHaveAttribute('aria-selected', 'false');
   await page.keyboard.press('Escape');
   await expect(page.getByText('2 songs')).toBeVisible();
+});
+
+test('a bandmate opens an invite link, signs up there, and lands in the playlist', async ({
+  page,
+  browser,
+}) => {
+  // The owner makes a private playlist and copies its invite link.
+  const owner = await browser.newContext({ baseURL: 'http://localhost:3101' });
+  await owner.request.post('/trpc/auth.logIn', {
+    data: { email: 'user@zpevnak.test', password: 'zpevnak-dev-password' },
+  });
+  const created = await owner.request.post('/trpc/playlists.create', {
+    data: { name: `Koleda ${Date.now()}`, isPublic: false, songIds: [] },
+  });
+  const playlist = (await created.json()).result.data as { id: number; name: string };
+  const invite = await owner.request.get(
+    `/trpc/playlists.invite?input=${encodeURIComponent(JSON.stringify({ id: playlist.id }))}`,
+  );
+  const { token } = (await invite.json()).result.data as { token: string };
+  await owner.close();
+
+  // A bandmate without an account opens it.
+  await page.goto(`/join/${token}`);
+  await expect(
+    page.getByText(`invites you to work on the playlist “${playlist.name}”`),
+  ).toBeVisible();
+  await page.getByRole('link', { name: 'Sign up' }).click();
+  await page.getByLabel('Name').fill('Bandmate');
+  await page.getByLabel('Email').fill(`bandmate-${Date.now()}@example.com`);
+  await page.getByRole('textbox', { name: 'Password' }).fill('a long enough passphrase');
+  await page.getByRole('button', { name: 'Sign up' }).click();
+
+  // Back on the invite, joined, and in the playlist as a collaborator.
+  await expect(
+    page.getByRole('heading', { level: 1, name: playlist.name }),
+  ).toBeVisible();
+  await expect(page.getByText(/Collaborator/)).toBeVisible();
+  await expect(
+    page.getByText('Confirm your email, then you can edit the playlist.'),
+  ).toBeVisible();
 });

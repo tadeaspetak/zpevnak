@@ -22,9 +22,10 @@ type Props = { songId: number | null; onClose: () => void };
 export function AddToPlaylistModal({ songId, onClose }: Props) {
   const { t } = useI18n();
   const { playlists } = useCatalog();
-  const mine = [...playlists.values()].filter((p) => p.isMine);
+  // Every playlist the viewer may change: their own and those they collaborate on.
+  const mine = [...playlists.values()].filter((p) => p.role !== null);
   const [name, setName] = useState('');
-  const update = trpc.playlists.update.useMutation();
+  const edit = trpc.playlists.edit.useMutation();
   const create = trpc.playlists.create.useMutation();
 
   const added = (playlist: Parameters<typeof putPlaylist>[1] & object) => {
@@ -41,20 +42,17 @@ export function AddToPlaylistModal({ songId, onClose }: Props) {
     <Modal opened={songId !== null} onClose={onClose} title={t('song.addToPlaylist')}>
       {songId !== null && (
         <Stack gap="sm">
-          <ErrorText error={update.error ?? create.error} />
+          <ErrorText error={edit.error ?? create.error} />
           {mine.length > 0 && (
             <Stack gap={0}>
               {mine.map((p) => (
                 <UnstyledButton
                   key={p.id}
                   className={classes.row}
-                  disabled={update.isPending}
+                  disabled={edit.isPending}
                   onClick={async () =>
                     added(
-                      await update.mutateAsync({
-                        id: p.id,
-                        songIds: [...p.songIds, songId],
-                      }),
+                      await edit.mutateAsync({ id: p.id, op: { type: 'add', songId } }),
                     )
                   }
                 >

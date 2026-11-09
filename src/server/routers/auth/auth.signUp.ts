@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {
+  appPathSchema,
   displayNameSchema,
   emailSchema,
   localeSchema,
@@ -25,6 +26,7 @@ export const signUp = publicProcedure
       password: passwordSchema,
       displayName: displayNameSchema,
       locale: localeSchema,
+      next: appPathSchema.optional(),
     }),
   )
   .mutation(async ({ ctx, input }) => {
@@ -36,7 +38,12 @@ export const signUp = publicProcedure
         ON CONFLICT (lower(email)) DO NOTHING
         RETURNING id
       `,
-      { ...input, passwordHash },
+      {
+        email: input.email,
+        displayName: input.displayName,
+        locale: input.locale,
+        passwordHash,
+      },
     );
     const userId: number | undefined = rows[0]?.id;
     if (userId === undefined) {
@@ -50,7 +57,7 @@ export const signUp = publicProcedure
       return { signedIn: false };
     }
     const token = await issueEmailToken(ctx.db, userId, 'verify_email');
-    await sendEmail(verifyEmail(input.email, input.locale, token));
+    await sendEmail(verifyEmail(input.email, input.locale, token, input.next ?? null));
     setSessionCookie(ctx.res, await createSession(ctx.db, userId));
     return { signedIn: true };
   });

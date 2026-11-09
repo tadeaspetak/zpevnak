@@ -15,6 +15,7 @@ import {
   VerifyEmailPage,
 } from './pages/AuthPages.tsx';
 import { HomePage } from './pages/HomePage.tsx';
+import { JoinPage } from './pages/JoinPage.tsx';
 import { NotFoundPage } from './pages/NotFoundPage.tsx';
 import { PlaylistPage } from './pages/PlaylistPage.tsx';
 import { PlaylistsPage } from './pages/PlaylistsPage.tsx';
@@ -74,6 +75,7 @@ export function App() {
         <Route path={routes.playlists} element={<PlaylistsPage />} />
         <Route path={routes.playlist} element={<PlaylistPage />} />
         <Route path={routes.playlistSong} element={<PlaylistSongPage />} />
+        <Route path={routes.join} element={<JoinPage />} />
         <Route path={routes.queue} element={<QueuePage />} />
         <Route path={routes.review} element={<ReviewPage />} />
         <Route path={routes.account} element={<AccountPage />} />

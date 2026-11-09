@@ -31,7 +31,7 @@ export function useSearchResults(query: string) {
         .map((playlist) => ({
           kind: 'playlist' as const,
           playlist,
-          to: url.playlist(playlist.id),
+          to: url.playlist(playlist),
         })),
       ...searchSongs(query).map((hit) => ({
         kind: 'song' as const,

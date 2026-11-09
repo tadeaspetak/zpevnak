@@ -10,9 +10,10 @@ import {
   TextInput,
 } from '@mantine/core';
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { notifications } from '@mantine/notifications';
 import { IconCircleCheck, IconMailCheck } from '@tabler/icons-react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
-import { PASSWORD_MIN } from '#shared/validators/index.ts';
+import { PASSWORD_MIN, safeAppPath } from '#shared/validators/index.ts';
 import { ErrorText } from '../components/ErrorText.tsx';
 import { Page } from '../components/Page.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
@@ -21,10 +22,13 @@ import { trpc } from '../trpc.ts';
 import { url } from '../urls.ts';
 
 /** Where to go after signing in. Only paths inside the app: never an open redirect. */
-function useNext() {
+/**
+ * Where to go after signing in, signing up or confirming an email: the `next` path, when it is
+ * one inside the app (never an open redirect), else null.
+ */
+function useNext(): string | null {
   const [params] = useSearchParams();
-  const next = params.get('next');
-  return next && next.startsWith('/') && !next.startsWith('//') ? next : url.home();
+  return safeAppPath(params.get('next'));
 }
 
 function AuthPage({ title, children }: { title: string; children: ReactNode }) {
@@ -56,7 +60,7 @@ export function LogInPage() {
   const logIn = trpc.auth.logIn.useMutation({
     onSuccess: async () => {
       await signedIn();
-      navigate(next, { replace: true });
+      navigate(next ?? url.home(), { replace: true });
     },
   });
   const submit = (e: FormEvent) => {
@@ -93,7 +97,7 @@ export function LogInPage() {
       </Anchor>
       <Text size="sm">
         {t('auth.noAccount')}{' '}
-        <Anchor component={Link} to={url.signUp()}>
+        <Anchor component={Link} to={url.signUp(next ?? undefined)}>
           {t('auth.signUp')}
         </Anchor>
       </Text>
@@ -108,11 +112,25 @@ export function SignUpPage() {
   const { t, locale } = useI18n();
   const signedIn = useSignedIn();
   const [form, setForm] = useState({ displayName: '', email: '', password: '' });
-  const signUp = trpc.auth.signUp.useMutation({ onSuccess: () => signedIn() });
+  const navigate = useNavigate();
+  const next = useNext();
+  const signUp = trpc.auth.signUp.useMutation({
+    onSuccess: async (data) => {
+      await signedIn();
+      // Signed up from somewhere (an invite): go back there now. The email says the rest.
+      if (data.signedIn && next) {
+        notifications.show({ message: t('auth.signedUp') });
+        navigate(next, { replace: true });
+      }
+    },
+  });
   const field = (key: keyof typeof form) => ({
     value: form[key],
-    onChange: (e: { currentTarget: { value: string } }) =>
-      setForm((f) => ({ ...f, [key]: e.currentTarget.value })),
+    onChange: (e: { currentTarget: { value: string } }) => {
+      // Read now: React runs the updater later, when the event's currentTarget is gone.
+      const value = e.currentTarget.value;
+      setForm((f) => ({ ...f, [key]: value }));
+    },
   });
 
   if (signUp.data) {
@@ -132,7 +150,7 @@ export function SignUpPage() {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          signUp.mutate({ ...form, locale });
+          signUp.mutate({ ...form, locale, ...(next ? { next } : {}) });
         }}
       >
         <Stack>
@@ -167,7 +185,7 @@ export function SignUpPage() {
       </form>
       <Text size="sm">
         {t('auth.haveAccount')}{' '}
-        <Anchor component={Link} to={url.logIn()}>
+        <Anchor component={Link} to={url.logIn(next ?? undefined)}>
           {t('auth.logIn')}
         </Anchor>
       </Text>
@@ -264,7 +282,17 @@ export function VerifyEmailPage() {
   const [params] = useSearchParams();
   const token = params.get('token') ?? '';
   const signedIn = useSignedIn();
-  const verify = trpc.auth.verifyEmail.useMutation({ onSuccess: () => signedIn() });
+  const navigate = useNavigate();
+  const next = useNext();
+  const verify = trpc.auth.verifyEmail.useMutation({
+    onSuccess: async () => {
+      await signedIn();
+      if (next) {
+        notifications.show({ message: t('auth.verified') });
+        navigate(next, { replace: true });
+      }
+    },
+  });
   // Strict mode mounts twice in development; the token can be used only once.
   const sent = useRef(false);
   useEffect(() => {

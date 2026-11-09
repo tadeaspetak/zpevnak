@@ -1,5 +1,5 @@
 import { Alert, Button, Loader, Center, Stack, Text } from '@mantine/core';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router';
 import type { SongLinkState } from '../components/SongRow.tsx';
 import { parseSong } from '#shared/chordpro/parse.ts';
@@ -18,30 +18,64 @@ import { SongSheet } from '../song/SongSheet.tsx';
 import { SongToolbar } from '../song/SongToolbar.tsx';
 import { PlaylistBar } from '../song/PlaylistBar.tsx';
 import { trpc } from '../trpc.ts';
-import { songIdFromRef, url } from '../urls.ts';
+import { idFromRef, url } from '../urls.ts';
+import { useLivePlaylist } from '../data/livePlaylist.ts';
+import { followSong } from '../song/followSong.ts';
+import { useCanonicalPath } from '../hooks/useCanonicalPath.ts';
 import classes from './SongPage.module.css';
 
-/** /s/:songRef: one song on its own. */
+/** /song/:songRef: one song on its own. */
 export function SongPage() {
   const { songRef } = useParams();
-  const id = songIdFromRef(songRef);
+  const id = idFromRef(songRef);
   return <SongPlayer songId={id} playlist={null} />;
 }
 
-/** /p/:id/:position: a song inside a playlist, with previous and next. */
+/** /playlist/:playlistRef/:position: a song inside a playlist, with previous and next. */
 export function PlaylistSongPage() {
   const params = useParams();
-  const playlistId = Number(params.id);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const playlistId = idFromRef(params.playlistRef) ?? 0;
   const position = Number(params.position);
   const { playlists, loaded } = useCatalog();
   const playlist = playlists.get(playlistId);
   const { t } = useI18n();
+  useLivePlaylist(playlistId);
+
+  // The song being played, remembered apart from its position: when someone else changes the
+  // playlist, the player stays on this song (D68). A visit to a position (prev, next, a link)
+  // starts over from whatever is there; a correction made here keeps the song.
+  const songAt = playlist?.songIds[position - 1] ?? null;
+  const [shown, setShown] = useState<{ key: string; songId: number | null } | null>(null);
+  let current = shown;
+  if (
+    !current ||
+    current.key !== location.key ||
+    (current.songId === null && songAt !== null)
+  ) {
+    const followed = (location.state as { followSong?: number } | null)?.followSong;
+    current = { key: location.key, songId: followed ?? songAt };
+    setShown(current);
+  }
+  const songId = current.songId;
+  const followed =
+    playlist && songId !== null ? followSong(playlist.songIds, songId, position) : null;
+  useEffect(() => {
+    if (playlist && songId !== null && followed && followed.position !== position) {
+      navigate(url.playlistSong(playlist, followed.position), {
+        replace: true,
+        state: { followSong: songId },
+      });
+    }
+  }, [playlist, songId, followed, position, navigate]);
 
   useEffect(() => {
     if (playlist && position >= 1 && position <= playlist.songIds.length) {
       playPlaylist(playlist.id, position);
     }
   }, [playlist, position]);
+  useCanonicalPath(playlist ? url.playlistSong(playlist, position) : null);
 
   if (!loaded) {
     return <FullPageLoader />;
@@ -49,7 +83,6 @@ export function PlaylistSongPage() {
   if (!playlist) {
     return <Missing text={t('playlists.notFound')} />;
   }
-  const songId = playlist.songIds[position - 1] ?? null;
   return (
     <SongPlayer
       songId={songId}
@@ -58,12 +91,20 @@ export function PlaylistSongPage() {
         name: playlist.name,
         songIds: playlist.songIds,
         position,
+        removed: followed?.removed ?? false,
       }}
     />
   );
 }
 
-type PlaylistContext = { id: number; name: string; songIds: number[]; position: number };
+type PlaylistContext = {
+  id: number;
+  name: string;
+  songIds: number[];
+  position: number;
+  /** Someone took the song out while it played: it stays, and next is the song after it. */
+  removed: boolean;
+};
 
 /** Finds the song in the catalog; failing that (a rejected song an editor opens), asks the server. */
 function useSong(songId: number | null) {
@@ -93,6 +134,7 @@ function SongPlayer({
   const { me, isEditor } = useMe();
   useWakeLock();
   const back = useBack(playlist);
+  useCanonicalPath(!playlist && song ? url.song(song) : null);
 
   const semitones = song ? (prefs.transpose[song.id] ?? 0) : 0;
   const parsed = useMemo(() => (song ? parseSong(song.source) : null), [song]);
@@ -120,18 +162,24 @@ function SongPlayer({
   // Built from primitives: the playlist object is new on every render, and these feed the
   // swipe and key listeners, which would otherwise re-attach on each one.
   const playlistId = playlist?.id ?? null;
+  const playlistName = playlist?.name ?? '';
   const position = playlist?.position ?? 0;
+  const removed = playlist?.removed ?? false;
   const { prev, next } = useMemo(() => {
     if (playlistId === null) {
       return { prev: undefined, next: undefined };
     }
     const go = (to: number) => () =>
-      navigate(url.playlistSong(playlistId, to), { replace: true });
+      navigate(url.playlistSong({ id: playlistId, name: playlistName }, to), {
+        replace: true,
+      });
+    // A removed song's place is taken by the one that followed it: that one is next.
+    const after = removed ? position : position + 1;
     return {
       prev: position > 1 ? go(position - 1) : undefined,
-      next: position < total ? go(position + 1) : undefined,
+      next: after <= total ? go(after) : undefined,
     };
-  }, [navigate, playlistId, position, total]);
+  }, [navigate, playlistId, playlistName, position, total, removed]);
 
   useSwipe(useMemo(() => ({ onLeft: next, onRight: prev }), [next, prev]));
   useKeys(
@@ -212,6 +260,11 @@ function SongPlayer({
         showDiagrams={prefs.showDiagrams && semitones === 0}
         showColumns={prefs.showColumns}
       />
+      {playlist?.removed && (
+        <Alert color="gray" variant="light" mx="md" mt="xs">
+          {t('song.removedFromPlaylist')}
+        </Alert>
+      )}
       {song.status === 'pending' && (
         <Text size="sm" c="dimmed" px="md" pb="md">
           {t('song.unverifiedNote')}
@@ -242,7 +295,7 @@ function useBack(playlist: PlaylistContext | null) {
   const location = useLocation();
   if (playlist) {
     return {
-      to: url.playlist(playlist.id),
+      to: url.playlist(playlist),
       label: t('nav.backTo', { name: playlist.name }),
     };
   }

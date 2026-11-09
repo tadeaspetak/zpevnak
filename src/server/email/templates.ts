@@ -5,8 +5,14 @@ import type { Email } from './send.ts';
 const link = (path: string, token: string) =>
   `${env.APP_URL}${path}?token=${encodeURIComponent(token)}`;
 
-export function verifyEmail(to: string, locale: Locale, token: string): Email {
-  const url = link('/verify', token);
+export function verifyEmail(
+  to: string,
+  locale: Locale,
+  token: string,
+  next: string | null = null,
+): Email {
+  // `next` brings the reader back to where they signed up from (an invite, say).
+  const url = `${link('/verify', token)}${next ? `&next=${encodeURIComponent(next)}` : ''}`;
   return locale === 'cs'
     ? {
         to,

@@ -125,11 +125,38 @@ entry that says which it replaces and what changed.
   several words); on the list, reached by Tab, Space toggles. After a toggle the search text is
   selected, so typing starts the next search and the arrows carry on: the same whatever the
   number of results. (2026-11-09)
-- **D65. Playlists page: "Moje" and "Od ostatních"** when signed in (your public playlists are
+- **D65 (replaced by D70).** ~~Playlists page: "Moje" and "Od ostatních"~~ when signed in (your public playlists are
   yours, marked with a globe, not repeated under the public ones); "Veřejné playlisty" signed
   out. (2026-11-09)
 - **D66. Outline buttons use their colour's text shade** (scheme-aware): Mantine's dark-mode
   outline is the palest shade, so a red outline read as white. (2026-11-09)
+
+- **D67. Addresses say what they are, id first:** `/song/2-lajla-tov-…`, `/playlist/1-vrsek`,
+  `/playlist/1-vrsek/2`. The id is what the app looks up; the slug is for people reading a
+  shared link. Slugs aren't unique and don't need to be: two playlists called "Vánoce" are
+  `/playlist/4-vanoce` and `/playlist/9-vanoce`, not `vanoce-2`. A renamed playlist's old links
+  keep working, and a bare or stale address is corrected in place. Pure unique slugs were
+  considered and rejected: they need site-wide uniqueness and break, or need remembering, on
+  every rename. (2026-11-09)
+
+- **D68. Playlists are collaborative.** The owner shares an invite link; whoever opens it
+  signed in joins as a collaborator (no user search: it would reveal who has an account). The
+  owner sees who joined, removes people, and can replace the link (the old one stops; joined
+  people stay). Collaborators add, remove, reorder and rename; only the owner deletes, changes
+  visibility and manages people. Collaborators can leave. Joining needs an account, editing a
+  confirmed email. The invite token never syncs to collaborators' devices. (2026-11-09)
+- **D69. Edits are operations, not whole lists** (add / remove / move, naming their song), applied
+  by the server to the playlist as it is now, under a row lock: two people editing at once both
+  keep their change. The device shows each change at once with the same code. An open playlist
+  refreshes every 30 s and on returning to the app. The player stays on the song being played
+  when the list changes under it; a song taken out stays on screen, flagged, and next is the
+  song that followed it. (2026-11-09)
+- **D70. Playlists page: one list, most recently played first,** as a table (playlist · role ·
+  visibility, "sdíleno (n)") where it fits and rows with the same facts on a phone. Role is
+  Vlastník / Spolupracovník, or "od {name}" for someone else's public playlist. (2026-11-09)
+- **D71. `next` survives signing up:** an invite link sends a signed-out visitor to log in or
+  sign up with `next`; sign-up returns there at once, and the confirmation email's link carries
+  `next` too. Only paths inside the app are followed. (2026-11-09)
 
 ## Engineering
 

@@ -8,7 +8,6 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 import {
-  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
@@ -17,6 +16,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import {
   ActionIcon,
+  Alert,
   Button,
   Center,
   Group,
@@ -35,44 +35,48 @@ import {
   IconPlayerPlayFilled,
   IconPlus,
   IconTrash,
+  IconUsers,
   IconX,
 } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
+import type { PlaylistOp } from '#shared/playlistOps.ts';
 import { Link, useNavigate, useParams } from 'react-router';
 import { ErrorText } from '../components/ErrorText.tsx';
 import { Page } from '../components/Page.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
+import { ShareModal } from '../components/ShareModal.tsx';
 import { SongPicker } from '../components/SongPicker.tsx';
 import { SongRow } from '../components/SongRow.tsx';
 import { StatusBadge } from '../components/StatusBadge.tsx';
-import { putPlaylist, syncCatalog, useCatalog } from '../data/catalog.ts';
+import { putPlaylist, useCatalog } from '../data/catalog.ts';
+import { useLivePlaylist } from '../data/livePlaylist.ts';
+import { usePlaylistEdits } from '../data/playlistEdits.ts';
+import { playlistFacts } from '../data/playlistFacts.ts';
 import { leavePlaylist, usePlayer } from '../data/session.ts';
 import type { PlaylistRecord, SongRecord } from '../data/store.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
-import { toggleSong } from '../song/toggleSong.ts';
 import { trpc } from '../trpc.ts';
-import { url } from '../urls.ts';
+import { idFromRef, url } from '../urls.ts';
+import { useCanonicalPath } from '../hooks/useCanonicalPath.ts';
 import classes from './PlaylistPage.module.css';
 
 export function PlaylistPage() {
   const { t, tn } = useI18n();
   const navigate = useNavigate();
-  const id = Number(useParams().id);
+  const id = idFromRef(useParams().playlistRef) ?? 0;
   const { playlists, songs, loaded } = useCatalog();
   const { session } = usePlayer();
   const { me } = useMe();
   const playlist = playlists.get(id);
+  useCanonicalPath(playlist ? url.playlist(playlist) : null);
+  useLivePlaylist(id);
+  const edits = usePlaylistEdits(id);
   const [editing, setEditing] = useState(false);
   const [adding, { open: openAdd, close: closeAdd }] = useDisclosure(false);
+  const [sharing, { open: openShare, close: closeShare }] = useDisclosure(false);
   const [confirmingDelete, { open: confirmDelete, close: cancelDelete }] =
     useDisclosure(false);
-
-  const update = trpc.playlists.update.useMutation({
-    onSuccess: (p) => putPlaylist(p.id, p),
-    // The device showed the change before the server had it; take the server's word again.
-    onError: () => void syncCatalog(me?.id ?? null),
-  });
   const remove = trpc.playlists.delete.useMutation({
     onSuccess: () => {
       putPlaylist(id, null);
@@ -102,10 +106,15 @@ export function PlaylistPage() {
     );
   }
 
-  /** Shows the new order at once and saves it behind the scenes. */
-  const setSongIds = (songIds: number[]) => {
-    putPlaylist(id, { ...playlist, songIds });
-    update.mutate({ id, songIds });
+  // Owner and collaborators change the songs and the name, once their email is confirmed.
+  const isMember = playlist.role !== null;
+  const canEdit = isMember && Boolean(me?.emailVerified);
+  const { role, visibility } = playlistFacts(playlist, t);
+  const toggle = (songId: number) => {
+    const last = playlist.songIds.lastIndexOf(songId);
+    edits.edit(
+      last === -1 ? { type: 'add', songId } : { type: 'remove', songId, index: last },
+    );
   };
   const currentPosition = session?.playlistId === id ? session.position : null;
 
@@ -116,7 +125,7 @@ export function PlaylistPage() {
         backTo={url.playlists()}
         backLabel={backLabel}
         actions={
-          playlist.isMine && (
+          canEdit && (
             <>
               <Tooltip label={editing ? t('playlists.done') : t('playlists.edit')}>
                 <ActionIcon
@@ -130,17 +139,31 @@ export function PlaylistPage() {
                   {editing ? <IconCheck size={20} /> : <IconPencil size={20} />}
                 </ActionIcon>
               </Tooltip>
-              <Tooltip label={t('common.delete')}>
+              <Tooltip label={t('playlists.share')}>
                 <ActionIcon
                   variant="subtle"
                   color="gray"
                   size="lg"
-                  onClick={confirmDelete}
-                  aria-label={t('common.delete')}
+                  onClick={openShare}
+                  aria-label={t('playlists.share')}
+                  aria-haspopup="dialog"
                 >
-                  <IconTrash size={20} />
+                  <IconUsers size={20} />
                 </ActionIcon>
               </Tooltip>
+              {playlist.role === 'owner' && (
+                <Tooltip label={t('common.delete')}>
+                  <ActionIcon
+                    variant="subtle"
+                    color="gray"
+                    size="lg"
+                    onClick={confirmDelete}
+                    aria-label={t('common.delete')}
+                  >
+                    <IconTrash size={20} />
+                  </ActionIcon>
+                </Tooltip>
+              )}
             </>
           )
         }
@@ -149,18 +172,14 @@ export function PlaylistPage() {
         <Stack gap="md">
           <Group justify="space-between" wrap="nowrap">
             <Text size="sm" c="dimmed">
-              {tn('common.songs', playlist.songIds.length)}
-              {' · '}
-              {playlist.isMine
-                ? playlist.isPublic
-                  ? t('common.public')
-                  : t('common.private')
-                : t('playlists.by', { name: playlist.ownerName })}
+              {[tn('common.songs', playlist.songIds.length), role, visibility].join(
+                ' · ',
+              )}
             </Text>
             {!editing && playlist.songIds.length > 0 && (
               <Button
                 component={Link}
-                to={url.playlistSong(id, currentPosition ?? 1)}
+                to={url.playlistSong(playlist, currentPosition ?? 1)}
                 leftSection={<IconPlayerPlayFilled size={16} />}
               >
                 {t('playlists.play')}
@@ -168,14 +187,25 @@ export function PlaylistPage() {
             )}
           </Group>
 
-          {editing && <PlaylistSettings playlist={playlist} />}
-          <ErrorText error={update.error ?? remove.error} />
+          {isMember && !canEdit && (
+            <Alert color="yellow" variant="light">
+              {t('playlists.confirmToEdit')}
+            </Alert>
+          )}
+          {editing && (
+            <PlaylistSettings
+              playlist={playlist}
+              onRename={edits.rename}
+              onPublic={edits.setPublic}
+            />
+          )}
+          <ErrorText error={remove.error} />
 
           {playlist.songIds.length === 0 && (
             <Center py="xl">
               <Stack align="center" gap="sm">
                 <Text c="dimmed">{t('playlists.empty')}</Text>
-                {playlist.isMine && !editing && (
+                {canEdit && !editing && (
                   <Button
                     variant="default"
                     leftSection={<IconPlus size={16} />}
@@ -189,11 +219,7 @@ export function PlaylistPage() {
           )}
 
           {editing ? (
-            <SortableSongs
-              songIds={playlist.songIds}
-              songs={songs}
-              onChange={setSongIds}
-            />
+            <SortableSongs songIds={playlist.songIds} songs={songs} onEdit={edits.edit} />
           ) : (
             <Stack gap={0} mx="-md">
               {playlist.songIds.map((songId, index) => {
@@ -203,7 +229,7 @@ export function PlaylistPage() {
                   <SongRow
                     key={`${songId}-${index}`}
                     song={song}
-                    to={url.playlistSong(id, position)}
+                    to={url.playlistSong(playlist, position)}
                     active={currentPosition === position}
                     leading={<Position n={position} />}
                   />
@@ -228,8 +254,9 @@ export function PlaylistPage() {
         opened={adding}
         onClose={closeAdd}
         songIds={playlist.songIds}
-        onToggle={(songId) => setSongIds(toggleSong(playlist.songIds, songId))}
+        onToggle={toggle}
       />
+      <ShareModal playlist={playlist} opened={sharing} onClose={closeShare} />
       <Modal opened={confirmingDelete} onClose={cancelDelete} title={t('common.delete')}>
         <Stack>
           <Text>{t('playlists.deleteConfirm', { name: playlist.name })}</Text>
@@ -266,11 +293,11 @@ function Position({ n }: { n: number }) {
 function SortableSongs({
   songIds,
   songs,
-  onChange,
+  onEdit,
 }: {
   songIds: number[];
   songs: Map<number, SongRecord>;
-  onChange: (songIds: number[]) => void;
+  onEdit: (op: PlaylistOp) => void;
 }) {
   // A song may appear twice; its nth appearance keeps the same key wherever it moves.
   const keys = useMemo(() => {
@@ -291,7 +318,7 @@ function SortableSongs({
     }
     const from = keys.indexOf(String(active.id));
     const to = keys.indexOf(String(over.id));
-    onChange(arrayMove(songIds, from, to));
+    onEdit({ type: 'move', songId: songIds[from] as number, from, to });
   };
   return (
     <DndContext
@@ -309,7 +336,9 @@ function SortableSongs({
                 id={key}
                 song={song}
                 position={index + 1}
-                onRemove={() => onChange(songIds.filter((_, i) => i !== index))}
+                onRemove={() =>
+                  onEdit({ type: 'remove', songId: songIds[index] as number, index })
+                }
               />
             ) : null;
           })}
@@ -386,12 +415,17 @@ function SortableRow({
   );
 }
 
-function PlaylistSettings({ playlist }: { playlist: PlaylistRecord }) {
+function PlaylistSettings({
+  playlist,
+  onRename,
+  onPublic,
+}: {
+  playlist: PlaylistRecord;
+  onRename: (name: string) => void;
+  onPublic: (isPublic: boolean) => void;
+}) {
   const { t } = useI18n();
   const [name, setName] = useState(playlist.name);
-  const update = trpc.playlists.update.useMutation({
-    onSuccess: (p) => putPlaylist(p.id, p),
-  });
   return (
     <Stack gap="sm" className={classes.settings}>
       <TextInput
@@ -400,18 +434,18 @@ function PlaylistSettings({ playlist }: { playlist: PlaylistRecord }) {
         onChange={(e) => setName(e.currentTarget.value)}
         onBlur={() => {
           if (name.trim() && name !== playlist.name) {
-            update.mutate({ id: playlist.id, name });
+            onRename(name);
           }
         }}
       />
-      <Switch
-        label={t('playlists.isPublic')}
-        checked={playlist.isPublic}
-        onChange={(e) =>
-          update.mutate({ id: playlist.id, isPublic: e.currentTarget.checked })
-        }
-      />
-      <ErrorText error={update.error} />
+      {/* Who can see it is the owner's call. */}
+      {playlist.role === 'owner' && (
+        <Switch
+          label={t('playlists.isPublic')}
+          checked={playlist.isPublic}
+          onChange={(e) => onPublic(e.currentTarget.checked)}
+        />
+      )}
     </Stack>
   );
 }

@@ -17,7 +17,7 @@ yarn dev                # http://localhost:3100 (server + Vite, port 3100 so dee
 yarn test               # every Vitest project: unit, server (real Postgres), client (jsdom)
 yarn lint               # tsc, ESLint, knip, Prettier: the gates
 yarn build              # the client into dist/ (the server needs no build)
-yarn ux:probe --url /s/1 [--email user@zpevnak.test]   # measure one page state, see /ux
+yarn ux:probe --url /song/1 [--email user@zpevnak.test]   # measure one page state, see /ux
 node src/server/cli/set-role.ts <email> admin          # make the first admin
 ```
 

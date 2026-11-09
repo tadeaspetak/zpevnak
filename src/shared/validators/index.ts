@@ -40,3 +40,17 @@ export const songSourceSchema = z.string().max(100_000);
 export const playlistNameSchema = z.string().trim().min(1).max(100);
 
 export const tokenSchema = z.string().min(20).max(200);
+
+/**
+ * A path inside the app to return to after signing in or confirming an email. Only a local
+ * path: "/" first, never "//" (another host) or a backslash (which browsers read as "/").
+ */
+export const appPathSchema = z
+  .string()
+  .max(500)
+  .refine((p) => p.startsWith('/') && !p.startsWith('//') && !p.includes('\\'));
+
+/** `appPathSchema`, as a check for the client: the path, or null if it isn't a local one. */
+export function safeAppPath(path: string | null | undefined): string | null {
+  return path && appPathSchema.safeParse(path).success ? path : null;
+}

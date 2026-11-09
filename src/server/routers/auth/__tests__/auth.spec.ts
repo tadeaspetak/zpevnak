@@ -60,6 +60,22 @@ describe('auth.signUp', () => {
     expect(testOutbox.at(-1)?.subject).toBe('Na Zpěvňáku už účet máš');
   });
 
+  it('carries `next` into the verification link, so confirming returns there', async () => {
+    await callerFor(null).auth.signUp({
+      ...signUpInput,
+      next: '/join/AbCdEfGhIjKlMnOpQr',
+    });
+    expect(testOutbox[0]?.text).toMatch(
+      /\/verify\?token=[^&\s]+&next=%2Fjoin%2FAbCdEfGhIjKlMnOpQr/,
+    );
+  });
+
+  it('refuses a `next` that leaves the app', async () => {
+    await expect(
+      callerFor(null).auth.signUp({ ...signUpInput, next: '//evil.example' }),
+    ).rejects.toThrow();
+  });
+
   it('refuses a short password', async () => {
     await expect(
       callerFor(null).auth.signUp({ ...signUpInput, password: 'short' }),

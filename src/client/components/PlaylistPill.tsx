@@ -27,7 +27,7 @@ export function PlaylistPill() {
       <Group gap={0} wrap="nowrap" className={classes.pill}>
         <UnstyledButton
           component={Link}
-          to={url.playlistSong(playlist.id, position)}
+          to={url.playlistSong(playlist, position)}
           className={classes.main}
           aria-label={t('session.backTo', { name: playlist.name })}
         >

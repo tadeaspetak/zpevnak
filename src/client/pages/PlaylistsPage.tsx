@@ -1,39 +1,44 @@
 import {
   Alert,
+  Anchor,
   Button,
   Group,
   Modal,
   Stack,
   Switch,
+  Table,
   Text,
   TextInput,
-  Title,
-  UnstyledButton,
 } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
-import { IconPlus, IconWorld } from '@tabler/icons-react';
+import { useDisclosure, useMediaQuery } from '@mantine/hooks';
+import { IconPlus } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { ErrorText } from '../components/ErrorText.tsx';
 import { Page } from '../components/Page.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
+import { PlaylistRow } from '../components/PlaylistRow.tsx';
 import { putPlaylist, useCatalog } from '../data/catalog.ts';
+import { playlistFacts } from '../data/playlistFacts.ts';
 import { usePlayer } from '../data/session.ts';
-import type { PlaylistRecord } from '../data/store.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc } from '../trpc.ts';
 import { url } from '../urls.ts';
-import rowClasses from '../components/SongRow.module.css';
 
+/**
+ * Every playlist the viewer can open, in one list: their own, those they collaborate on, and
+ * everyone else's public ones, most recently played first. A table where it fits; on a phone,
+ * rows with the same facts under the name.
+ */
 export function PlaylistsPage() {
-  const { t } = useI18n();
+  const { t, tn } = useI18n();
   const { me } = useMe();
   const { playlists } = useCatalog();
   const { recentPlaylists } = usePlayer();
+  const wide = useMediaQuery('(min-width: 48em)');
   const [creating, { open, close }] = useDisclosure(false);
 
-  // Most recently played first, then most recently changed.
   const sorted = useMemo(
     () =>
       [...playlists.values()].sort(
@@ -43,8 +48,6 @@ export function PlaylistsPage() {
       ),
     [playlists, recentPlaylists],
   );
-  const mine = sorted.filter((p) => p.isMine);
-  const others = sorted.filter((p) => !p.isMine);
 
   return (
     <>
@@ -62,18 +65,7 @@ export function PlaylistsPage() {
       />
       <Page>
         <Stack gap="lg">
-          {me ? (
-            <section>
-              <Title order={2} size="h5" mb={4}>
-                {t('playlists.mine')}
-              </Title>
-              {mine.length === 0 ? (
-                <Text c="dimmed">{t('playlists.noneMine')}</Text>
-              ) : (
-                <PlaylistList playlists={mine} />
-              )}
-            </section>
-          ) : (
+          {!me && (
             <Alert variant="light" color="gray">
               <Group justify="space-between">
                 <Text size="sm">{t('playlists.signInToCreate')}</Text>
@@ -88,52 +80,53 @@ export function PlaylistsPage() {
               </Group>
             </Alert>
           )}
-          <section>
-            <Title order={2} size="h5" mb={4}>
-              {/* Signed in, your own public playlists are under "mine": this is everyone else's. */}
-              {me ? t('playlists.others') : t('playlists.public')}
-            </Title>
-            {others.length === 0 ? (
-              <Text c="dimmed">
-                {me ? t('playlists.noneOthers') : t('playlists.none')}
-              </Text>
-            ) : (
-              <PlaylistList playlists={others} />
-            )}
-          </section>
+          {sorted.length === 0 ? (
+            <Text c="dimmed">{t('playlists.none')}</Text>
+          ) : wide ? (
+            <Table highlightOnHover verticalSpacing="sm">
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>{t('playlists.colName')}</Table.Th>
+                  <Table.Th>{t('playlists.colRole')}</Table.Th>
+                  <Table.Th>{t('playlists.colVisibility')}</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
+                {sorted.map((p) => {
+                  const { role, visibility } = playlistFacts(p, t);
+                  return (
+                    <Table.Tr key={p.id}>
+                      <Table.Td>
+                        <Anchor
+                          component={Link}
+                          to={url.playlist(p)}
+                          fw={600}
+                          c="inherit"
+                        >
+                          {p.name}
+                        </Anchor>
+                        <Text size="sm" c="dimmed">
+                          {tn('common.songs', p.songIds.length)}
+                        </Text>
+                      </Table.Td>
+                      <Table.Td>{role}</Table.Td>
+                      <Table.Td>{visibility}</Table.Td>
+                    </Table.Tr>
+                  );
+                })}
+              </Table.Tbody>
+            </Table>
+          ) : (
+            <Stack gap={0} mx="-md">
+              {sorted.map((p) => (
+                <PlaylistRow key={p.id} playlist={p} />
+              ))}
+            </Stack>
+          )}
         </Stack>
       </Page>
       <NewPlaylistModal opened={creating} onClose={close} />
     </>
-  );
-}
-
-function PlaylistList({ playlists }: { playlists: PlaylistRecord[] }) {
-  const { t, tn } = useI18n();
-  return (
-    <Stack gap={0} mx="-md">
-      {playlists.map((p) => (
-        <UnstyledButton
-          key={p.id}
-          component={Link}
-          to={url.playlist(p.id)}
-          className={rowClasses.row}
-        >
-          <Group gap={6} wrap="nowrap">
-            <Text fw={600} truncate>
-              {p.name}
-            </Text>
-            {p.isMine && p.isPublic && (
-              <IconWorld size={14} aria-label={t('common.public')} />
-            )}
-          </Group>
-          <Text size="sm" c="dimmed">
-            {tn('common.songs', p.songIds.length)}
-            {!p.isMine && ` · ${t('playlists.by', { name: p.ownerName })}`}
-          </Text>
-        </UnstyledButton>
-      ))}
-    </Stack>
   );
 }
 
@@ -146,7 +139,7 @@ function NewPlaylistModal({ opened, onClose }: { opened: boolean; onClose: () =>
     onSuccess: (playlist) => {
       putPlaylist(playlist.id, playlist);
       onClose();
-      navigate(url.playlist(playlist.id));
+      navigate(url.playlist(playlist));
     },
   });
   return (
