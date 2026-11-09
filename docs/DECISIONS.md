@@ -200,6 +200,14 @@ entry that says which it replaces and what changed.
   confirmation says how many playlists lose the song. In the song's ⋯ menu and on the review
   screen. (2026-11-09)
 
+- **D79. Playlist details by who's looking.** Search results and the overview show a playlist
+  briefly: its songs and whose it is ("3 písničky · od Tadeáš"), or the viewer's own role. The
+  playlists page adds visibility, and for the playlist's own people how many souputníci it has;
+  the server sends that count to nobody else. Replaces D70's "shared (n)". (2026-11-09)
+- **D80. Collaborators are souputníci** (bandmates in English): a songbook with attitude, not an
+  office. The role is Souputník / Bandmate, the people dialog is Souputníci, and an invite reads
+  "{owner} tě zve, ať se přidáš k playlistu". (2026-11-09)
+
 ## Engineering
 
 - **D40. One developer; commit to `main`.** No branches, PRs or release process. (2026-11-09)

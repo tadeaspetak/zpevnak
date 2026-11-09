@@ -46,13 +46,15 @@ function roleOf(row: PlaylistRow, viewer: SessionUser | null): PlaylistRole | nu
  * on its own (`playlists.invite`).
  */
 function toPlaylistRecord(row: PlaylistRow, viewer: SessionUser | null) {
+  const role = roleOf(row, viewer);
   return {
     id: row.id,
     name: row.name,
     isPublic: row.is_public,
     ownerName: row.owner_name,
-    role: roleOf(row, viewer),
-    collaboratorCount: row.collaborator_count,
+    role,
+    // Who works on a playlist is its own people's business: null to anyone else (D79).
+    collaboratorCount: role ? row.collaborator_count : null,
     songIds: row.song_ids.map(Number),
     updatedAt: row.updated_at.toISOString(),
   };

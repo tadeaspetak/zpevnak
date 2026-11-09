@@ -56,7 +56,7 @@ export function ShareModal({ playlist, opened, onClose }: Props) {
       await utils.playlists.members.invalidate({ id: playlist.id });
       putPlaylist(playlist.id, {
         ...playlist,
-        collaboratorCount: Math.max(0, playlist.collaboratorCount - 1),
+        collaboratorCount: Math.max(0, (playlist.collaboratorCount ?? 1) - 1),
       });
     },
   });
@@ -167,9 +167,7 @@ function LeaveButton({ playlist }: { playlist: PlaylistRecord }) {
       // A public playlist stays visible after leaving, just no longer as yours.
       putPlaylist(
         playlist.id,
-        playlist.isPublic
-          ? { ...playlist, role: null, collaboratorCount: playlist.collaboratorCount - 1 }
-          : null,
+        playlist.isPublic ? { ...playlist, role: null, collaboratorCount: null } : null,
       );
       navigate(url.playlists());
     },

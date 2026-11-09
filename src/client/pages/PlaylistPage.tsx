@@ -110,7 +110,7 @@ export function PlaylistPage() {
   // Owner and collaborators change the songs and the name, once their email is confirmed.
   const isMember = playlist.role !== null;
   const canEdit = isMember && Boolean(me?.emailVerified);
-  const { role, visibility } = playlistFacts(playlist, t);
+  const { role, visibility } = playlistFacts(playlist, { t, tn });
   const toggle = (songId: number) => {
     const last = playlist.songIds.lastIndexOf(songId);
     edits.edit(

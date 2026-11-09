@@ -95,7 +95,7 @@ export function PlaylistsPage() {
               </Table.Thead>
               <Table.Tbody>
                 {sorted.map((p) => {
-                  const { role, visibility } = playlistFacts(p, t);
+                  const { role, visibility } = playlistFacts(p, { t, tn });
                   return (
                     <Table.Tr
                       key={p.id}
@@ -130,7 +130,7 @@ export function PlaylistsPage() {
           ) : (
             <Stack gap={0} mx="-md">
               {sorted.map((p) => (
-                <PlaylistRow key={p.id} playlist={p} />
+                <PlaylistRow key={p.id} playlist={p} full />
               ))}
             </Stack>
           )}

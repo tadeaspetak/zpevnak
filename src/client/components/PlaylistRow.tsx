@@ -14,12 +14,15 @@ import classes from './SongRow.module.css';
 export function PlaylistRow({
   playlist,
   active,
+  full = false,
 }: {
   playlist: PlaylistRecord;
   active?: boolean;
+  /** Visibility and collaborators too, as on the playlists page; else just songs and whose. */
+  full?: boolean;
 }) {
   const { t, tn } = useI18n();
-  const { role, visibility } = playlistFacts(playlist, t);
+  const { role, visibility } = playlistFacts(playlist, { t, tn });
   return (
     <UnstyledButton
       component={Link}
@@ -34,7 +37,9 @@ export function PlaylistRow({
             {playlist.name}
           </Text>
           <Text size="sm" c="dimmed" truncate>
-            {[tn('common.songs', playlist.songIds.length), role, visibility].join(' · ')}
+            {[tn('common.songs', playlist.songIds.length), role, full ? visibility : null]
+              .filter(Boolean)
+              .join(' · ')}
           </Text>
         </div>
       </Group>

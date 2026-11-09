@@ -155,7 +155,7 @@ test('a bandmate opens an invite link, signs up there, and lands in the playlist
   // A bandmate without an account opens it.
   await page.goto(`/join/${token}`);
   await expect(
-    page.getByText(`invites you to work on the playlist “${playlist.name}”`),
+    page.getByText(`invites you to join the playlist “${playlist.name}”`),
   ).toBeVisible();
   await page.getByRole('link', { name: 'Sign up' }).click();
   await page.getByLabel('Name').fill('Bandmate');
@@ -167,7 +167,7 @@ test('a bandmate opens an invite link, signs up there, and lands in the playlist
   await expect(
     page.getByRole('heading', { level: 1, name: playlist.name }),
   ).toBeVisible();
-  await expect(page.getByText(/Collaborator/)).toBeVisible();
+  await expect(page.getByText(/Bandmate/)).toBeVisible();
   await expect(
     page.getByText('Confirm your email, then you can edit the playlist.'),
   ).toBeVisible();

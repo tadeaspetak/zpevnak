@@ -209,6 +209,21 @@ describe('sharing', () => {
     ).toBe(1);
   });
 
+  it("tells the playlist's own people how many collaborators it has, nobody else", async () => {
+    const { owner, collaborator, stranger, playlist } = await shared();
+    await callerFor(owner).playlists.setPublic({ id: playlist.id, isPublic: true });
+    for (const member of [owner, collaborator]) {
+      expect(
+        (await callerFor(member).playlists.byId({ id: playlist.id })).collaboratorCount,
+      ).toBe(1);
+    }
+    for (const outsider of [stranger, null]) {
+      expect(
+        (await callerFor(outsider).playlists.byId({ id: playlist.id })).collaboratorCount,
+      ).toBeNull();
+    }
+  });
+
   it('lets an unconfirmed account join (it may edit once its email is confirmed)', async () => {
     const { token, playlist, a } = await shared();
     const fresh = await createUser({ verified: false });
