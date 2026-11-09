@@ -19,7 +19,6 @@ import { SongToolbar } from '../song/SongToolbar.tsx';
 import { PlaylistBar } from '../song/PlaylistBar.tsx';
 import { trpc } from '../trpc.ts';
 import { idFromRef, url } from '../urls.ts';
-import { useLivePlaylist } from '../data/livePlaylist.ts';
 import { followSong } from '../song/followSong.ts';
 import { useCanonicalPath } from '../hooks/useCanonicalPath.ts';
 import classes from './SongPage.module.css';
@@ -41,7 +40,6 @@ export function PlaylistSongPage() {
   const { playlists, loaded } = useCatalog();
   const playlist = playlists.get(playlistId);
   const { t } = useI18n();
-  useLivePlaylist(playlistId);
 
   // The song being played, remembered apart from its position: when someone else changes the
   // playlist, the player stays on this song (D68). A visit to a position (prev, next, a link)

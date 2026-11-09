@@ -25,6 +25,7 @@ import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc } from '../trpc.ts';
 import { url } from '../urls.ts';
+import classes from './PlaylistsPage.module.css';
 
 /**
  * Every playlist the viewer can open, in one list: their own, those they collaborate on, and
@@ -33,6 +34,7 @@ import { url } from '../urls.ts';
  */
 export function PlaylistsPage() {
   const { t, tn } = useI18n();
+  const navigate = useNavigate();
   const { me } = useMe();
   const { playlists } = useCatalog();
   const { recentPlaylists } = usePlayer();
@@ -95,7 +97,16 @@ export function PlaylistsPage() {
                 {sorted.map((p) => {
                   const { role, visibility } = playlistFacts(p, t);
                   return (
-                    <Table.Tr key={p.id}>
+                    <Table.Tr
+                      key={p.id}
+                      className={classes.row}
+                      onClick={(e) => {
+                        // The title link handles its own click; the rest of the row follows it.
+                        if (!(e.target as HTMLElement).closest('a')) {
+                          navigate(url.playlist(p));
+                        }
+                      }}
+                    >
                       <Table.Td>
                         <Anchor
                           component={Link}

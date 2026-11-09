@@ -147,8 +147,8 @@ entry that says which it replaces and what changed.
   confirmed email. The invite token never syncs to collaborators' devices. (2026-11-09)
 - **D69. Edits are operations, not whole lists** (add / remove / move, naming their song), applied
   by the server to the playlist as it is now, under a row lock: two people editing at once both
-  keep their change. The device shows each change at once with the same code. An open playlist
-  refreshes every 30 s and on returning to the app. The player stays on the song being played
+  keep their change. The device shows each change at once with the same code. Updates from
+  others arrive as D72 says. The player stays on the song being played
   when the list changes under it; a song taken out stays on screen, flagged, and next is the
   song that followed it. (2026-11-09)
 - **D70. Playlists page: one list, most recently played first,** as a table (playlist · role ·
@@ -157,6 +157,15 @@ entry that says which it replaces and what changed.
 - **D71. `next` survives signing up:** an invite link sends a signed-out visitor to log in or
   sign up with `next`; sign-up returns there at once, and the confirmation email's link carries
   `next` too. Only paths inside the app are followed. (2026-11-09)
+
+- **D72. No polling.** A playlist page loads its playlist fresh once, when it opens; nothing
+  refreshes on a timer or on returning to the app. Polling every 30 s was ~1,000 requests in a
+  two-hour session on four tablets, for nothing most of the time, and still too slow for
+  editing together. Bring live updates back only if a real need shows, and then as something
+  fast (push), not a faster timer. The catalog sync (on start, on return, every 5 min) is
+  separate and stays. Replaces D69's 30 s refresh. (2026-11-09)
+- **D73. A table row is one target.** The whole row opens the playlist; the title stays the one
+  link, for keyboards. (2026-11-09)
 
 ## Engineering
 

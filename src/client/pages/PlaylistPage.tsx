@@ -49,7 +49,7 @@ import { SongPicker } from '../components/SongPicker.tsx';
 import { SongRow } from '../components/SongRow.tsx';
 import { StatusBadge } from '../components/StatusBadge.tsx';
 import { putPlaylist, useCatalog } from '../data/catalog.ts';
-import { useLivePlaylist } from '../data/livePlaylist.ts';
+import { useFreshPlaylist } from '../data/freshPlaylist.ts';
 import { usePlaylistEdits } from '../data/playlistEdits.ts';
 import { playlistFacts } from '../data/playlistFacts.ts';
 import { leavePlaylist, usePlayer } from '../data/session.ts';
@@ -70,7 +70,7 @@ export function PlaylistPage() {
   const { me } = useMe();
   const playlist = playlists.get(id);
   useCanonicalPath(playlist ? url.playlist(playlist) : null);
-  useLivePlaylist(id);
+  useFreshPlaylist(id);
   const edits = usePlaylistEdits(id);
   const [editing, setEditing] = useState(false);
   const [adding, { open: openAdd, close: closeAdd }] = useDisclosure(false);

@@ -3,21 +3,22 @@ import { useOnline } from '../hooks/useOnline.ts';
 import { trpc } from '../trpc.ts';
 import { putPlaylist } from './catalog.ts';
 
-const REFRESH_MS = 30_000;
-
 /**
- * Keeps an open playlist in step with what others change in it: every 30 seconds while
- * online, and on coming back to the app. A playlist the viewer may no longer see (deleted,
- * made private, or they were taken out) leaves the device.
+ * Loads a playlist fresh once, when its page opens, to show what others changed since the
+ * device last synced. No timer and no refetch on returning to the app: polling cost requests
+ * for nothing most of the time and was too slow for editing together (D72). A playlist the
+ * viewer may no longer see (deleted, made private, or they were taken out) leaves the device.
  */
-export function useLivePlaylist(id: number | null) {
+export function useFreshPlaylist(id: number | null) {
   const online = useOnline();
   const query = trpc.playlists.byId.useQuery(
     { id: id ?? 0 },
     {
       enabled: id !== null && id > 0 && online,
-      refetchInterval: REFRESH_MS,
-      refetchOnWindowFocus: true,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      staleTime: 0,
+      gcTime: 0,
       retry: false,
     },
   );
