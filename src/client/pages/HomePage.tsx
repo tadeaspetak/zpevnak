@@ -28,6 +28,7 @@ import { Footer } from '../components/Footer.tsx';
 import { PlaylistPill } from '../components/PlaylistPill.tsx';
 import { PlaylistRow } from '../components/PlaylistRow.tsx';
 import { SearchResults, useSearchResults } from '../components/SearchResults.tsx';
+import { RefreshButton } from '../components/RefreshButton.tsx';
 import { SettingsButton } from '../components/SettingsModal.tsx';
 import { SongRow } from '../components/SongRow.tsx';
 import { useCatalog } from '../data/catalog.ts';
@@ -129,6 +130,7 @@ export function HomePage() {
                   />
                 </Indicator>
               )}
+              <RefreshButton />
               <SettingsButton />
               {me ? (
                 <NavIcon

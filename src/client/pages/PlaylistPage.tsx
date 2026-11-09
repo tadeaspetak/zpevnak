@@ -44,6 +44,7 @@ import { Link, useNavigate, useParams } from 'react-router';
 import { ErrorText } from '../components/ErrorText.tsx';
 import { Page } from '../components/Page.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
+import { RefreshButton } from '../components/RefreshButton.tsx';
 import { ShareModal } from '../components/ShareModal.tsx';
 import { SongPicker } from '../components/SongPicker.tsx';
 import { SongRow } from '../components/SongRow.tsx';
@@ -125,47 +126,50 @@ export function PlaylistPage() {
         backTo={url.playlists()}
         backLabel={backLabel}
         actions={
-          canEdit && (
-            <>
-              <Tooltip label={editing ? t('playlists.done') : t('playlists.edit')}>
-                <ActionIcon
-                  variant={editing ? 'filled' : 'subtle'}
-                  color={editing ? undefined : 'gray'}
-                  size="lg"
-                  onClick={() => setEditing((e) => !e)}
-                  aria-label={editing ? t('playlists.done') : t('playlists.edit')}
-                  aria-pressed={editing}
-                >
-                  {editing ? <IconCheck size={20} /> : <IconPencil size={20} />}
-                </ActionIcon>
-              </Tooltip>
-              <Tooltip label={t('playlists.share')}>
-                <ActionIcon
-                  variant="subtle"
-                  color="gray"
-                  size="lg"
-                  onClick={openShare}
-                  aria-label={t('playlists.share')}
-                  aria-haspopup="dialog"
-                >
-                  <IconUsers size={20} />
-                </ActionIcon>
-              </Tooltip>
-              {playlist.role === 'owner' && (
-                <Tooltip label={t('common.delete')}>
+          <>
+            <RefreshButton playlistId={playlist.id} />
+            {canEdit && (
+              <>
+                <Tooltip label={editing ? t('playlists.done') : t('playlists.edit')}>
+                  <ActionIcon
+                    variant={editing ? 'filled' : 'subtle'}
+                    color={editing ? undefined : 'gray'}
+                    size="lg"
+                    onClick={() => setEditing((e) => !e)}
+                    aria-label={editing ? t('playlists.done') : t('playlists.edit')}
+                    aria-pressed={editing}
+                  >
+                    {editing ? <IconCheck size={20} /> : <IconPencil size={20} />}
+                  </ActionIcon>
+                </Tooltip>
+                <Tooltip label={t('playlists.share')}>
                   <ActionIcon
                     variant="subtle"
                     color="gray"
                     size="lg"
-                    onClick={confirmDelete}
-                    aria-label={t('common.delete')}
+                    onClick={openShare}
+                    aria-label={t('playlists.share')}
+                    aria-haspopup="dialog"
                   >
-                    <IconTrash size={20} />
+                    <IconUsers size={20} />
                   </ActionIcon>
                 </Tooltip>
-              )}
-            </>
-          )
+                {playlist.role === 'owner' && (
+                  <Tooltip label={t('common.delete')}>
+                    <ActionIcon
+                      variant="subtle"
+                      color="gray"
+                      size="lg"
+                      onClick={confirmDelete}
+                      aria-label={t('common.delete')}
+                    >
+                      <IconTrash size={20} />
+                    </ActionIcon>
+                  </Tooltip>
+                )}
+              </>
+            )}
+          </>
         }
       />
       <Page>

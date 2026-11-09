@@ -162,10 +162,16 @@ entry that says which it replaces and what changed.
   refreshes on a timer or on returning to the app. Polling every 30 s was ~1,000 requests in a
   two-hour session on four tablets, for nothing most of the time, and still too slow for
   editing together. Bring live updates back only if a real need shows, and then as something
-  fast (push), not a faster timer. The catalog sync (on start, on return, every 5 min) is
-  separate and stays. Replaces D69's 30 s refresh. (2026-11-09)
+  fast (push), not a faster timer. The catalog sync is D74. Replaces D69's 30 s refresh. (2026-11-09)
 - **D73. A table row is one target.** The whole row opens the playlist; the title stays the one
   link, for keyboards. (2026-11-09)
+
+- **D74. The catalog syncs when the app starts and when someone signs in or out**, nothing
+  else: no timer, no sync on returning to the app. To see what others changed, there's a refresh
+  button (↻, "Načíst novinky") at top right on the overview and on every playlist page, for
+  anyone who can see it; on a playlist it fetches that playlist and the catalog. It works the
+  same in an app installed to the home screen, which has no reload (no ⌘R, no pull-to-refresh),
+  and keeps the reader where they are. Offline, it is greyed out. (2026-11-09)
 
 ## Engineering
 

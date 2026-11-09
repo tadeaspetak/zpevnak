@@ -39,6 +39,7 @@ export const en: Record<keyof typeof cs, string> = {
   'search.playlists': 'Playlists',
   'search.songs': 'Songs',
   'settings.open': 'Settings',
+  'refresh.label': 'Get what’s new',
   'about.source': 'Source on GitHub',
   'about.contact': 'Send me an owl',
   'home.searchLabel': 'Search songs',

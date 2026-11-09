@@ -42,6 +42,7 @@ export const cs = {
   'search.playlists': 'Playlisty',
   'search.songs': 'Písničky',
   'settings.open': 'Nastavení',
+  'refresh.label': 'Načíst novinky',
   'about.source': 'Zdroják na GitHubu',
   'about.contact': 'Pošli mi sovu',
   'home.searchLabel': 'Hledat písničky',

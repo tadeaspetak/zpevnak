@@ -25,35 +25,19 @@ import { EditSongPage, NewSongPage } from './pages/SongEditPage.tsx';
 import { PlaylistSongPage, SongPage } from './pages/SongPage.tsx';
 import { routes, url } from './urls.ts';
 
-const SYNC_EVERY_MS = 5 * 60_000;
-
 /** Keeps the device's catalog in step: on start, on sign-in/out, on return, and every 5 min. */
+/**
+ * Brings the device's catalog up to date when the app starts (a reload does it) and when
+ * someone signs in or out (each viewer sees different songs). Nothing on a timer or on
+ * returning to the app: reloading is the way to fetch what others changed (D74).
+ */
 function useCatalogSync() {
   const { me, known } = useMe();
   const viewer = me?.id ?? null;
   useEffect(() => {
-    if (!known) {
-      return;
+    if (known && navigator.onLine) {
+      void syncCatalog(viewer);
     }
-    const sync = () => {
-      if (navigator.onLine) {
-        void syncCatalog(viewer);
-      }
-    };
-    const onVisible = () => {
-      if (document.visibilityState === 'visible') {
-        sync();
-      }
-    };
-    sync();
-    const timer = window.setInterval(sync, SYNC_EVERY_MS);
-    window.addEventListener('online', sync);
-    document.addEventListener('visibilitychange', onVisible);
-    return () => {
-      window.clearInterval(timer);
-      window.removeEventListener('online', sync);
-      document.removeEventListener('visibilitychange', onVisible);
-    };
   }, [viewer, known]);
 }
 
