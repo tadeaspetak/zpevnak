@@ -8,7 +8,7 @@ import type { SearchHit } from '../data/search.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { url } from '../urls.ts';
 import { PlaylistRow } from './PlaylistRow.tsx';
-import { SongRow } from './SongRow.tsx';
+import { SongRow, songLinkState } from './SongRow.tsx';
 
 const MAX_PLAYLISTS = 5;
 
@@ -57,9 +57,7 @@ export function useSearchResults(query: string) {
       setSelected((i) => Math.max(i - 1, 0));
     } else if (e.key === 'Enter' && items[selected]) {
       e.preventDefault();
-      navigate(items[selected].to, {
-        state: { backTo: `${window.location.pathname}${window.location.search}` },
-      });
+      navigate(items[selected].to, { state: songLinkState(window.location) });
     }
   };
 

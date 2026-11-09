@@ -94,6 +94,16 @@ entry that says which it replaces and what changed.
 - **D59. No key line under the artist.** The toolbar shows the key and changes it; the line
   repeated it. A capo, which the toolbar doesn't show, keeps its line.
 
+- **D60. The back arrow goes one level up, to a fixed parent; the browser's back is history.**
+  Replaces D57 and D31's "back returns to the page it was opened from", which made the arrow a
+  second browser-back whose destination you couldn't predict (song → search → song → ← went to
+  the first song). Parents: a song in a playlist being played → the playlist; any other song →
+  the overview, keeping the search it was found by; playlist → playlists; playlists, account,
+  queue, new song → overview; review → queue; users → account; edit song → the song. Context
+  survives where it's built for it: the playlist pill (D32), the overview's query, the search
+  overlay (D50). The queue has one entry, the overview's checklist icon. The tooltip still says
+  where the arrow goes. (2026-11-09)
+
 ## Engineering
 
 - **D40. One developer; commit to `main`.** No branches, PRs or release process. (2026-11-09)

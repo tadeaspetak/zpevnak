@@ -9,7 +9,6 @@ import { SongRow } from '../components/SongRow.tsx';
 import { syncCatalog, useCatalog } from '../data/catalog.ts';
 import { writeLocalJson } from '../data/local.ts';
 import { sortByTitle } from '../data/search.ts';
-import type { BackState } from '../hooks/useBack.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc } from '../trpc.ts';
@@ -19,7 +18,7 @@ export function AccountPage() {
   const { t, locale } = useI18n();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { me, isEditor, isAdmin, known } = useMe();
+  const { me, isAdmin, known } = useMe();
   const { songs } = useCatalog();
   const mySongs = useMemo(
     () =>
@@ -31,10 +30,6 @@ export function AccountPage() {
         : [],
     [songs, me, locale],
   );
-  const backToAccount: BackState = {
-    backTo: url.account(),
-    backLabel: t('nav.backTo', { name: t('account.title') }),
-  };
   const resend = trpc.auth.resendVerification.useMutation();
   const logOut = trpc.auth.logOut.useMutation({
     onSuccess: async () => {
@@ -94,13 +89,8 @@ export function AccountPage() {
             </Group>
             <Text c="dimmed">{me.email}</Text>
             <Group gap="md" mt="sm">
-              {isEditor && (
-                <Anchor component={Link} to={url.queue()} state={backToAccount}>
-                  {t('nav.queue')}
-                </Anchor>
-              )}
               {isAdmin && (
-                <Anchor component={Link} to={url.adminUsers()} state={backToAccount}>
+                <Anchor component={Link} to={url.adminUsers()}>
                   {t('nav.users')}
                 </Anchor>
               )}

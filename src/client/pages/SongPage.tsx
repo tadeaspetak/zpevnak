@@ -233,36 +233,23 @@ function SongPlayer({
 }
 
 /**
- * Where the song's back arrow leads, and what its tooltip says: the playlist when playing
- * one, else the page the song was opened from (search results keep their query), else home.
+ * Where the song's back arrow leads: one level up (D60). Inside a playlist being played, the
+ * playlist; otherwise the overview, keeping the search the song was found by. "Where I came
+ * from" is the browser's own back, not this arrow's.
  */
 function useBack(playlist: PlaylistContext | null) {
   const { t } = useI18n();
   const location = useLocation();
-  const { playlists } = useCatalog();
   if (playlist) {
     return {
       to: url.playlist(playlist.id),
       label: t('nav.backTo', { name: playlist.name }),
     };
   }
-  const from = (location.state as SongLinkState | null)?.backTo;
-  if (!from || from === url.home()) {
-    return { to: url.home(), label: t('nav.backHome') };
-  }
-  if (new URLSearchParams(from.split('?')[1] ?? '').has('q') && from.startsWith('/?')) {
-    return { to: from, label: t('nav.backToResults') };
-  }
-  if (from === url.account()) {
-    return { to: from, label: t('nav.backTo', { name: t('account.title') }) };
-  }
-  // Opened from a playlist (its page or one of its songs), e.g. through the search overlay.
-  const fromPlaylist = /^\/p\/(\d+)/.exec(from);
-  const playlistName = fromPlaylist && playlists.get(Number(fromPlaylist[1]))?.name;
-  if (playlistName) {
-    return { to: from, label: t('nav.backTo', { name: playlistName }) };
-  }
-  return { to: from, label: t('common.back') };
+  const results = (location.state as SongLinkState | null)?.backTo;
+  return results
+    ? { to: results, label: t('nav.backToResults') }
+    : { to: url.home(), label: t('nav.backHome') };
 }
 
 function FullPageLoader() {

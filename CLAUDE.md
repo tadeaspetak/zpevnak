@@ -95,7 +95,8 @@ Every change to behaviour ships with its tests in the same commit.
 ## UI conventions
 
 - **Mobile first.** Phones and tablets on a stand are the main screen. Check 390 px first.
-- **Back says where it goes** (tooltip and accessible name: "Back to Vršek 2026"). **Search is
+- **The back arrow goes one level up** to a fixed parent, and says where ("Back to Vršek
+  2026"); history is the browser's back (D60). **Search is
   the last icon at top right on every page**, song view included, so it is always in one place.
 - Buttons inside a row or card are `size="sm"`; `md` is for page-level calls to action.
 - Secondary text uses `c="dimmed"`, which the theme darkens to pass WCAG AA (Mantine's default

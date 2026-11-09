@@ -45,11 +45,11 @@ test('a player goes through a playlist, takes a detour, and comes back', async (
   await page.getByRole('link', { name: /Zkušební písnička/ }).click();
   await expect(heading).toHaveText('Zkušební písnička');
 
-  // The toolbar's back arrow (the playlist pill below says the same, and goes there too).
-  await page
-    .getByRole('banner')
-    .getByRole('link', { name: 'Back to Vršek 2026' })
-    .click();
+  // The song's arrow goes up to the overview (D60); the way back into the playlist is the pill.
+  await expect(
+    page.getByRole('banner').getByRole('link', { name: 'Back home' }),
+  ).toBeVisible();
+  await page.getByRole('link', { name: 'Back to Vršek 2026' }).click();
   await expect(page).toHaveURL(/\/p\/\d+\/2$/);
   await expect(heading).toHaveText('Lajla tov (Dobrou noc)');
 });
