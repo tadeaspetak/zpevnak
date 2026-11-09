@@ -1,0 +1,26 @@
+{
+  "env": {
+    "CLOUDSDK_ACTIVE_CONFIG_NAME": "zpevnak"
+  },
+  "permissions": {
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(gcloud config configurations activate*)",
+      "Bash(gcloud auth application-default*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/bash-guard.ts\""
+          }
+        ]
+      }
+    ]
+  }
+}

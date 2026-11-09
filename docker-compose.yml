@@ -1,0 +1,20 @@
+# Local Postgres for development and tests. Production uses Supabase (Postgres 17).
+# Port 5434, so it never collides with another project's database on 5432.
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: zpevnak
+      POSTGRES_PASSWORD: zpevnak
+      POSTGRES_DB: zpevnak
+    ports:
+      - '127.0.0.1:5434:5432'
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U zpevnak']
+      interval: 2s
+      timeout: 3s
+      retries: 20
+volumes:
+  pg-data:

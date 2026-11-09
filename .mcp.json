@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "ux-walk-browser": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@0.0.84",
+        "--isolated",
+        "--viewport-size",
+        "390,844",
+        "--output-dir",
+        ".ux-walk/browser"
+      ]
+    }
+  }
+}
