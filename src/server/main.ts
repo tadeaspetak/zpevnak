@@ -31,9 +31,12 @@ if (isProduction) {
   });
 } else {
   const { createServer } = await import('vite');
-  // Its own HMR port, so it runs beside other projects' Vite servers.
+  // Its own HMR port, so it runs beside other projects' Vite servers; none under e2e tests.
   const vite = await createServer({
-    server: { middlewareMode: true, hmr: { port: 24690 } },
+    server: {
+      middlewareMode: true,
+      hmr: process.env.VITE_HMR === 'off' ? false : { port: 24690 },
+    },
     appType: 'spa',
   });
   app.use(vite.middlewares);
