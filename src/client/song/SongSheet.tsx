@@ -77,10 +77,11 @@ function SectionView({
 export function SongSheet({ song, fontScale, showDiagrams, showColumns = true }: Props) {
   const { t } = useI18n();
   const style = { '--song-scale': fontScale } as CSSProperties;
-  const meta = [
-    song.meta.key && t('song.key', { key: song.meta.key }),
-    song.meta.capo ? t('song.capo', { fret: song.meta.capo }) : null,
-  ].filter(Boolean);
+  // The key isn't repeated here: the toolbar shows it, and changes it (D59). A capo is not
+  // in the toolbar, so it stays.
+  const meta = [song.meta.capo ? t('song.capo', { fret: song.meta.capo }) : null].filter(
+    Boolean,
+  );
 
   return (
     <article className={classes.sheet} style={style} lang="und">

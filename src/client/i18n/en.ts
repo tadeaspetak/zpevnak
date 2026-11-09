@@ -57,7 +57,6 @@ export const en: Record<keyof typeof cs, string> = {
   'song.transposeDown': 'Down a semitone',
   'song.transposeUp': 'Up a semitone',
   'song.transposeReset': 'Original key',
-  'song.key': 'Key {key}',
   'song.capo': 'Capo {fret}',
   'song.textSize': 'Text size',
   'song.display': 'Display',

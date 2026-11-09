@@ -91,6 +91,9 @@ entry that says which it replaces and what changed.
   places (the queue from the overview or the account; a song from anywhere), and says so.
 - **D58. Full screen: a toolbar button on wide screens, a ⋯ menu item on phones.** Never both.
 
+- **D59. No key line under the artist.** The toolbar shows the key and changes it; the line
+  repeated it. A capo, which the toolbar doesn't show, keeps its line.
+
 ## Engineering
 
 - **D40. One developer; commit to `main`.** No branches, PRs or release process. (2026-11-09)
