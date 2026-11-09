@@ -25,6 +25,14 @@ Dev personas, all on the password `zpevnak-dev-password` (`src/server/db/devPers
 `admin@`, `editor@`, `user@`, `new@` (unverified) `zpevnak.test`. In development, emails are
 printed to the server log.
 
+## Planning
+
+- **`docs/DECISIONS.md`**: what has been settled and why (D-numbers). Binding; cite them.
+- **`.planning/{ongoing,next,later}/`**: plans by state. `next/` is shaped but not started,
+  `ongoing/` has started, `later/` is parked. Move a plan along as it progresses, and record what
+  it settles in the decisions log when it ships.
+- **`docs/BACKLOG.md`**: small agreed changes not big enough for a plan.
+
 ## How it is built
 
 - **Node 24 runs the TypeScript directly** (type stripping): no build step for the server, and
