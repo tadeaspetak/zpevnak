@@ -24,6 +24,7 @@ import { useI18n } from '../i18n/index.tsx';
 import { ChordProEditor } from '../song/ChordProEditor.tsx';
 import { trpc } from '../trpc.ts';
 import { url } from '../urls.ts';
+import classes from './ReviewPage.module.css';
 
 /**
  * An editor's review of one song: fix the ChordPro right here, then verify or reject.
@@ -80,6 +81,7 @@ export function ReviewPage() {
     return (
       <>
         <PageHeader
+          width="80rem"
           title={t('queue.title')}
           backTo={url.queue()}
           backLabel={t('nav.backTo', { name: t('queue.title') })}
@@ -98,6 +100,7 @@ export function ReviewPage() {
   return (
     <>
       <PageHeader
+        width="80rem"
         title={song.data.title}
         backTo={url.queue()}
         backLabel={t('nav.backTo', { name: t('queue.title') })}
@@ -122,7 +125,9 @@ export function ReviewPage() {
           </Group>
           <ErrorText error={save.error ?? verify.error ?? reject.error} />
           <ChordProEditor value={current} onChange={setSource} />
-          <Group justify="space-between" mt="xs">
+          {/* All decisions together, bottom right, the primary last; the bar stays on
+              screen, so a long song never hides them. */}
+          <Group justify="flex-end" gap="xs" className={classes.actions}>
             <Button
               variant="outline"
               color="red"
@@ -132,23 +137,21 @@ export function ReviewPage() {
             >
               {t('queue.reject')}
             </Button>
-            <Group gap="xs">
-              <Button
-                variant="default"
-                disabled={!dirty}
-                loading={save.isPending}
-                onClick={() => save.mutate({ id, source: current })}
-              >
-                {t('common.save')}
-              </Button>
-              <Button
-                leftSection={<IconCheck size={16} />}
-                loading={verify.isPending}
-                onClick={() => verify.mutate({ id, source: dirty ? current : undefined })}
-              >
-                {dirty ? t('queue.saveAndVerify') : t('queue.verify')}
-              </Button>
-            </Group>
+            <Button
+              variant="default"
+              disabled={!dirty}
+              loading={save.isPending}
+              onClick={() => save.mutate({ id, source: current })}
+            >
+              {t('common.save')}
+            </Button>
+            <Button
+              leftSection={<IconCheck size={16} />}
+              loading={verify.isPending}
+              onClick={() => verify.mutate({ id, source: dirty ? current : undefined })}
+            >
+              {dirty ? t('queue.saveAndVerify') : t('queue.verify')}
+            </Button>
           </Group>
         </Stack>
       </Container>

@@ -13,16 +13,24 @@ type Props = {
   backLabel: string;
   /** This page's own actions. They sit left of a divider; search sits right of it (D30). */
   actions?: ReactNode;
+  /** The page's own column width, so the header lines up with it: wide for the editors. */
+  width?: '48rem' | '80rem';
 };
 
 /**
  * The one header style for every page that isn't home or a song, in the same column as the
  * page's content (`Page`), so every page is equally wide.
  */
-export function PageHeader({ title, backTo, backLabel, actions }: Props) {
+export function PageHeader({
+  title,
+  backTo,
+  backLabel,
+  actions,
+  width = '48rem',
+}: Props) {
   return (
     <header className={classes.header}>
-      <Container size="48rem" px="md">
+      <Container size={width} px="md">
         <Group gap="xs" wrap="nowrap">
           <Tooltip label={backLabel}>
             <ActionIcon

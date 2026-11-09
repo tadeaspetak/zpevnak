@@ -111,6 +111,13 @@ entry that says which it replaces and what changed.
   success, yellow warning, red error) and default to neutral grey; badges are neutral unless
   they mean something. (2026-11-09)
 
+- **D62. Editors approve: "Schválit" / "Approve"**, not "Ověřit", which reads like sending a
+  song off to be verified. The song's status stays "Neověřeno" for players: nobody checked it yet.
+  The review's actions sit together bottom right, primary last (Zamítnout · Uložit · Schválit),
+  in a bar that stays on screen. (2026-11-09)
+- **D63. The queue icon shows how many songs wait**, counted from the device's catalog (no
+  request; right offline). (2026-11-09)
+
 ## Engineering
 
 - **D40. One developer; commit to `main`.** No branches, PRs or release process. (2026-11-09)

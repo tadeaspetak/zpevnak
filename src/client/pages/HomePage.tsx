@@ -5,6 +5,7 @@ import {
   Button,
   Container,
   Group,
+  Indicator,
   Loader,
   Stack,
   Text,
@@ -62,6 +63,12 @@ export function HomePage() {
 
   useKeys(useMemo(() => ({ '/': () => inputRef.current?.focus() }), []));
 
+  // Every pending song is in every catalog, so the device counts them itself: no request,
+  // and right offline too.
+  const waiting = useMemo(
+    () => [...songs.values()].filter((s) => s.status === 'pending').length,
+    [songs],
+  );
   const allSongs = useMemo(() => sortByTitle(songs.values(), locale), [songs, locale]);
   const recentPlaylistList = useMemo(
     () =>
@@ -110,11 +117,17 @@ export function HomePage() {
                 />
               )}
               {isEditor && (
-                <NavIcon
-                  to={url.queue()}
-                  label={t('nav.queue')}
-                  icon={<IconChecklist />}
-                />
+                <Indicator label={waiting} size={18} offset={6} disabled={waiting === 0}>
+                  <NavIcon
+                    to={url.queue()}
+                    label={
+                      waiting > 0
+                        ? t('nav.queueWaiting', { count: waiting })
+                        : t('nav.queue')
+                    }
+                    icon={<IconChecklist />}
+                  />
+                </Indicator>
               )}
               <SettingsButton />
               {me ? (

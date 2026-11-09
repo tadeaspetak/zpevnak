@@ -30,6 +30,7 @@ export function NewSongPage() {
   return (
     <>
       <PageHeader
+        width="80rem"
         title={t('editor.newTitle')}
         backTo={url.home()}
         backLabel={t('nav.backHome')}
@@ -77,6 +78,7 @@ export function EditSongPage() {
   return (
     <>
       <PageHeader
+        width="80rem"
         title={t('editor.editTitle')}
         backTo={url.song(song)}
         backLabel={t('nav.backTo', { name: song.title })}
