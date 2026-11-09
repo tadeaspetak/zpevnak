@@ -9,7 +9,7 @@ verbatim.
 
 The walk runs against the dev server on http://localhost:3100 and the local seeded database.
 
-1. `curl -s -o /dev/null -w '%{http_code}' http://localhost:3100/healthz`.
+1. `curl -s -o /dev/null -w '%{http_code}' http://localhost:3100/health`.
    - **200:** it's up. Use it as it is.
    - **No answer:** check Docker's database first: `docker compose ps db`. If it isn't running,
      `yarn db:up`. Then make sure the data is there (`yarn migrate && yarn seed`; both are safe

@@ -47,7 +47,8 @@ export function createApp(db: Knex) {
   app.set('trust proxy', 1);
   app.use(securityHeaders);
   app.use(cookieParser());
-  app.get('/healthz', (_req, res) => {
+  // Not /healthz: Cloud Run reserves paths ending in z, and answers them itself with a 404.
+  app.get('/health', (_req, res) => {
     res.json({ ok: true });
   });
   if (env.NODE_ENV !== 'test') {

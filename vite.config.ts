@@ -32,7 +32,7 @@ export default defineConfig({
       workbox: {
         // The app shell works offline; songs come from IndexedDB, never from this cache.
         navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/trpc/, /^\/healthz/],
+        navigateFallbackDenylist: [/^\/trpc/, /^\/health/],
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
       },
     }),

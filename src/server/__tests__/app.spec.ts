@@ -9,7 +9,7 @@ const app = createApp(db);
 
 describe('the HTTP app', () => {
   it('answers the health check', async () => {
-    await request(app).get('/healthz').expect(200, { ok: true });
+    await request(app).get('/health').expect(200, { ok: true });
   });
 
   it('signs in with an HttpOnly cookie that later requests are recognised by', async () => {
@@ -47,7 +47,7 @@ describe('the HTTP app', () => {
   });
 
   it('sets the security headers', async () => {
-    const res = await request(app).get('/healthz');
+    const res = await request(app).get('/health');
     expect(res.headers['x-content-type-options']).toBe('nosniff');
     expect(res.headers['content-security-policy']).toBe("frame-ancestors 'none'");
     expect(res.headers['x-powered-by']).toBeUndefined();

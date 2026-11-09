@@ -14,7 +14,7 @@ export default defineConfig({
   },
   webServer: {
     command: 'node tests/e2e/server.ts',
-    url: 'http://localhost:3101/healthz',
+    url: 'http://localhost:3101/health',
     reuseExistingServer: false,
     timeout: 120_000,
   },

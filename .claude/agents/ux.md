@@ -41,7 +41,7 @@ report, and don't stop to ask.
 The dev server on http://localhost:3100 with the local seeded database.
 
 - `/ux` checks the server before launching you: `curl -s -o /dev/null -w '%{http_code}'
-http://localhost:3100/healthz`. If it isn't up, say so and stop. Don't start or stop servers
+http://localhost:3100/health`. If it isn't up, say so and stop. Don't start or stop servers
   and don't reseed the database: a server you start dies with you, and the data is the owner's.
 - **Personas** (password `zpevnak-dev-password`, `src/server/db/devPersonas.ts`):
   `user@zpevnak.test` (owns the public playlist "Vršek 2026" and a pending song),
