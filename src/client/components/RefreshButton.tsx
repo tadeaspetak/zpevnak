@@ -1,6 +1,7 @@
 import { ActionIcon, Tooltip } from '@mantine/core';
 import { IconRefresh } from '@tabler/icons-react';
 import { useState } from 'react';
+import { checkForAppUpdate } from '../appUpdate.ts';
 import { putPlaylist, syncCatalog, useCatalog } from '../data/catalog.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useOnline } from '../hooks/useOnline.ts';
@@ -9,9 +10,10 @@ import { trpc } from '../trpc.ts';
 import classes from './RefreshButton.module.css';
 
 /**
- * Fetches what others changed: the catalog, and on a playlist's page that playlist too. The
- * way to see a bandmate's change without reloading, and the only way at all in an app installed
- * to the home screen, which has no reload (D74). Stays where you are; offline, it waits.
+ * Fetches what others changed: the catalog, and on a playlist's page that playlist too; and
+ * asks whether the app itself has a new version (D75), which reloads onto it. The way to see a
+ * bandmate's change without reloading, and the only way at all in an app installed to the home
+ * screen, which has no reload (D74). Otherwise stays where you are; offline, it waits.
  */
 export function RefreshButton({ playlistId }: { playlistId?: number }) {
   const { t } = useI18n();
@@ -26,6 +28,7 @@ export function RefreshButton({ playlistId }: { playlistId?: number }) {
     try {
       await Promise.all([
         syncCatalog(me?.id ?? null),
+        checkForAppUpdate(),
         playlistId
           ? utils.playlists.byId
               .fetch({ id: playlistId }, { staleTime: 0 })

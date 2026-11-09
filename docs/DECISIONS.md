@@ -173,6 +173,11 @@ entry that says which it replaces and what changed.
   same in an app installed to the home screen, which has no reload (no ⌘R, no pull-to-refresh),
   and keeps the reader where they are. Offline, it is greyed out. (2026-11-09)
 
+- **D75. New app versions:** a device checks when the app starts and reloads itself onto a new
+  version once installed. The refresh button (D74) asks too, so a tablet left open for days
+  updates when someone taps ↻, and the reload comes when it was asked for. Verified on a local
+  production build: ↻ moved an open page from one version to the next. (2026-11-09)
+
 ## Engineering
 
 - **D40. One developer; commit to `main`.** No branches, PRs or release process. (2026-11-09)
