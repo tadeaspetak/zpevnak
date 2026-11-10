@@ -1,4 +1,4 @@
-import { Group, Text, UnstyledButton } from '@mantine/core';
+import { Box, Group, Text, UnstyledButton } from '@mantine/core';
 import { IconListDetails } from '@tabler/icons-react';
 import { Link } from 'react-router';
 import { playlistFacts } from '../data/playlistFacts.ts';
@@ -32,7 +32,7 @@ export function PlaylistRow({
     >
       <Group gap="sm" wrap="nowrap" align="flex-start">
         <IconListDetails size={20} className={classes.playlistIcon} />
-        <div className={classes.text}>
+        <Box flex={1} miw={0}>
           <Text fw={600} truncate>
             {playlist.name}
           </Text>
@@ -41,7 +41,7 @@ export function PlaylistRow({
               .filter(Boolean)
               .join(' · ')}
           </Text>
-        </div>
+        </Box>
       </Group>
     </UnstyledButton>
   );

@@ -11,8 +11,8 @@ export function StatusBadge({ status }: { status: SongStatus }) {
   return (
     <Badge
       size="sm"
-      variant="light"
-      color={status === 'rejected' ? 'red' : 'gray'}
+      // Unverified is neutral (the theme's default); rejected means something: red (D61).
+      {...(status === 'rejected' ? { variant: 'outline', color: 'red' } : {})}
       style={{ flexShrink: 0 }}
     >
       {status === 'rejected' ? t('common.rejected') : t('common.unverified')}

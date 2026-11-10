@@ -69,7 +69,7 @@ export function PlaylistsPage() {
       <Page>
         <Stack gap="lg">
           {!me && (
-            <Alert variant="light" color="gray">
+            <Alert>
               <Group justify="space-between">
                 <Text size="sm">{t('playlists.signInToCreate')}</Text>
                 <Button

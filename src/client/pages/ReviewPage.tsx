@@ -1,17 +1,4 @@
-import {
-  ActionIcon,
-  Alert,
-  Badge,
-  Button,
-  Container,
-  Group,
-  Modal,
-  Radio,
-  Stack,
-  Text,
-  Textarea,
-  Tooltip,
-} from '@mantine/core';
+import { Alert, Badge, Button, Container, Group, Stack, Text } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import {
@@ -21,10 +8,10 @@ import {
   IconTrash,
   IconX,
 } from '@tabler/icons-react';
-import { type ReactNode, useRef, useState } from 'react';
+import { type ReactNode, useRef } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router';
-import { REJECTION_REASONS, type RejectionReason } from '#shared/validators/index.ts';
 import { DeleteSongModal } from '../components/DeleteSongModal.tsx';
+import { RejectModal } from '../components/RejectModal.tsx';
 import { ErrorText } from '../components/ErrorText.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
 import { StatusBadge } from '../components/StatusBadge.tsx';
@@ -37,6 +24,7 @@ import { useI18n } from '../i18n/index.tsx';
 import { ChordProEditor, type ChordProEditorHandle } from '../song/ChordProEditor.tsx';
 import { trpc } from '../trpc.ts';
 import { url } from '../urls.ts';
+import { IconButton } from '../components/IconButton.tsx';
 
 /**
  * An editor's review of one song: fix the ChordPro right here, then verify or reject.
@@ -44,11 +32,16 @@ import { url } from '../urls.ts';
  * sitting, and a song put off for later comes round again only after the rest.
  */
 export function ReviewPage() {
+  const id = Number(useParams().id);
+  // A fresh page per song: its mutations, errors and dialogs don't carry over to the next.
+  return <ReviewSong key={id} id={id} />;
+}
+
+function ReviewSong({ id }: { id: number }) {
   const i18n = useI18n();
   const { t, formatDate } = i18n;
   const { playlists } = useCatalog();
   const navigate = useNavigate();
-  const id = Number(useParams().id);
   const { me, isEditor, known } = useMe();
   const utils = trpc.useUtils();
   const song = trpc.songs.byId.useQuery({ id }, { enabled: isEditor });
@@ -147,34 +140,18 @@ export function ReviewPage() {
         actions={
           <>
             {position > 0 && (
-              <Badge variant="default" size="lg">
+              <Badge size="lg">
                 {position} / {pending.data?.length}
               </Badge>
             )}
             {position > 0 && (pending.data?.length ?? 0) > 1 && (
-              <Tooltip label={t('queue.skip')}>
-                <ActionIcon
-                  variant="subtle"
-                  color="gray"
-                  size="lg"
-                  onClick={() => void goToNext()}
-                  aria-label={t('queue.skip')}
-                >
-                  <IconPlayerTrackNext size={20} />
-                </ActionIcon>
-              </Tooltip>
+              <IconButton label={t('queue.skip')} onClick={() => void goToNext()}>
+                <IconPlayerTrackNext size={20} />
+              </IconButton>
             )}
-            <Tooltip label={t('song.delete')}>
-              <ActionIcon
-                variant="subtle"
-                color="gray"
-                size="lg"
-                onClick={openDelete}
-                aria-label={t('song.delete')}
-              >
-                <IconTrash size={20} />
-              </ActionIcon>
-            </Tooltip>
+            <IconButton label={t('song.delete')} onClick={openDelete}>
+              <IconTrash size={20} />
+            </IconButton>
           </>
         }
       />
@@ -219,7 +196,7 @@ export function ReviewPage() {
               )}
             </Alert>
           )}
-          <ErrorText error={save.error ?? verify.error ?? reject.error} />
+          <ErrorText error={save.error ?? verify.error} />
           <ChordProEditor
             ref={editor}
             value={current}
@@ -265,78 +242,13 @@ export function ReviewPage() {
         </Stack>
       </Container>
       <RejectModal
-        key={id}
         opened={rejecting}
         onClose={closeReject}
         loading={reject.isPending}
+        error={reject.error}
         dropsEdits={dirty}
         onReject={(reason, note) => reject.mutate({ id, reason, note })}
       />
     </>
-  );
-}
-
-function RejectModal(props: {
-  opened: boolean;
-  onClose: () => void;
-  loading: boolean;
-  /** The editor changed the text: rejecting doesn't keep it. */
-  dropsEdits: boolean;
-  onReject: (reason: RejectionReason, note: string) => void;
-}) {
-  const { t } = useI18n();
-  // Nothing chosen for the editor: a reason picked by default is a reason nobody gave.
-  const [reason, setReason] = useState<RejectionReason | null>(null);
-  const [note, setNote] = useState('');
-  // "Other" says nothing by itself: the note is the reason.
-  const needsNote = reason === 'other';
-  const ready = reason !== null && (!needsNote || note.trim() !== '');
-  return (
-    <Modal opened={props.opened} onClose={props.onClose} title={t('queue.rejectTitle')}>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (reason && ready) {
-            props.onReject(reason, note);
-          }
-        }}
-      >
-        <Stack>
-          <Radio.Group
-            label={t('queue.reason')}
-            value={reason ?? ''}
-            onChange={(v) => setReason(v as RejectionReason)}
-          >
-            <Stack gap="xs" mt="xs">
-              {REJECTION_REASONS.map((r) => (
-                <Radio key={r} value={r} label={t(`reason.${r}`)} />
-              ))}
-            </Stack>
-          </Radio.Group>
-          <Textarea
-            label={needsNote ? t('queue.noteRequired') : t('queue.note')}
-            required={needsNote}
-            value={note}
-            onChange={(e) => setNote(e.currentTarget.value)}
-            autosize
-            minRows={2}
-            maxLength={1000}
-          />
-          {props.dropsEdits && (
-            <Text size="sm" c="dimmed">
-              {t('queue.rejectDropsEdits')}
-            </Text>
-          )}
-          <Group justify="flex-end">
-            <Button variant="default" onClick={props.onClose}>
-              {t('common.cancel')}
-            </Button>
-            <Button type="submit" color="red" loading={props.loading} disabled={!ready}>
-              {t('queue.reject')}
-            </Button>
-          </Group>
-        </Stack>
-      </form>
-    </Modal>
   );
 }

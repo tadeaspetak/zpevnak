@@ -2,8 +2,6 @@ import {
   Alert,
   Anchor,
   Button,
-  Center,
-  Loader,
   PasswordInput,
   Stack,
   Text,
@@ -20,8 +18,8 @@ import { PageHeader } from '../components/PageHeader.tsx';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc } from '../trpc.ts';
 import { url } from '../urls.ts';
+import { PageLoader } from '../components/PageLoader.tsx';
 
-/** Where to go after signing in. Only paths inside the app: never an open redirect. */
 /**
  * Where to go after signing in, signing up or confirming an email: the `next` path, when it is
  * one inside the app (never an open redirect), else null.
@@ -136,7 +134,7 @@ export function SignUpPage() {
   if (signUp.data) {
     return (
       <AuthPage title={t('auth.signUpTitle')}>
-        <Alert variant="light" color="green" icon={<IconMailCheck size={20} />}>
+        <Alert color="green" icon={<IconMailCheck size={20} />}>
           {signUp.data.signedIn ? t('auth.signedUp') : t('auth.signUpPending')}
         </Alert>
         <Button component={Link} to={url.home()}>
@@ -200,7 +198,7 @@ export function ForgotPasswordPage() {
   return (
     <AuthPage title={t('auth.forgotTitle')}>
       {request.isSuccess ? (
-        <Alert variant="light" color="green" icon={<IconMailCheck size={20} />}>
+        <Alert color="green" icon={<IconMailCheck size={20} />}>
           {t('auth.linkSent', { email })}
         </Alert>
       ) : (
@@ -305,7 +303,7 @@ export function VerifyEmailPage() {
     <AuthPage title={t('auth.verifyTitle')}>
       {verify.isSuccess ? (
         <>
-          <Alert variant="light" color="green" icon={<IconCircleCheck size={20} />}>
+          <Alert color="green" icon={<IconCircleCheck size={20} />}>
             {t('auth.verified')}
           </Alert>
           <Button component={Link} to={url.home()}>
@@ -320,9 +318,7 @@ export function VerifyEmailPage() {
           </Anchor>
         </>
       ) : (
-        <Center py="xl">
-          <Loader />
-        </Center>
+        <PageLoader />
       )}
     </AuthPage>
   );

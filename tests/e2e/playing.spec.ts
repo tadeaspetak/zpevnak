@@ -57,6 +57,13 @@ test('a player goes through a playlist, takes a detour, and comes back', async (
   await page.getByRole('link', { name: 'Back to Vršek 2026' }).click();
   await expect(page).toHaveURL(/\/playlist\/\d+-vrsek-2026\/2$/);
   await expect(heading).toHaveText('Lajla tov (Dobrou noc)');
+
+  // Up to the playlist: it carries on where the player is, and says so (D92).
+  await page.getByRole('link', { name: 'Back to Vršek 2026' }).click();
+  await expect(page.getByRole('link', { name: 'Continue' })).toHaveAttribute(
+    'href',
+    /\/playlist\/\d+-vrsek-2026\/2$/,
+  );
 });
 
 test('songs stay searchable and playable offline', async ({ page, context }) => {

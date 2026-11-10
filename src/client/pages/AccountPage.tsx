@@ -57,7 +57,7 @@ export function AccountPage() {
       <Page>
         <Stack gap="xl">
           {!me.emailVerified && (
-            <Alert color="yellow" variant="light">
+            <Alert color="yellow">
               <Stack gap="xs">
                 <Text size="sm">{t('account.verifyBanner')}</Text>
                 {resend.isSuccess ? (
@@ -85,7 +85,7 @@ export function AccountPage() {
               <Title order={2} size="h4">
                 {me.displayName}
               </Title>
-              <Badge variant="default">{t(`account.role.${me.role}`)}</Badge>
+              <Badge>{t(`account.role.${me.role}`)}</Badge>
             </Group>
             <Text c="dimmed">{me.email}</Text>
             <Group gap="md" mt="sm">

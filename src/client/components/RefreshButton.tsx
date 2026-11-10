@@ -1,4 +1,3 @@
-import { ActionIcon, Tooltip } from '@mantine/core';
 import { IconRefresh } from '@tabler/icons-react';
 import { useState } from 'react';
 import { checkForAppUpdate } from '../appUpdate.ts';
@@ -8,6 +7,7 @@ import { useOnline } from '../hooks/useOnline.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc } from '../trpc.ts';
 import classes from './RefreshButton.module.css';
+import { IconButton } from './IconButton.tsx';
 
 /**
  * Fetches what others changed: the catalog, and on a playlist's page that playlist too; and
@@ -48,22 +48,18 @@ export function RefreshButton({ playlistId }: { playlistId?: number }) {
 
   const spinning = busy || syncing;
   return (
-    <Tooltip label={online ? t('refresh.label') : t('common.offline')}>
-      <ActionIcon
-        variant="subtle"
-        color="gray"
-        size="lg"
-        onClick={refresh}
-        disabled={!online}
-        aria-label={t('refresh.label')}
-        aria-busy={spinning}
-      >
-        <IconRefresh
-          size={20}
-          className={classes.icon}
-          data-spinning={spinning || undefined}
-        />
-      </ActionIcon>
-    </Tooltip>
+    <IconButton
+      label={t('refresh.label')}
+      tooltip={online ? t('refresh.label') : t('common.offline')}
+      onClick={refresh}
+      disabled={!online}
+      aria-busy={spinning}
+    >
+      <IconRefresh
+        size={20}
+        className={classes.icon}
+        data-spinning={spinning || undefined}
+      />
+    </IconButton>
   );
 }

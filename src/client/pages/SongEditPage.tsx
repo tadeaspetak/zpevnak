@@ -1,4 +1,4 @@
-import { Button, Center, Container, Loader, Stack } from '@mantine/core';
+import { Alert, Button, Container, Stack } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useRef } from 'react';
 import {
@@ -8,7 +8,10 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router';
+import { canChangeSong } from '#shared/songs.ts';
 import { ErrorText } from '../components/ErrorText.tsx';
+import { Page } from '../components/Page.tsx';
+import { PageLoader } from '../components/PageLoader.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
 import { putPlaylist, putSong, useCatalog } from '../data/catalog.ts';
 import { useDraft } from '../hooks/useDraft.ts';
@@ -67,10 +70,12 @@ export function NewSongPage() {
     return known ? (
       <Navigate to={url.logIn(location.pathname + location.search)} replace />
     ) : (
-      <Center h="100dvh">
-        <Loader />
-      </Center>
+      <PageLoader full />
     );
+  }
+  if (!me.emailVerified) {
+    // The server would refuse the song; say why before anything is typed.
+    return <Blocked title={t('editor.newTitle')} message={t('editor.confirmFirst')} />;
   }
   return (
     <>
@@ -119,6 +124,7 @@ export function EditSongPage() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const id = Number(useParams().id);
+  const { me, known } = useMe();
   const { songs, loaded } = useCatalog();
   const fromCatalog = songs.get(id);
   const fallback = trpc.songs.byId.useQuery({ id }, { enabled: loaded && !fromCatalog });
@@ -138,7 +144,14 @@ export function EditSongPage() {
     },
   });
   if (!song) {
-    return null;
+    return fallback.error ? (
+      <Blocked title={t('editor.editTitle')} error={fallback.error} />
+    ) : (
+      <PageLoader full />
+    );
+  }
+  if (known && !canChangeSong(me, song)) {
+    return <Blocked title={t('editor.editTitle')} message={t('editor.notEditable')} />;
   }
   const source = draft.source ?? song.source;
   return (
@@ -175,6 +188,28 @@ export function EditSongPage() {
           </Stack>
         </form>
       </Container>
+    </>
+  );
+}
+
+/** An editor page that can't be used: why, and the way home. */
+function Blocked({
+  title,
+  message,
+  error,
+}: {
+  title: string;
+  message?: string;
+  error?: unknown;
+}) {
+  const { t } = useI18n();
+  return (
+    <>
+      <PageHeader title={title} backTo={url.home()} backLabel={t('nav.backHome')} />
+      <Page>
+        {message && <Alert color="yellow">{message}</Alert>}
+        <ErrorText error={error} />
+      </Page>
     </>
   );
 }

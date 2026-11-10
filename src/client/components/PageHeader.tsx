@@ -1,9 +1,10 @@
-import { ActionIcon, Container, Divider, Group, Title, Tooltip } from '@mantine/core';
+import { Container, Divider, Group, Title } from '@mantine/core';
 import { IconArrowLeft } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
-import { Link } from 'react-router';
+
 import classes from './PageHeader.module.css';
 import { SearchButton } from './SearchButton.tsx';
+import { IconButton } from './IconButton.tsx';
 
 type Props = {
   title: ReactNode;
@@ -32,18 +33,9 @@ export function PageHeader({
     <header className={classes.header}>
       <Container size={width} px="md">
         <Group gap="xs" wrap="nowrap">
-          <Tooltip label={backLabel}>
-            <ActionIcon
-              component={Link}
-              to={backTo}
-              variant="subtle"
-              color="gray"
-              size="lg"
-              aria-label={backLabel}
-            >
-              <IconArrowLeft size={22} />
-            </ActionIcon>
-          </Tooltip>
+          <IconButton label={backLabel} to={backTo}>
+            <IconArrowLeft size={22} />
+          </IconButton>
           <Title order={1} size="h3" className={classes.title}>
             {title}
           </Title>

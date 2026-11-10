@@ -41,6 +41,7 @@ import { useOnline } from '../hooks/useOnline.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { url } from '../urls.ts';
 import classes from './HomePage.module.css';
+import { IconButton } from '../components/IconButton.tsx';
 
 const RECENT_PLAYLISTS = 4;
 const RECENT_SONGS = 6;
@@ -101,50 +102,41 @@ export function HomePage() {
               </Title>
               {!online && (
                 <Tooltip label={t('common.offlineHint')} multiline w={240}>
-                  <Badge
-                    variant="light"
-                    color="gray"
-                    leftSection={<IconWifiOff size={12} />}
-                  >
+                  <Badge leftSection={<IconWifiOff size={12} />}>
                     {t('common.offline')}
                   </Badge>
                 </Tooltip>
               )}
             </Group>
             <Group gap={4} wrap="nowrap">
-              <NavIcon
-                to={url.playlists()}
-                label={t('nav.playlists')}
-                icon={<IconPlaylist />}
-              />
+              <IconButton to={url.playlists()} label={t('nav.playlists')}>
+                <IconPlaylist />
+              </IconButton>
               {me?.emailVerified && (
-                <NavIcon
-                  to={url.newSong()}
-                  label={t('nav.newSong')}
-                  icon={<IconPlus />}
-                />
+                <IconButton to={url.newSong()} label={t('nav.newSong')}>
+                  <IconPlus />
+                </IconButton>
               )}
               {isEditor && (
                 <Indicator label={waiting} size={18} offset={6} disabled={waiting === 0}>
-                  <NavIcon
+                  <IconButton
                     to={url.queue()}
                     label={
                       waiting > 0
                         ? t('nav.queueWaiting', { count: waiting })
                         : t('nav.queue')
                     }
-                    icon={<IconChecklist />}
-                  />
+                  >
+                    <IconChecklist />
+                  </IconButton>
                 </Indicator>
               )}
               <RefreshButton />
               <SettingsButton />
               {me ? (
-                <NavIcon
-                  to={url.account()}
-                  label={t('nav.account')}
-                  icon={<IconUserCircle />}
-                />
+                <IconButton to={url.account()} label={t('nav.account')}>
+                  <IconUserCircle />
+                </IconButton>
               ) : (
                 <Button component={Link} to={url.logIn()} variant="default" size="sm">
                   {t('nav.logIn')}
@@ -164,8 +156,6 @@ export function HomePage() {
             rightSection={
               query ? (
                 <ActionIcon
-                  variant="subtle"
-                  color="gray"
                   onClick={() => {
                     setQuery('');
                     inputRef.current?.focus();
@@ -254,23 +244,6 @@ export function HomePage() {
       </Container>
       <PlaylistPill />
     </div>
-  );
-}
-
-function NavIcon({ to, label, icon }: { to: string; label: string; icon: ReactNode }) {
-  return (
-    <Tooltip label={label}>
-      <ActionIcon
-        component={Link}
-        to={to}
-        variant="subtle"
-        color="gray"
-        size="lg"
-        aria-label={label}
-      >
-        {icon}
-      </ActionIcon>
-    </Tooltip>
   );
 }
 

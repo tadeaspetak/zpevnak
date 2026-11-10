@@ -1,4 +1,4 @@
-import { Button, Group, Loader, Modal, Stack, Text } from '@mantine/core';
+import { Loader, Text } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useNavigate } from 'react-router';
 import { dropSong, syncCatalog } from '../data/catalog.ts';
@@ -7,16 +7,7 @@ import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc } from '../trpc.ts';
 import { url } from '../urls.ts';
-import { ErrorText } from './ErrorText.tsx';
-
-/** Who may delete a song (D78): editors any; its author until it is approved. */
-export function useCanDelete(song: SongRecord | undefined): boolean {
-  const { me, isEditor } = useMe();
-  if (!song || !me?.emailVerified) {
-    return false;
-  }
-  return isEditor || (song.createdBy === me.id && song.status !== 'verified');
-}
+import { ConfirmModal } from './ConfirmModal.tsx';
 
 /**
  * Deletes a song for good, after saying how many playlists lose it: the one change to people's
@@ -48,34 +39,25 @@ export function DeleteSongModal({
     },
   });
   return (
-    <Modal opened={opened} onClose={onClose} title={t('song.delete')}>
-      <Stack>
-        <Text>{t('song.deleteConfirm', { title: song.title })}</Text>
-        {impact.isLoading ? (
-          <Loader size="xs" />
-        ) : (
-          impact.data &&
-          impact.data.playlists > 0 && (
-            <Text fw={600}>
-              {t('song.deleteImpact', { count: impact.data.playlists })}
-            </Text>
-          )
-        )}
-        <ErrorText error={impact.error ?? remove.error} />
-        <Group justify="flex-end">
-          <Button variant="default" onClick={onClose}>
-            {t('common.cancel')}
-          </Button>
-          <Button
-            color="red"
-            loading={remove.isPending}
-            disabled={impact.isLoading}
-            onClick={() => remove.mutate({ id: song.id })}
-          >
-            {t('common.delete')}
-          </Button>
-        </Group>
-      </Stack>
-    </Modal>
+    <ConfirmModal
+      opened={opened}
+      onClose={onClose}
+      title={t('song.delete')}
+      confirmLabel={t('common.delete')}
+      onConfirm={() => remove.mutate({ id: song.id })}
+      loading={remove.isPending}
+      disabled={impact.isLoading}
+      error={impact.error ?? remove.error}
+    >
+      <Text>{t('song.deleteConfirm', { title: song.title })}</Text>
+      {impact.isLoading ? (
+        <Loader size="xs" />
+      ) : (
+        impact.data &&
+        impact.data.playlists > 0 && (
+          <Text fw={600}>{t('song.deleteImpact', { count: impact.data.playlists })}</Text>
+        )
+      )}
+    </ConfirmModal>
   );
 }

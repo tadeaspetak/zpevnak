@@ -19,11 +19,6 @@
   }
 }
 
-.text {
-  flex: 1;
-  min-width: 0;
-}
-
 /* In the playlist: a filled check. Not in: a quiet plus. */
 .mark {
   display: inline-flex;

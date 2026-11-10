@@ -1,11 +1,11 @@
-import { Group, Modal, Stack, Text, TextInput } from '@mantine/core';
+import { Group, Modal, Stack, TextInput } from '@mantine/core';
 import { IconCheck, IconPlus } from '@tabler/icons-react';
 import { useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { useCatalog } from '../data/catalog.ts';
 import { useSongSearch } from '../data/search.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { NothingFound } from './SearchResults.tsx';
-import { StatusBadge } from './StatusBadge.tsx';
+import { SongLabel } from './SongRow.tsx';
 import classes from './SongPicker.module.css';
 
 const MAX_RESULTS = 30;
@@ -119,19 +119,7 @@ export function SongPicker({ opened, onClose, playlistId, songIds, onToggle }: P
                 onClick={() => toggle(song.id)}
               >
                 <Group justify="space-between" wrap="nowrap">
-                  <div className={classes.text}>
-                    <Group gap={6} wrap="nowrap">
-                      <Text fw={600} truncate>
-                        {song.title}
-                      </Text>
-                      <StatusBadge status={song.status} />
-                    </Group>
-                    {song.artist && (
-                      <Text size="sm" c="dimmed" truncate>
-                        {song.artist}
-                      </Text>
-                    )}
-                  </div>
+                  <SongLabel song={song} />
                   <span className={classes.mark} data-selected={selected || undefined}>
                     {selected ? <IconCheck size={18} /> : <IconPlus size={18} />}
                   </span>

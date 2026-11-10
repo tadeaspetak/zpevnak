@@ -163,6 +163,10 @@ export const cs = {
   'editor.line': 'Řádek {line}',
   'editor.noTitle': 'Doplň název: {title: …}',
   'editor.submit': 'Odeslat ke kontrole',
+  'editor.confirmFirst':
+    'Potvrď svůj e-mail, pak můžeš přidávat písničky. Odkaz najdeš v e-mailu z registrace.',
+  'editor.notEditable':
+    'Tuhle písničku upravit nemůžeš: schválené písničky upravují editoři.',
   'editor.submitted': 'Odesláno. Editor ji zkontroluje.',
   'editor.submittedTo': 'Odesláno ke kontrole a přidáno do playlistu {name}.',
   'editor.saveAndResubmit': 'Uložit a poslat ke kontrole',

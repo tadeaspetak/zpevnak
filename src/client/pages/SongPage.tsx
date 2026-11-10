@@ -1,4 +1,4 @@
-import { Alert, Button, Loader, Center, Stack, Text } from '@mantine/core';
+import { Alert, Button, Center, Stack, Text } from '@mantine/core';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router';
 import type { SongLinkState } from '../components/SongRow.tsx';
@@ -24,6 +24,8 @@ import { idFromRef, url } from '../urls.ts';
 import { followSong, playlistSteps } from '../song/followSong.ts';
 import { useCanonicalPath } from '../hooks/useCanonicalPath.ts';
 import classes from './SongPage.module.css';
+import { PageLoader } from '../components/PageLoader.tsx';
+import { canChangeSong } from '#shared/songs.ts';
 
 /** /song/:songRef: one song on its own. */
 export function SongPage() {
@@ -78,7 +80,7 @@ export function PlaylistSongPage() {
   useCanonicalPath(playlist ? url.playlistSong(playlist, position) : null);
 
   if (!loaded) {
-    return <FullPageLoader />;
+    return <PageLoader full />;
   }
   if (!playlist) {
     return <Missing text={t('playlists.notFound')} />;
@@ -131,7 +133,7 @@ function SongPlayer({
   const { song, pending } = useSong(songId);
   const { session } = usePlayer();
   const prefs = usePrefs();
-  const { me, isEditor } = useMe();
+  const { me } = useMe();
   useWakeLock();
   const back = useBack(playlist);
   const toolbar = useHideOnScroll();
@@ -214,15 +216,13 @@ function SongPlayer({
   );
 
   if (pending) {
-    return <FullPageLoader />;
+    return <PageLoader full />;
   }
   if (!song || !shown) {
     return <Missing text={t('song.notFound')} />;
   }
 
-  const canEdit =
-    me?.emailVerified &&
-    (isEditor || (song.createdBy === me.id && song.status !== 'verified'));
+  const canEdit = canChangeSong(me, song);
   // Jumped out of a playlist to play something else: keep the way back in reach.
   const showPill = !playlist && session !== null;
 
@@ -240,7 +240,7 @@ function SongPlayer({
         semitones={semitones}
         hasDiagrams={(parsed?.definitions.length ?? 0) > 0}
         hasColumns={(parsed?.columns ?? 1) > 1}
-        canEdit={Boolean(canEdit)}
+        canEdit={canEdit}
         canAddToPlaylist={Boolean(me?.emailVerified)}
         hidden={toolbar.hidden}
       />
@@ -263,7 +263,7 @@ function SongPlayer({
         />
       </div>
       {playlist?.removed && (
-        <Alert color="gray" variant="light" mx="md" mt="xs">
+        <Alert mx="md" mt="xs">
           {t('song.removedFromPlaylist')}
         </Alert>
       )}
@@ -300,14 +300,6 @@ function useBack(playlist: PlaylistContext | null) {
   return results
     ? { to: results, label: t('nav.backToResults') }
     : { to: url.home(), label: t('nav.backHome') };
-}
-
-function FullPageLoader() {
-  return (
-    <Center h="100dvh">
-      <Loader />
-    </Center>
-  );
 }
 
 function Missing({ text }: { text: string }) {

@@ -1,10 +1,8 @@
 import {
-  ActionIcon,
   Modal,
   SegmentedControl,
   Stack,
   Text,
-  Tooltip,
   useMantineColorScheme,
   type MantineColorScheme,
 } from '@mantine/core';
@@ -12,6 +10,7 @@ import { useDisclosure } from '@mantine/hooks';
 import { IconSettings } from '@tabler/icons-react';
 import type { Locale } from '#shared/validators/index.ts';
 import { useI18n } from '../i18n/index.tsx';
+import { IconButton } from './IconButton.tsx';
 
 /** Language and theme, per device, for everyone: a cogwheel opening a small dialog. */
 export function SettingsButton() {
@@ -20,18 +19,9 @@ export function SettingsButton() {
   const [opened, { open, close }] = useDisclosure(false);
   return (
     <>
-      <Tooltip label={t('settings.open')}>
-        <ActionIcon
-          variant="subtle"
-          color="gray"
-          size="lg"
-          onClick={open}
-          aria-label={t('settings.open')}
-          aria-haspopup="dialog"
-        >
-          <IconSettings size={22} />
-        </ActionIcon>
-      </Tooltip>
+      <IconButton label={t('settings.open')} onClick={open} aria-haspopup="dialog">
+        <IconSettings size={22} />
+      </IconButton>
       <Modal opened={opened} onClose={close} title={t('settings.open')} size="sm">
         <Stack gap="md">
           <div>

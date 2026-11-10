@@ -16,16 +16,7 @@ export function AdminUsersPage() {
   const utils = trpc.useUtils();
   const users = trpc.users.list.useQuery(undefined, { enabled: isAdmin });
   const setRole = trpc.users.setRole.useMutation({
-    onSuccess: (_, input) => {
-      const user = users.data?.find((u) => u.id === input.userId);
-      notifications.show({
-        message: t('users.roleChanged', {
-          name: user?.displayName ?? '',
-          role: t(`account.role.${input.role}`),
-        }),
-      });
-      void utils.users.list.invalidate();
-    },
+    onSuccess: () => void utils.users.list.invalidate(),
   });
 
   if (known && !isAdmin) {
@@ -63,7 +54,20 @@ export function AdminUsersPage() {
                 allowDeselect={false}
                 data={ROLES.map((r) => ({ value: r, label: t(`account.role.${r}`) }))}
                 onChange={(role) =>
-                  role && setRole.mutate({ userId: user.id, role: role as Role })
+                  role &&
+                  setRole.mutate(
+                    { userId: user.id, role: role as Role },
+                    {
+                      // Named from the row itself: the person whose role it is.
+                      onSuccess: () =>
+                        notifications.show({
+                          message: t('users.roleChanged', {
+                            name: user.displayName,
+                            role: t(`account.role.${role as Role}`),
+                          }),
+                        }),
+                    },
+                  )
                 }
               />
             </Group>

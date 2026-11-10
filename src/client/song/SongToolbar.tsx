@@ -28,7 +28,7 @@ import {
 } from '@tabler/icons-react';
 import { Link } from 'react-router';
 import { AddToPlaylistModal } from '../components/AddToPlaylistModal.tsx';
-import { DeleteSongModal, useCanDelete } from '../components/DeleteSongModal.tsx';
+import { DeleteSongModal } from '../components/DeleteSongModal.tsx';
 import { mailtoAuthor } from '../contact.ts';
 import { SearchButton } from '../components/SearchButton.tsx';
 import { FONT_SCALES, usePrefs } from '../data/prefs.ts';
@@ -38,6 +38,7 @@ import { useFullscreen } from '../hooks/useFullscreen.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { url } from '../urls.ts';
 import classes from './SongToolbar.module.css';
+import { IconButton } from '../components/IconButton.tsx';
 
 type Props = {
   backTo: string;
@@ -49,6 +50,7 @@ type Props = {
   hasDiagrams: boolean;
   /** The song asks for columns ({columns: 2}): the reader may turn them off. */
   hasColumns: boolean;
+  /** May edit the song, and so delete it: the same people (canChangeSong, D78). */
   canEdit: boolean;
   canAddToPlaylist: boolean;
   /** Out of the way: scrolled away, or the reader tapped the song (`useHideOnScroll`). */
@@ -79,7 +81,6 @@ export function SongToolbar(props: Props) {
   const wide = useWide();
   const [adding, { open: openAdd, close: closeAdd }] = useDisclosure(false);
   const [deleting, { open: openDelete, close: closeDelete }] = useDisclosure(false);
-  const canDelete = useCanDelete(song);
 
   // A song without a {key} shows how far it's transposed instead. A real minus sign: a
   // hyphen reads as a dash.
@@ -94,18 +95,9 @@ export function SongToolbar(props: Props) {
     <>
       <header className={classes.bar} data-hidden={hidden || undefined}>
         <Group gap={4} wrap="nowrap" className={classes.inner}>
-          <Tooltip label={backLabel}>
-            <ActionIcon
-              component={Link}
-              to={backTo}
-              variant="subtle"
-              color="gray"
-              size="xl"
-              aria-label={backLabel}
-            >
-              <IconArrowLeft size={24} />
-            </ActionIcon>
-          </Tooltip>
+          <IconButton label={backLabel} to={backTo} size="xl">
+            <IconArrowLeft size={24} />
+          </IconButton>
 
           <div className={classes.spacer} />
 
@@ -117,8 +109,6 @@ export function SongToolbar(props: Props) {
             aria-label={t('song.transpose')}
           >
             <ActionIcon
-              variant="subtle"
-              color="gray"
               size="lg"
               onClick={() => prefs.setTranspose(song.id, semitones - 1)}
               aria-label={t('song.transposeDown')}
@@ -151,8 +141,6 @@ export function SongToolbar(props: Props) {
               </Tooltip>
             )}
             <ActionIcon
-              variant="subtle"
-              color="gray"
               size="lg"
               onClick={() => prefs.setTranspose(song.id, semitones + 1)}
               aria-label={t('song.transposeUp')}
@@ -164,8 +152,6 @@ export function SongToolbar(props: Props) {
           <Popover position="bottom-end" shadow="md" withArrow width={300}>
             <Popover.Target>
               <ActionIcon
-                variant="subtle"
-                color="gray"
                 size="xl"
                 aria-label={
                   prefs.showChords
@@ -194,8 +180,6 @@ export function SongToolbar(props: Props) {
                     aria-label={t('song.textSize')}
                   >
                     <ActionIcon
-                      variant="subtle"
-                      color="gray"
                       size="lg"
                       onClick={() => prefs.stepFont(-1)}
                       disabled={prefs.fontScale <= (FONT_SCALES[0] ?? 0)}
@@ -209,8 +193,6 @@ export function SongToolbar(props: Props) {
                       })}
                     </Text>
                     <ActionIcon
-                      variant="subtle"
-                      color="gray"
                       size="lg"
                       onClick={() => prefs.stepFont(1)}
                       disabled={prefs.fontScale >= (FONT_SCALES.at(-1) ?? 0)}
@@ -256,8 +238,6 @@ export function SongToolbar(props: Props) {
 
           {fullscreen.supported && (
             <ActionIcon
-              variant="subtle"
-              color="gray"
               size="xl"
               onClick={fullscreen.toggle}
               aria-label={
@@ -275,12 +255,7 @@ export function SongToolbar(props: Props) {
 
           <Menu position="bottom-end" width={260}>
             <Menu.Target>
-              <ActionIcon
-                variant="subtle"
-                color="gray"
-                size="xl"
-                aria-label={t('song.more')}
-              >
+              <ActionIcon size="xl" aria-label={t('song.more')}>
                 <IconDots size={22} />
               </ActionIcon>
             </Menu.Target>
@@ -337,7 +312,7 @@ export function SongToolbar(props: Props) {
                   {t('song.edit')}
                 </Menu.Item>
               )}
-              {canDelete && (
+              {canEdit && (
                 <Menu.Item
                   color="red"
                   leftSection={<IconTrash size={16} />}
@@ -355,9 +330,7 @@ export function SongToolbar(props: Props) {
         </Group>
       </header>
       <AddToPlaylistModal songId={adding ? song.id : null} onClose={closeAdd} />
-      {canDelete && (
-        <DeleteSongModal song={song} opened={deleting} onClose={closeDelete} />
-      )}
+      {canEdit && <DeleteSongModal song={song} opened={deleting} onClose={closeDelete} />}
     </>
   );
 }

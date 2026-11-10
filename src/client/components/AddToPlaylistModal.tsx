@@ -25,21 +25,26 @@ export function AddToPlaylistModal({ songId, onClose }: Props) {
   // Every playlist the viewer may change: their own and those they collaborate on.
   const mine = [...playlists.values()].filter((p) => p.role !== null);
   const [name, setName] = useState('');
-  const edit = trpc.playlists.edit.useMutation();
-  const create = trpc.playlists.create.useMutation();
-
   const added = (playlist: Parameters<typeof putPlaylist>[1] & object) => {
     putPlaylist(playlist.id, playlist);
     notifications.show({
       message: t('playlists.added', { name: playlist.name }),
       icon: <IconCheck size={16} />,
     });
+    close();
+  };
+  // A failure shows in the dialog through `.error`; the next opening starts clean.
+  const edit = trpc.playlists.edit.useMutation({ onSuccess: added });
+  const create = trpc.playlists.create.useMutation({ onSuccess: added });
+  const close = () => {
     setName('');
+    edit.reset();
+    create.reset();
     onClose();
   };
 
   return (
-    <Modal opened={songId !== null} onClose={onClose} title={t('song.addToPlaylist')}>
+    <Modal opened={songId !== null} onClose={close} title={t('song.addToPlaylist')}>
       {songId !== null && (
         <Stack gap="sm">
           <ErrorText error={edit.error ?? create.error} />
@@ -50,11 +55,7 @@ export function AddToPlaylistModal({ songId, onClose }: Props) {
                   key={p.id}
                   className={classes.row}
                   disabled={edit.isPending}
-                  onClick={async () =>
-                    added(
-                      await edit.mutateAsync({ id: p.id, op: { type: 'add', songId } }),
-                    )
-                  }
+                  onClick={() => edit.mutate({ id: p.id, op: { type: 'add', songId } })}
                 >
                   <Text fw={600}>{p.name}</Text>
                   {p.songIds.includes(songId) && (
@@ -68,11 +69,9 @@ export function AddToPlaylistModal({ songId, onClose }: Props) {
           )}
           {mine.length > 0 && <Divider />}
           <form
-            onSubmit={async (e) => {
+            onSubmit={(e) => {
               e.preventDefault();
-              added(
-                await create.mutateAsync({ name, isPublic: false, songIds: [songId] }),
-              );
+              create.mutate({ name, isPublic: false, songIds: [songId] });
             }}
           >
             <Stack gap="xs">

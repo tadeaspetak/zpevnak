@@ -27,12 +27,7 @@ export function SongStatusBanner({
   const noteIsReason = rejection?.reason === 'other' && Boolean(rejection.note);
   if (song.status === 'pending') {
     return (
-      <Alert
-        color="gray"
-        variant="light"
-        icon={<IconInfoCircle size={18} />}
-        className={classes.quiet}
-      >
+      <Alert icon={<IconInfoCircle size={18} />} className={classes.quiet}>
         <Text size="sm">{t('song.unverifiedNote')}</Text>
       </Alert>
     );
@@ -41,7 +36,6 @@ export function SongStatusBanner({
     return (
       <Alert
         color="red"
-        variant="light"
         icon={<IconAlertTriangle size={20} />}
         className={inForm ? undefined : classes.banner}
         title={

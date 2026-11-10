@@ -1,5 +1,7 @@
 import {
+  ActionIcon,
   Alert,
+  Badge,
   createTheme,
   type MantineColorsTuple,
   Modal,
@@ -57,6 +59,10 @@ export const theme = createTheme({
   cursorType: 'pointer',
   variantColorResolver,
   components: {
+    // Icon buttons are quiet by default: the toolbar's and headers' many. A filled one says so.
+    ActionIcon: ActionIcon.extend({ defaultProps: { variant: 'subtle', color: 'gray' } }),
+    // Badges are neutral unless they mean something (D61); never the tinted `light`.
+    Badge: Badge.extend({ defaultProps: { variant: 'default' } }),
     // An alert's colour says what kind of message it is: never the brand orange, which in dark
     // mode reads as an error and matches the buttons. Neutral unless a call site says otherwise.
     Alert: Alert.extend({ defaultProps: { color: 'gray' } }),

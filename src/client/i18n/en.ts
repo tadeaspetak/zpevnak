@@ -161,6 +161,9 @@ export const en: Record<keyof typeof cs, string> = {
   'editor.line': 'Line {line}',
   'editor.noTitle': 'Add a title: {title: …}',
   'editor.submit': 'Submit for review',
+  'editor.confirmFirst':
+    'Confirm your email, then you can add songs. The link is in the email from signing up.',
+  'editor.notEditable': 'You can’t edit this song: approved songs are edited by editors.',
   'editor.submitted': 'Submitted. An editor will check it.',
   'editor.submittedTo': 'Submitted for review and added to {name}.',
   'editor.saveAndResubmit': 'Save and submit for review',

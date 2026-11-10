@@ -326,6 +326,15 @@ From the first UX walk of the song view and a playlist session (2026-11-10):
   words, "I'm in no way attached to the colours at this point". The app icons keep their old
   orange until they are redrawn. On `/join`, sign-up is the primary button: someone opening
   an invite is most likely new. (2026-11-10)
+- **D104. One rule for who may change a song, shared** (`canChangeSong` in `src/shared/songs.ts`):
+  the server's update and delete and the client's edit and delete buttons ask the same function.
+  Saves lock the song's row and decide on it inside their transaction, so two saves take turns.
+  (2026-11-10)
+- **D105. Theme first, then one small component.** Defaults that hold everywhere live in the
+  theme (`ActionIcon` subtle and grey, `Badge` neutral, `Alert` grey and light); what a theme
+  can't do gets one shared component (`IconButton`: an icon with its tooltip and name;
+  `ConfirmModal`; `SongLabel`; `PageLoader`), never a copy per page. Breakpoints are the
+  theme's (`useWide`, `usePhone`, `$mantine-breakpoint-*`). (2026-11-10)
 
 ## Engineering
 

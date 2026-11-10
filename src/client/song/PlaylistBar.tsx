@@ -56,6 +56,7 @@ export function PlaylistBar({
         </UnstyledButton>
         <ActionIcon
           variant="filled"
+          color="orange"
           size={48}
           radius="xl"
           onClick={onNext}

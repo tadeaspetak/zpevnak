@@ -8,7 +8,7 @@ export function ErrorText({ error }: { error: unknown }) {
     return null;
   }
   return (
-    <Alert color="red" variant="light" role="alert">
+    <Alert color="red" role="alert">
       {tError(error)}
     </Alert>
   );

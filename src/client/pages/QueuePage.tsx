@@ -1,4 +1,4 @@
-import { Badge, Center, Loader, Stack, Tabs, Text, UnstyledButton } from '@mantine/core';
+import { Badge, Stack, Tabs, Text, UnstyledButton } from '@mantine/core';
 import { Navigate, Link, useSearchParams } from 'react-router';
 import { ErrorText } from '../components/ErrorText.tsx';
 import { Page } from '../components/Page.tsx';
@@ -10,6 +10,7 @@ import { useI18n } from '../i18n/index.tsx';
 import { trpc } from '../trpc.ts';
 import { url } from '../urls.ts';
 import rowClasses from '../components/SongRow.module.css';
+import { PageLoader } from '../components/PageLoader.tsx';
 
 type Status = 'pending' | 'rejected';
 
@@ -26,7 +27,11 @@ export function QueuePage() {
     { enabled: isEditor },
   );
 
-  if (known && !isEditor) {
+  if (!known) {
+    // Not the tabs for a moment, then away: wait to know who this is.
+    return <PageLoader full />;
+  }
+  if (!isEditor) {
     return <Navigate to={url.home()} replace />;
   }
 
@@ -49,7 +54,7 @@ export function QueuePage() {
               value="pending"
               rightSection={
                 pendingCount.data?.length ? (
-                  <Badge size="sm" circle>
+                  <Badge size="sm" variant="filled" color="orange" circle>
                     {pendingCount.data.length}
                   </Badge>
                 ) : null
@@ -62,9 +67,7 @@ export function QueuePage() {
         </Tabs>
         <ErrorText error={queue.error} />
         {queue.isLoading ? (
-          <Center py="xl">
-            <Loader size="sm" />
-          </Center>
+          <PageLoader />
         ) : queue.data?.length === 0 ? (
           <Text c="dimmed" ta="center" py="xl">
             {t('queue.empty')}

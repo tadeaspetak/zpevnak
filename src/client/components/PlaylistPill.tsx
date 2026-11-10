@@ -1,4 +1,4 @@
-import { CloseButton, Group, Text, UnstyledButton } from '@mantine/core';
+import { Box, CloseButton, Group, Text, UnstyledButton } from '@mantine/core';
 import { IconPlayerPlayFilled } from '@tabler/icons-react';
 import { Link } from 'react-router';
 import { useCatalog } from '../data/catalog.ts';
@@ -34,7 +34,7 @@ export function PlaylistPill() {
         >
           <Group gap="sm" wrap="nowrap">
             <IconPlayerPlayFilled size={18} className={classes.icon} />
-            <div className={classes.text}>
+            <Box miw={0}>
               <Text size="sm" fw={600} truncate>
                 {playlist.name}
               </Text>
@@ -42,7 +42,7 @@ export function PlaylistPill() {
                 {t('session.position', { position, total })}
                 {song ? ` · ${song.title}` : ''}
               </Text>
-            </div>
+            </Box>
           </Group>
         </UnstyledButton>
         <CloseButton

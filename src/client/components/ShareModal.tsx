@@ -153,8 +153,6 @@ export function ShareModal({ playlist, opened, onClose }: Props) {
                   label={t('playlists.removePerson', { name: person.displayName })}
                 >
                   <ActionIcon
-                    variant="subtle"
-                    color="gray"
                     aria-label={t('playlists.removePerson', { name: person.displayName })}
                     loading={remove.isPending && remove.variables?.userId === person.id}
                     onClick={() => removePerson(person)}

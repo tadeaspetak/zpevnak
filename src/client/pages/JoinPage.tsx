@@ -1,4 +1,4 @@
-import { Button, Center, Group, Loader, Stack, Text } from '@mantine/core';
+import { Button, Group, Loader, Stack, Text } from '@mantine/core';
 import { useEffect, useRef } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { ErrorText } from '../components/ErrorText.tsx';
@@ -9,6 +9,7 @@ import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc } from '../trpc.ts';
 import { url } from '../urls.ts';
+import { PageLoader } from '../components/PageLoader.tsx';
 
 /**
  * /join/:token, an invite link. Says whose playlist it is; signed in, joins at once and opens
@@ -26,14 +27,15 @@ export function JoinPage() {
       navigate(url.playlist(playlist), { replace: true });
     },
   });
-  // Once per visit: a token is used up on nothing, but a join should not fire twice.
+  // Once per visit: a token is used up on nothing, but a join should not fire twice. Only once
+  // the server has said who is signed in: the device's last answer may be an expired session.
   const asked = useRef(false);
   useEffect(() => {
-    if (me && preview.isSuccess && !asked.current) {
+    if (me && known && preview.isSuccess && !asked.current) {
       asked.current = true;
       join.mutate({ token });
     }
-  }, [me, preview.isSuccess, join, token]);
+  }, [me, known, preview.isSuccess, join, token]);
 
   const here = url.join(token);
   return (
@@ -48,9 +50,7 @@ export function JoinPage() {
           {preview.error ? (
             <ErrorText error={preview.error} />
           ) : !preview.data || !known ? (
-            <Center py="xl">
-              <Loader />
-            </Center>
+            <PageLoader />
           ) : (
             <>
               <Text size="lg">

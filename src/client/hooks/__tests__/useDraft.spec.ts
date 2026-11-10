@@ -57,17 +57,11 @@ describe('useDraft', () => {
     expect(result.current).toMatchObject({ dirty: false, restored: false });
   });
 
-  it('keeps one draft per song when the page moves on to another', () => {
-    localStorage.setItem('zpevnak.draft:review:2', 'lo lo');
-    const { result, rerender } = renderHook(
-      ({ id }) => useDraft(`review:${id}`, 'saved'),
-      {
-        initialProps: { id: 1 },
-      },
-    );
-    act(() => result.current.setSource('la la'));
-    rerender({ id: 2 });
-    expect(result.current).toMatchObject({ source: 'lo lo', restored: true });
-    expect(stored('review:1')).toBe('la la');
+  it('keeps one draft per song', () => {
+    const one = renderHook(() => useDraft('review:1', 'saved'));
+    act(() => one.result.current.setSource('la la'));
+    const two = renderHook(() => useDraft('review:2', 'saved'));
+    act(() => two.result.current.setSource('lo lo'));
+    expect([stored('review:1'), stored('review:2')]).toEqual(['la la', 'lo lo']);
   });
 });

@@ -1,66 +1,45 @@
 import {
-  closestCenter,
-  DndContext,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import {
-  ActionIcon,
   Alert,
   Button,
   Center,
   Group,
-  Modal,
   Stack,
   Switch,
   Text,
   TextInput,
-  Tooltip,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import {
   IconCheck,
-  IconGripVertical,
   IconPencil,
   IconPlayerPlayFilled,
   IconPlus,
   IconTrash,
   IconUsers,
-  IconX,
 } from '@tabler/icons-react';
-import { useMemo, useState } from 'react';
-import type { PlaylistOp } from '#shared/playlistOps.ts';
+import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { ErrorText } from '../components/ErrorText.tsx';
+import { ConfirmModal } from '../components/ConfirmModal.tsx';
 import { Page } from '../components/Page.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
 import { RefreshButton } from '../components/RefreshButton.tsx';
 import { ShareModal } from '../components/ShareModal.tsx';
 import { SongPicker } from '../components/SongPicker.tsx';
 import { SongRow } from '../components/SongRow.tsx';
-import { StatusBadge } from '../components/StatusBadge.tsx';
+import { Position, SortableSongs } from '../components/SortableSongs.tsx';
 import { putPlaylist, useCatalog } from '../data/catalog.ts';
 import { useFreshPlaylist } from '../data/freshPlaylist.ts';
 import { usePlaylistEdits } from '../data/playlistEdits.ts';
 import { playlistFacts } from '../data/playlistFacts.ts';
 import { leavePlaylist, usePlayer } from '../data/session.ts';
-import type { PlaylistRecord, SongRecord } from '../data/store.ts';
+import type { PlaylistRecord } from '../data/store.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc } from '../trpc.ts';
 import { idFromRef, url } from '../urls.ts';
 import { useCanonicalPath } from '../hooks/useCanonicalPath.ts';
 import classes from './PlaylistPage.module.css';
+import { IconButton } from '../components/IconButton.tsx';
 
 export function PlaylistPage() {
   const { t, tn } = useI18n();
@@ -130,42 +109,26 @@ export function PlaylistPage() {
             <RefreshButton playlistId={playlist.id} />
             {canEdit && (
               <>
-                <Tooltip label={editing ? t('playlists.done') : t('playlists.edit')}>
-                  <ActionIcon
-                    variant={editing ? 'filled' : 'subtle'}
-                    color={editing ? undefined : 'gray'}
-                    size="lg"
-                    onClick={() => setEditing((e) => !e)}
-                    aria-label={editing ? t('playlists.done') : t('playlists.edit')}
-                    aria-pressed={editing}
-                  >
-                    {editing ? <IconCheck size={20} /> : <IconPencil size={20} />}
-                  </ActionIcon>
-                </Tooltip>
-                <Tooltip label={t('playlists.share')}>
-                  <ActionIcon
-                    variant="subtle"
-                    color="gray"
-                    size="lg"
-                    onClick={openShare}
-                    aria-label={t('playlists.share')}
-                    aria-haspopup="dialog"
-                  >
-                    <IconUsers size={20} />
-                  </ActionIcon>
-                </Tooltip>
+                <IconButton
+                  label={editing ? t('playlists.done') : t('playlists.edit')}
+                  variant={editing ? 'filled' : undefined}
+                  color={editing ? 'orange' : undefined}
+                  onClick={() => setEditing((e) => !e)}
+                  aria-pressed={editing}
+                >
+                  {editing ? <IconCheck size={20} /> : <IconPencil size={20} />}
+                </IconButton>
+                <IconButton
+                  label={t('playlists.share')}
+                  onClick={openShare}
+                  aria-haspopup="dialog"
+                >
+                  <IconUsers size={20} />
+                </IconButton>
                 {playlist.role === 'owner' && (
-                  <Tooltip label={t('common.delete')}>
-                    <ActionIcon
-                      variant="subtle"
-                      color="gray"
-                      size="lg"
-                      onClick={confirmDelete}
-                      aria-label={t('common.delete')}
-                    >
-                      <IconTrash size={20} />
-                    </ActionIcon>
-                  </Tooltip>
+                  <IconButton label={t('common.delete')} onClick={confirmDelete}>
+                    <IconTrash size={20} />
+                  </IconButton>
                 )}
               </>
             )}
@@ -197,9 +160,7 @@ export function PlaylistPage() {
           </Group>
 
           {isMember && !canEdit && (
-            <Alert color="yellow" variant="light">
-              {t('playlists.confirmToEdit')}
-            </Alert>
+            <Alert color="yellow">{t('playlists.confirmToEdit')}</Alert>
           )}
           {editing && (
             <PlaylistSettings
@@ -208,7 +169,6 @@ export function PlaylistPage() {
               onPublic={edits.setPublic}
             />
           )}
-          <ErrorText error={remove.error} />
 
           {playlist.songIds.length === 0 && (
             <Center py="xl">
@@ -269,167 +229,18 @@ export function PlaylistPage() {
         onToggle={toggle}
       />
       <ShareModal playlist={playlist} opened={sharing} onClose={closeShare} />
-      <Modal opened={confirmingDelete} onClose={cancelDelete} title={t('common.delete')}>
-        <Stack>
-          <Text>{t('playlists.deleteConfirm', { name: playlist.name })}</Text>
-          <Group justify="flex-end">
-            <Button variant="default" onClick={cancelDelete}>
-              {t('common.cancel')}
-            </Button>
-            <Button
-              color="red"
-              loading={remove.isPending}
-              onClick={() => remove.mutate({ id })}
-            >
-              {t('common.delete')}
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
+      <ConfirmModal
+        opened={confirmingDelete}
+        onClose={cancelDelete}
+        title={t('common.delete')}
+        confirmLabel={t('common.delete')}
+        onConfirm={() => remove.mutate({ id })}
+        loading={remove.isPending}
+        error={remove.error}
+      >
+        <Text>{t('playlists.deleteConfirm', { name: playlist.name })}</Text>
+      </ConfirmModal>
     </>
-  );
-}
-
-function Position({ n, active = false }: { n: number; active?: boolean }) {
-  return (
-    <Text
-      c={active ? 'var(--brand-text)' : 'dimmed'}
-      fw={active ? 800 : 600}
-      miw="1.25rem"
-      ta="right"
-      className={classes.number}
-    >
-      {n}
-    </Text>
-  );
-}
-
-/**
- * Songs in their order, dragged by their grip. Only the grip starts a drag, so scrolling a long
- * list on a phone never reorders it by accident; the keyboard reorders too (Space, arrows).
- */
-function SortableSongs({
-  songIds,
-  songs,
-  onEdit,
-}: {
-  songIds: number[];
-  songs: Map<number, SongRecord>;
-  onEdit: (op: PlaylistOp) => void;
-}) {
-  // A song may appear twice; its nth appearance keeps the same key wherever it moves.
-  const keys = useMemo(() => {
-    const seen = new Map<number, number>();
-    return songIds.map((songId) => {
-      const n = (seen.get(songId) ?? 0) + 1;
-      seen.set(songId, n);
-      return `${songId}#${n}`;
-    });
-  }, [songIds]);
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
-  const onDragEnd = ({ active, over }: DragEndEvent) => {
-    if (!over || active.id === over.id) {
-      return;
-    }
-    const from = keys.indexOf(String(active.id));
-    const to = keys.indexOf(String(over.id));
-    onEdit({ type: 'move', songId: songIds[from] as number, from, to });
-  };
-  return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragEnd={onDragEnd}
-    >
-      <SortableContext items={keys} strategy={verticalListSortingStrategy}>
-        <Stack gap={0} mx="-md">
-          {keys.map((key, index) => {
-            const song = songs.get(songIds[index] ?? -1);
-            return song ? (
-              <SortableRow
-                key={key}
-                id={key}
-                song={song}
-                position={index + 1}
-                onRemove={() =>
-                  onEdit({ type: 'remove', songId: songIds[index] as number, index })
-                }
-              />
-            ) : null;
-          })}
-        </Stack>
-      </SortableContext>
-    </DndContext>
-  );
-}
-
-function SortableRow({
-  id,
-  song,
-  position,
-  onRemove,
-}: {
-  id: string;
-  song: SongRecord;
-  position: number;
-  onRemove: () => void;
-}) {
-  const { t } = useI18n();
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    setActivatorNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id });
-  return (
-    <div
-      ref={setNodeRef}
-      className={classes.sortableRow}
-      data-dragging={isDragging || undefined}
-      style={{ transform: CSS.Transform.toString(transform), transition }}
-    >
-      <ActionIcon
-        ref={setActivatorNodeRef}
-        variant="subtle"
-        color="gray"
-        size="xl"
-        className={classes.grip}
-        aria-label={t('playlists.drag', { title: song.title })}
-        {...attributes}
-        {...listeners}
-      >
-        <IconGripVertical size={20} />
-      </ActionIcon>
-      <Position n={position} />
-      <div className={classes.grow}>
-        <Group gap={6} wrap="nowrap">
-          <Text fw={600} truncate>
-            {song.title}
-          </Text>
-          <StatusBadge status={song.status} />
-        </Group>
-        {song.artist && (
-          <Text size="sm" c="dimmed" truncate>
-            {song.artist}
-          </Text>
-        )}
-      </div>
-      <ActionIcon
-        variant="subtle"
-        color="red"
-        size="xl"
-        onClick={onRemove}
-        aria-label={t('playlists.remove')}
-      >
-        <IconX size={18} />
-      </ActionIcon>
-    </div>
   );
 }
 
