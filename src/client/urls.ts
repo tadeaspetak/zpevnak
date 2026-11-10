@@ -18,7 +18,18 @@ export const url = {
   home: () => '/',
   song: (song: SongLink) => `/song/${ref(song.id, `${song.title} ${song.artist ?? ''}`)}`,
   editSong: (id: number) => `/song/${id}/edit`,
-  newSong: () => '/new',
+  /** A song not found by a search: its title to start from, and the playlist it is for. */
+  newSong: (from?: { title?: string; playlistId?: number }) => {
+    const params = new URLSearchParams();
+    if (from?.title?.trim()) {
+      params.set('title', from.title.trim());
+    }
+    if (from?.playlistId) {
+      params.set('playlist', String(from.playlistId));
+    }
+    const query = params.toString();
+    return query ? `/new?${query}` : '/new';
+  },
   playlists: () => '/playlists',
   playlist: (playlist: PlaylistLink) => `/playlist/${ref(playlist.id, playlist.name)}`,
   /** `position` counts from 1, as people do. */

@@ -1,5 +1,6 @@
-import { Alert, Text } from '@mantine/core';
-import { IconAlertTriangle, IconInfoCircle } from '@tabler/icons-react';
+import { Alert, Button, Text } from '@mantine/core';
+import { IconAlertTriangle, IconInfoCircle, IconPencil } from '@tabler/icons-react';
+import { Link } from 'react-router';
 import type { SongRecord } from '../data/store.ts';
 import { useI18n } from '../i18n/index.tsx';
 import classes from './SongStatusBanner.module.css';
@@ -9,8 +10,21 @@ import classes from './SongStatusBanner.module.css';
  * quiet line; rejected is a red banner, with the reason for its author and editors, and "waiting
  * to be fixed" for everyone else. A verified song shows nothing.
  */
-export function SongStatusBanner({ song }: { song: SongRecord }) {
+export function SongStatusBanner({
+  song,
+  fixTo,
+  inForm = false,
+}: {
+  song: SongRecord;
+  /** Where the viewer can fix a rejected song, if they may. */
+  fixTo?: string;
+  /** Inside a form's column, rather than above a song. */
+  inForm?: boolean;
+}) {
   const { t } = useI18n();
+  const rejection = song.rejection;
+  // "Other" says nothing by itself: the editor's note is the reason.
+  const noteIsReason = rejection?.reason === 'other' && Boolean(rejection.note);
   if (song.status === 'pending') {
     return (
       <Alert
@@ -29,17 +43,30 @@ export function SongStatusBanner({ song }: { song: SongRecord }) {
         color="red"
         variant="light"
         icon={<IconAlertTriangle size={20} />}
-        className={classes.banner}
+        className={inForm ? undefined : classes.banner}
         title={
-          song.rejection
-            ? t('song.rejectedNote', { reason: t(`reason.${song.rejection.reason}`) })
+          rejection
+            ? noteIsReason
+              ? t('common.rejected')
+              : t('song.rejectedNote', { reason: t(`reason.${rejection.reason}`) })
             : undefined
         }
       >
-        {song.rejection ? (
+        {rejection ? (
           <>
-            {song.rejection.note && <Text size="sm">{song.rejection.note}</Text>}
+            {rejection.note && <Text size="sm">{rejection.note}</Text>}
             <Text size="sm">{t('song.rejectedFix')}</Text>
+            {fixTo && (
+              <Button
+                component={Link}
+                to={fixTo}
+                size="sm"
+                mt="xs"
+                leftSection={<IconPencil size={16} />}
+              >
+                {t('song.fix')}
+              </Button>
+            )}
           </>
         ) : (
           <Text size="sm">{t('song.rejectedWaiting')}</Text>

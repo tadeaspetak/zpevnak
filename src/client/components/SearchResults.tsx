@@ -1,10 +1,11 @@
-import { Stack, Text, Title } from '@mantine/core';
+import { Anchor, Stack, Text, Title } from '@mantine/core';
 import { useMemo, useState, type KeyboardEvent } from 'react';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { useCatalog } from '../data/catalog.ts';
 import { searchPlaylists, useSongSearch } from '../data/search.ts';
 import type { PlaylistRecord } from '../data/store.ts';
 import type { SearchHit } from '../data/search.ts';
+import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { url } from '../urls.ts';
 import { PlaylistRow } from './PlaylistRow.tsx';
@@ -74,11 +75,7 @@ type Props = {
 export function SearchResults({ query, items, selected }: Props) {
   const { t } = useI18n();
   if (items.length === 0) {
-    return (
-      <Text c="dimmed" ta="center" py="xl">
-        {t('home.noResults', { query })}
-      </Text>
-    );
+    return <NothingFound query={query} />;
   }
   const playlistItems = items.filter((i) => i.kind === 'playlist');
   const songItems = items.filter((i) => i.kind === 'song');
@@ -122,6 +119,37 @@ export function SearchResults({ query, items, selected }: Props) {
             ))}
           </Stack>
         </section>
+      )}
+    </Stack>
+  );
+}
+
+/**
+ * A search that found nothing, and the way on from it: the song isn't here yet, so whoever may
+ * add songs can start it with the title they searched for.
+ */
+export function NothingFound({
+  query,
+  playlistId,
+}: {
+  query: string;
+  playlistId?: number;
+}) {
+  const { t } = useI18n();
+  const { me } = useMe();
+  return (
+    <Stack align="center" gap="xs" py="xl">
+      <Text c="dimmed" ta="center">
+        {t('home.noResults', { query })}
+      </Text>
+      {me?.emailVerified && query.trim() && (
+        <Anchor
+          component={Link}
+          to={url.newSong({ title: query, playlistId })}
+          ta="center"
+        >
+          {t('editor.addMissing', { title: query.trim() })}
+        </Anchor>
       )}
     </Stack>
   );

@@ -244,7 +244,7 @@ function SongPlayer({
         canAddToPlaylist={Boolean(me?.emailVerified)}
         hidden={toolbar.hidden}
       />
-      <SongStatusBanner song={song} />
+      <SongStatusBanner song={song} fixTo={canEdit ? url.editSong(song.id) : undefined} />
       {/* A tap on the song hides the toolbar, or brings it back, when things get tight (D93).
           A pointer convenience on top of scrolling, which does the same, so no key of its own. */}
       <div

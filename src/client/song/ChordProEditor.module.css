@@ -18,7 +18,84 @@
   overflow: hidden;
 }
 
+.cheatSheetToggle {
+  color: var(--mantine-color-anchor);
+
+  & svg {
+    transition: transform 150ms ease;
+  }
+
+  & svg[data-open] {
+    transform: rotate(180deg);
+  }
+}
+
+/* Each row: what to type, then what it does. */
 .cheatSheet {
-  white-space: pre-wrap;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--mantine-spacing-xs) var(--mantine-spacing-lg);
+  margin: var(--mantine-spacing-xs) 0;
+  font-size: var(--mantine-font-size-sm);
+
+  & > div {
+    display: contents;
+  }
+
+  & dt {
+    white-space: pre;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  & dd {
+    margin: 0;
+    color: var(--mantine-color-dimmed);
+  }
+}
+
+@media (max-width: 36em) {
+  .cheatSheet {
+    grid-template-columns: 1fr;
+    gap: 0;
+
+    & dd {
+      margin-bottom: var(--mantine-spacing-xs);
+    }
+  }
+}
+
+.notice {
+  border-color: var(--mantine-color-default-border);
+}
+
+.warningIcon {
+  color: var(--mantine-color-yellow-filled);
+}
+
+.warnings {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A warning leads to its line. */
+.warning {
+  display: block;
+  padding: 2px 0;
+  border-radius: var(--mantine-radius-xs);
+
+  &:hover span:first-child {
+    text-decoration: underline;
+  }
+}
+
+.actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  margin: 0 calc(var(--mantine-spacing-md) * -1);
+  padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
+  padding-bottom: max(var(--mantine-spacing-sm), env(safe-area-inset-bottom));
+  background: var(--mantine-color-body);
+  border-top: 1px solid var(--mantine-color-default-border);
 }

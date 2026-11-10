@@ -4,6 +4,7 @@ import { useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { useCatalog } from '../data/catalog.ts';
 import { useSongSearch } from '../data/search.ts';
 import { useI18n } from '../i18n/index.tsx';
+import { NothingFound } from './SearchResults.tsx';
 import { StatusBadge } from './StatusBadge.tsx';
 import classes from './SongPicker.module.css';
 
@@ -12,6 +13,8 @@ const MAX_RESULTS = 30;
 type Props = {
   opened: boolean;
   onClose: () => void;
+  /** The playlist the songs are for: a song it doesn't find can be added for it. */
+  playlistId: number;
   /** The playlist's songs, in order. */
   songIds: number[];
   /** Adds or removes the song (see `toggleSong`). */
@@ -25,7 +28,7 @@ type Props = {
  * results. Space stays a space in the box (searches have several words); on the list itself,
  * reached by Tab, Space toggles too.
  */
-export function SongPicker({ opened, onClose, songIds, onToggle }: Props) {
+export function SongPicker({ opened, onClose, playlistId, songIds, onToggle }: Props) {
   const { t } = useI18n();
   const { songs } = useCatalog();
   const search = useSongSearch(songs);
@@ -137,6 +140,9 @@ export function SongPicker({ opened, onClose, songIds, onToggle }: Props) {
             );
           })}
         </div>
+        {hits.length === 0 && query.trim() && (
+          <NothingFound query={query} playlistId={playlistId} />
+        )}
       </Stack>
     </Modal>
   );

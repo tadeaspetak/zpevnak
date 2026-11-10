@@ -13,7 +13,9 @@ type LocalKey =
   | 'showChords'
   | 'showColumns'
   | 'me'
-  | 'colorScheme';
+  | 'colorScheme'
+  // Unsaved ChordPro, one per editor page (useDraft).
+  | `draft:${string}`;
 
 const PREFIX = 'zpevnak.';
 

@@ -264,6 +264,7 @@ export function PlaylistPage() {
       <SongPicker
         opened={adding}
         onClose={closeAdd}
+        playlistId={playlist.id}
         songIds={playlist.songIds}
         onToggle={toggle}
       />

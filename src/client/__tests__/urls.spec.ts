@@ -17,6 +17,14 @@ describe('url', () => {
     );
   });
 
+  it('starts a new song from a search, for a playlist', () => {
+    expect(url.newSong()).toBe('/new');
+    expect(url.newSong({ title: '  ' })).toBe('/new');
+    expect(url.newSong({ title: 'Šla Nanynka', playlistId: 3 })).toBe(
+      '/new?title=%C5%A0la+Nanynka&playlist=3',
+    );
+  });
+
   it('falls back to the bare id when the name has nothing to slug', () => {
     expect(url.playlist({ id: 7, name: '♫♫' })).toBe('/playlist/7');
   });

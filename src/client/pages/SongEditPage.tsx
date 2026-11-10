@@ -1,54 +1,113 @@
-import { Button, Container, Group } from '@mantine/core';
+import { Button, Center, Container, Loader, Stack } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { useState } from 'react';
-import { Navigate, useNavigate, useParams } from 'react-router';
+import { useRef } from 'react';
+import {
+  Navigate,
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router';
 import { ErrorText } from '../components/ErrorText.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
-import { putSong, useCatalog } from '../data/catalog.ts';
+import { putPlaylist, putSong, useCatalog } from '../data/catalog.ts';
+import { useDraft } from '../hooks/useDraft.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
-import { ChordProEditor } from '../song/ChordProEditor.tsx';
+import { ChordProEditor, type ChordProEditorHandle } from '../song/ChordProEditor.tsx';
+import { SongStatusBanner } from '../song/SongStatusBanner.tsx';
 import { trpc } from '../trpc.ts';
 import { url } from '../urls.ts';
 
-/** /new: a new song, which goes to the review queue. */
+/**
+ * /new: a new song, which goes to the review queue. From a search that found nothing it starts
+ * with that title, and from a playlist's song picker it goes into the playlist too.
+ */
 export function NewSongPage() {
-  const { t } = useI18n();
+  const { t, tError } = useI18n();
   const navigate = useNavigate();
-  const { me } = useMe();
-  const [source, setSource] = useState(() => t('editor.template'));
+  const location = useLocation();
+  const { me, known } = useMe();
+  const [params] = useSearchParams();
+  const { playlists } = useCatalog();
+  const playlist = playlists.get(Number(params.get('playlist')));
+  const template = t('editor.template', { songTitle: params.get('title') ?? '' });
+  const draft = useDraft('new', template);
+  const source = draft.source ?? template;
+  const editor = useRef<ChordProEditorHandle>(null);
+  const addToPlaylist = trpc.playlists.edit.useMutation();
   const create = trpc.songs.create.useMutation({
-    onSuccess: (song) => {
+    onSuccess: async (song) => {
       putSong(song);
-      notifications.show({ message: t('editor.submitted') });
+      draft.clear();
+      if (playlist) {
+        try {
+          const updated = await addToPlaylist.mutateAsync({
+            id: playlist.id,
+            op: { type: 'add', songId: song.id },
+          });
+          putPlaylist(updated.id, updated);
+          notifications.show({
+            message: t('editor.submittedTo', { name: playlist.name }),
+          });
+          navigate(url.playlist(playlist));
+          return;
+        } catch (error) {
+          // The song is saved all the same: say why it isn't in the playlist, and show it.
+          notifications.show({ color: 'red', message: tError(error) });
+        }
+      } else {
+        notifications.show({ message: t('editor.submitted') });
+      }
       navigate(url.song(song));
     },
   });
   if (!me) {
-    return <Navigate to={url.logIn(url.newSong())} replace />;
+    // Who's signed in may not be known yet on a cold load: wait rather than send them away.
+    return known ? (
+      <Navigate to={url.logIn(location.pathname + location.search)} replace />
+    ) : (
+      <Center h="100dvh">
+        <Loader />
+      </Center>
+    );
   }
   return (
     <>
       <PageHeader
         width="80rem"
         title={t('editor.newTitle')}
-        backTo={url.home()}
-        backLabel={t('nav.backHome')}
+        backTo={playlist ? url.playlist(playlist) : url.home()}
+        backLabel={
+          playlist ? t('nav.backTo', { name: playlist.name }) : t('nav.backHome')
+        }
       />
-      <Container size="80rem" px="md" py="md">
+      <Container size="80rem" px="md" pt="md">
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            create.mutate({ source });
+            if (editor.current?.checkTitle() !== false) {
+              create.mutate({ source });
+            }
           }}
         >
-          <ErrorText error={create.error} />
-          <ChordProEditor value={source} onChange={setSource} />
-          <Group justify="flex-end" mt="md">
-            <Button type="submit" loading={create.isPending}>
-              {t('editor.submit')}
-            </Button>
-          </Group>
+          <Stack gap="sm">
+            <ErrorText error={create.error} />
+            <ChordProEditor
+              ref={editor}
+              value={source}
+              onChange={draft.setSource}
+              onDiscardDraft={draft.restored ? draft.clear : undefined}
+              actions={
+                <Button
+                  type="submit"
+                  loading={create.isPending || addToPlaylist.isPending}
+                >
+                  {t('editor.submit')}
+                </Button>
+              }
+            />
+          </Stack>
         </form>
       </Container>
     </>
@@ -64,17 +123,24 @@ export function EditSongPage() {
   const fromCatalog = songs.get(id);
   const fallback = trpc.songs.byId.useQuery({ id }, { enabled: loaded && !fromCatalog });
   const song = fromCatalog ?? fallback.data;
-  const [source, setSource] = useState<string | null>(null);
+  const draft = useDraft(`edit:${id}`, song?.source);
+  const editor = useRef<ChordProEditorHandle>(null);
+  // Saving a rejected song sends it back to the queue (D81): the button says so.
+  const resubmits = song?.status === 'rejected';
   const update = trpc.songs.update.useMutation({
     onSuccess: (saved) => {
       putSong(saved);
-      notifications.show({ message: t('common.saved') });
+      draft.clear();
+      notifications.show({
+        message: resubmits ? t('editor.resubmitted') : t('common.saved'),
+      });
       navigate(url.song(saved));
     },
   });
   if (!song) {
     return null;
   }
+  const source = draft.source ?? song.source;
   return (
     <>
       <PageHeader
@@ -83,20 +149,30 @@ export function EditSongPage() {
         backTo={url.song(song)}
         backLabel={t('nav.backTo', { name: song.title })}
       />
-      <Container size="80rem" px="md" py="md">
+      <Container size="80rem" px="md" pt="md">
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            update.mutate({ id, source: source ?? song.source });
+            if (editor.current?.checkTitle() !== false) {
+              update.mutate({ id, source });
+            }
           }}
         >
-          <ErrorText error={update.error} />
-          <ChordProEditor value={source ?? song.source} onChange={setSource} />
-          <Group justify="flex-end" mt="md">
-            <Button type="submit" loading={update.isPending} disabled={source === null}>
-              {t('common.save')}
-            </Button>
-          </Group>
+          <Stack gap="sm">
+            {resubmits && <SongStatusBanner song={song} inForm />}
+            <ErrorText error={update.error} />
+            <ChordProEditor
+              ref={editor}
+              value={source}
+              onChange={draft.setSource}
+              onDiscardDraft={draft.restored ? draft.clear : undefined}
+              actions={
+                <Button type="submit" loading={update.isPending} disabled={!draft.dirty}>
+                  {resubmits ? t('editor.saveAndResubmit') : t('common.save')}
+                </Button>
+              }
+            />
+          </Stack>
         </form>
       </Container>
     </>

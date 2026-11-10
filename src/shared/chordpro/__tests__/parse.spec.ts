@@ -118,7 +118,7 @@ describe('parseSong', () => {
   });
 
   it('warns when {chorus} has nothing to repeat', () => {
-    expect(song('{chorus}').warnings[0]?.message).toMatch(/none came before/);
+    expect(song('{chorus}').warnings[0]?.code).toBe('chorusBeforeAny');
   });
 
   it('reads chord definitions', () => {
@@ -168,14 +168,26 @@ describe('parseSong', () => {
   it('warns about directives it does not understand, with the line number', () => {
     const s = song('{title: x}', '{zoom-iphone: 2}');
     expect(s.warnings).toEqual([
-      { line: 2, message: "{zoom-iphone} isn't supported and was left out" },
+      { line: 2, code: 'unsupported', directive: 'zoom-iphone' },
     ]);
   });
 
   it('warns about unbalanced environments', () => {
-    expect(song('{eov}').warnings[0]?.message).toMatch(/no matching start/);
-    expect(song('{sov}', 'a').warnings[0]?.message).toMatch(/never closed/);
-    expect(song('{sov}', 'a', '{eoc}').warnings[0]?.message).toMatch(/different section/);
+    expect(song('{eov}').warnings[0]?.code).toBe('endWithoutStart');
+    expect(song('{sov}', 'a').warnings[0]?.code).toBe('sectionNeverClosed');
+    expect(song('{sov}', 'a', '{eoc}').warnings[0]?.code).toBe('endMismatch');
+  });
+
+  it('gives each warning the values its message needs', () => {
+    expect(
+      song('{capo: druhý}', '{define: Am}', '{define:}', '{sov}', '{sov}').warnings,
+    ).toEqual([
+      { line: 1, code: 'capoNotNumber', value: 'druhý' },
+      { line: 2, code: 'chordNoFrets', chord: 'Am' },
+      { line: 3, code: 'chordNoName' },
+      { line: 5, code: 'startInsideSection', directive: 'start_of_verse' },
+      { line: 5, code: 'sectionNeverClosed' },
+    ]);
   });
 
   it('keeps tab sections verbatim', () => {

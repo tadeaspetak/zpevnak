@@ -280,6 +280,32 @@ From the first UX walk of the song view and a playlist session (2026-11-10):
   like an e-book reader. Scrolling still hides and shows it as before, and takes over again
   after a tap. No button for it: the phone toolbar has no room. A tap on a link or button, the
   end of a text selection, or a swipe to the next song doesn't count. (2026-11-10)
+- **D94. Chords above the lyrics are converted, on offer.** Text pasted from chord sites puts
+  chords on a line of their own; the editor spots such lines and offers "Převést do ChordPro?".
+  Converting puts each chord inside the line below at its column, turns `[Verse 1]`, `Refrén:`,
+  `R:`, `2.` into sections, `Capo 2` into `{capo: 2}`, and a heading of one or two lines into
+  title and artist. It is typed in like a paste, so undo takes it back; "Nechat" keeps the text
+  as it is. In the shared editor, so new, edit and review all have it (D4 stands: still
+  ChordPro). (2026-11-10)
+- **D95. Unsaved ChordPro is a draft on the device,** one per page and song, kept as it is
+  typed: the back arrow, search, a reload or a flat battery don't lose it, and the page says
+  "Neuložené úpravy z minula" with a way to throw them away. Saved, approved or rejected, the
+  draft is gone. No "leave the page?" prompt: the draft covers more. Rejecting warns that the
+  editor's own unsaved edits go with it. (2026-11-10)
+- **D96. The review queue goes forward.** After approving, rejecting or skipping (⏭ beside
+  "2 / 4"), the song that followed opens, wrapping round at the end; a skipped song comes back
+  only after the rest. Toasts name the song ("Schváleno: Koleda"). The review screen says who
+  added the song and when. (2026-11-10)
+- **D97. A rejected song shows how to fix it:** an "Opravit" button in its red banner for whoever
+  may fix it, the banner again above the editor, and the button there says "Uložit a poslat ke
+  kontrole" (D81). For "jiný důvod" the editor's note is the reason. (2026-11-10)
+- **D98. The editor around the text.** Parser warnings are codes the editor translates
+  ("Řádek 9: {foo} tu neumíme…"), and each leads to its line. A missing title stops the save
+  and puts the caret in `{title: }`, rather than a server error; the untouched template isn't
+  warned about. The buttons sit in a bar that stays on screen. The cheat sheet is four examples,
+  each with what it does. A search that finds nothing offers "Přidat „…“ jako novou písničku",
+  started with that title; from a playlist's song picker the new song goes into the playlist
+  too. `/new` waits to know who is signed in before sending anyone to log in. (2026-11-10)
 
 ## Engineering
 

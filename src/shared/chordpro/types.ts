@@ -45,10 +45,20 @@ export type SongMeta = {
   tags: string[];
 };
 
-export type ParseWarning = {
-  line: number;
-  message: string;
-};
+/**
+ * Something in the source the song leaves out or reads its own way. A code with its values, not
+ * prose: the editor says it in the reader's language (`parse.<code>`).
+ */
+export type ParseWarning =
+  | {
+      line: number;
+      code: 'startInsideSection' | 'endWithoutStart' | 'endMismatch';
+      directive: string;
+    }
+  | { line: number; code: 'unsupported'; directive: string }
+  | { line: number; code: 'capoNotNumber'; value: string }
+  | { line: number; code: 'chorusBeforeAny' | 'sectionNeverClosed' | 'chordNoName' }
+  | { line: number; code: 'chordNoFrets'; chord: string };
 
 export type Song = {
   meta: SongMeta;

@@ -130,11 +130,14 @@ function parseFret(token: string): number | null {
   return Number.isInteger(n) ? n : null;
 }
 
-function readDefinition(value: string): ChordDefinition | string {
+type DefinitionProblem =
+  { code: 'chordNoName' } | { code: 'chordNoFrets'; chord: string };
+
+function readDefinition(value: string): ChordDefinition | DefinitionProblem {
   const tokens = value.split(/\s+/).filter(Boolean);
   const name = tokens.shift();
   if (!name) {
-    return 'a chord definition needs a name';
+    return { code: 'chordNoName' };
   }
   let baseFret = 1;
   const frets: (number | null)[] = [];
@@ -162,7 +165,7 @@ function readDefinition(value: string): ChordDefinition | string {
     }
   }
   if (frets.length === 0) {
-    return `chord ${name} has no frets`;
+    return { code: 'chordNoFrets', chord: name };
   }
   return { name, baseFret, frets, fingers };
 }
@@ -205,7 +208,7 @@ export function parseSong(source: string): Song {
   let explicit = false;
   let lastChorus: SectionBlock | null = null;
 
-  const warn = (line: number, message: string) => warnings.push({ line, message });
+  const warn = (warning: ParseWarning) => warnings.push(warning);
 
   const closeImplicit = () => {
     if (current && !explicit) {
@@ -266,7 +269,7 @@ export function parseSong(source: string): Song {
       const [, edge, envName = ''] = env;
       if (edge === 'start') {
         if (explicit && current) {
-          warn(lineNo, `{${name}} starts before the previous section ended`);
+          warn({ line: lineNo, code: 'startInsideSection', directive: name });
         }
         const kind = KNOWN_KINDS[envName] ?? 'other';
         const section: SectionBlock = {
@@ -284,9 +287,9 @@ export function parseSong(source: string): Song {
         }
       } else {
         if (!explicit || !current) {
-          warn(lineNo, `{${name}} has no matching start`);
+          warn({ line: lineNo, code: 'endWithoutStart', directive: name });
         } else if (current.kind !== (KNOWN_KINDS[envName] ?? 'other')) {
-          warn(lineNo, `{${name}} closes a different section`);
+          warn({ line: lineNo, code: 'endMismatch', directive: name });
         }
         current = null;
         explicit = false;
@@ -314,7 +317,7 @@ export function parseSong(source: string): Song {
         if (Number.isInteger(capo) && capo >= 0) {
           meta.capo = capo;
         } else {
-          warn(lineNo, `capo "${value}" is not a fret number`);
+          warn({ line: lineNo, code: 'capoNotNumber', value });
         }
         return;
       }
@@ -347,7 +350,7 @@ export function parseSong(source: string): Song {
           chorus: lastChorus ? structuredClone(lastChorus) : null,
         });
         if (!lastChorus) {
-          warn(lineNo, '{chorus} repeats a chorus, but none came before it');
+          warn({ line: lineNo, code: 'chorusBeforeAny' });
         }
         return;
       case 'column_break':
@@ -364,8 +367,8 @@ export function parseSong(source: string): Song {
       case 'define':
       case 'chord': {
         const definition = readDefinition(value);
-        if (typeof definition === 'string') {
-          warn(lineNo, definition);
+        if ('code' in definition) {
+          warn({ ...definition, line: lineNo });
         } else {
           definitions.push(definition);
         }
@@ -386,11 +389,11 @@ export function parseSong(source: string): Song {
     if (QUIET_METADATA.has(name) || PRINT_ONLY.has(name) || FORMATTING_RE.test(name)) {
       return;
     }
-    warn(lineNo, `{${name}} isn't supported and was left out`);
+    warn({ line: lineNo, code: 'unsupported', directive: name });
   });
 
   if (explicit && current) {
-    warn(lines.length, 'the last section is never closed');
+    warn({ line: lines.length, code: 'sectionNeverClosed' });
   }
 
   const song: Song = {

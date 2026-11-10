@@ -17,6 +17,27 @@ it ships and settles something.
 
 All eight shipped the same day: see D50–D58 in `DECISIONS.md`.
 
+## Add-a-song walk: waiting on the owner (2026-11-10)
+
+The second `/ux` walk (adding, fixing and reviewing a song; report
+https://claude.ai/artifact/QWWAqmVUVUgYQB1JnmWmZ7, handover `.ux-walk/handover-add-a-song-2026-11-10.md`).
+Its obvious fixes shipped as D94–D98. These five are the owner's call, still to take. The
+agent's pick is first.
+
+- [ ] **F11 Long songs in the editor.** A: on wide screens the source and the preview are as tall
+      as the window, each scrolls on its own, the preview follows the cursor's section. B: only a
+      sticky preview. C: leave it.
+- [ ] **F13 Telling the author about a rejection.** A: one email on reject (reason, note, link to
+      fix it), none on approval. B: a count on the account icon. C: after the gig.
+- [ ] **F14 Rejection reasons.** A: no reason preselected; a note required for "jiný důvod".
+      B: also a new reason "Není ve formátu ChordPro" (an enum migration).
+- [ ] **F15 Context in the review queue.** A: a dimmed line "v playlistu {name}" and "opraveno po
+      zamítnutí" (from `song_versions`, D86), and the previous rejection note on the review
+      screen. B: also sort songs that are in playlists first.
+- [ ] **F16 Join page and orange contrast (D61).** A: sign-up is the primary button on `/join`.
+      Separately: white on filled orange (#E8590C) is 3.6:1, under AA's 4.5:1; #C2410C gives
+      5.2:1 but changes every primary button.
+
 ## Bigger work
 
 - Song history, credits and suggested changes: `.planning/ongoing/song-history-credits-suggestions.md`.
