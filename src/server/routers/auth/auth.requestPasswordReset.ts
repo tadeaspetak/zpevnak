@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { emailSchema } from '#shared/validators/index.ts';
 import { issueEmailToken } from '../../auth/emailTokens.ts';
-import { sendEmail } from '../../email/send.ts';
+import { sendEmailInBackground } from '../../email/send.ts';
 import { resetPassword } from '../../email/templates.ts';
 import { publicProcedure } from '../../trpc/trpc.ts';
 
@@ -16,7 +16,10 @@ export const requestPasswordReset = publicProcedure
     const user = rows[0];
     if (user) {
       const token = await issueEmailToken(ctx.db, user.id, 'reset_password');
-      await sendEmail(resetPassword(user.email, user.locale, token));
+      sendEmailInBackground(
+        resetPassword(user.email, user.locale, token),
+        'password reset',
+      );
     }
     return { ok: true };
   });

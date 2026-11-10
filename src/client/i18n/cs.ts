@@ -286,6 +286,7 @@ export const cs = {
   'error.TOO_MANY_REQUESTS': 'Moc pokusů za sebou. Zkus to za chvíli.',
   'error.UNDO_EXPIRED': 'Na vrácení už je pozdě. Pošli pozvánku znovu.',
   'error.REJECTION_NOTE_REQUIRED': 'U jiného důvodu napiš autorovi, co je špatně.',
+  'error.PLAYLIST_FULL': 'Playlist je plný: víc než 500 písniček se do něj nevejde.',
 
   'notFound.title': 'Tahle stránka neexistuje',
   'notFound.home': 'Na hlavní stránku',

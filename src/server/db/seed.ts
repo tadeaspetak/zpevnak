@@ -7,7 +7,7 @@
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { parseSong } from '#shared/chordpro/parse.ts';
+import { parseHeader } from '../songs/header.ts';
 import { hashPassword } from '../auth/password.ts';
 import { env } from '../env.ts';
 import { DEV_PASSWORD, DEV_PERSONAS } from './devPersonas.ts';
@@ -24,13 +24,12 @@ async function seedSongs() {
     .filter((f) => f.endsWith('.pro'))
     .sort()) {
     const source = readFileSync(join(dir, file), 'utf8');
-    const song = parseSong(source);
-    const title = song.meta.title?.trim();
-    if (!title) {
+    const header = parseHeader(source);
+    if (!header) {
       console.warn(`Skipped ${file}: no {title}`);
       continue;
     }
-    const artist = song.artist?.trim() || null;
+    const { title, artist } = header;
     const added = await db.transaction(async (trx) => {
       const { rows } = await trx.raw(
         /* sql */ `

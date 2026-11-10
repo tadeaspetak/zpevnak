@@ -6,12 +6,13 @@ import {
   loadVisiblePlaylist,
   type PlaylistRole,
 } from '../../playlists/load.ts';
-import { fail, verifiedProcedure } from '../../trpc/trpc.ts';
+import { authedProcedure, fail, verifiedProcedure } from '../../trpc/trpc.ts';
 
 type MemberRow = { id: number; display_name: string; role: PlaylistRole };
 
 /** Who is in the playlist: the owner first, then collaborators by when they joined. */
-export const members = verifiedProcedure
+// Members and leaving need only an account, like joining (an unconfirmed account can join).
+export const members = authedProcedure
   .input(z.object({ id: idSchema }))
   .query(async ({ ctx, input }) => {
     await assertMember(ctx.db, input.id, ctx.user);
@@ -32,7 +33,7 @@ export const members = verifiedProcedure
   });
 
 /** A collaborator leaves; the owner can't (they delete the playlist instead). */
-export const leave = verifiedProcedure
+export const leave = authedProcedure
   .input(z.object({ id: idSchema }))
   .mutation(async ({ ctx, input }) => {
     const playlist = await assertMember(ctx.db, input.id, ctx.user);
@@ -75,7 +76,7 @@ export const removeCollaborator = verifiedProcedure
  * window is wider so a slow connection doesn't lose it, and narrow enough that it stays an undo
  * rather than a way to pull someone back in weeks later.
  */
-const UNDO_WINDOW = '10 minutes';
+const UNDO_MINUTES = 10;
 
 /**
  * Undoes the owner's recent removal: the person is back, as they were, with their original
@@ -91,12 +92,12 @@ export const restoreCollaborator = verifiedProcedure
         /* sql */ `
           SELECT id, joined_at FROM playlist_collaborator_removals
           WHERE playlist_id = :id AND user_id = :userId AND restored_at IS NULL
-            AND removed_at > now() - interval '${UNDO_WINDOW}'
+            AND removed_at > now() - make_interval(mins => :undoMinutes)
           ORDER BY removed_at DESC
           LIMIT 1
           FOR UPDATE
         `,
-        input,
+        { ...input, undoMinutes: UNDO_MINUTES },
       );
       const removal = rows[0];
       if (!removal) {

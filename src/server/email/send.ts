@@ -1,4 +1,4 @@
-import { env, isProduction } from '../env.ts';
+import { env } from '../env.ts';
 
 export type Email = {
   to: string;
@@ -9,15 +9,24 @@ export type Email = {
 /** Emails sent while testing, newest last. Specs read links out of them. */
 export const testOutbox: Email[] = [];
 
+/**
+ * Sends without holding up the answer, for mail the request doesn't depend on. A failure is
+ * logged: what the person did still stands, and they can ask again (resend a verification,
+ * request another reset). Not waiting also keeps "is there an account?" out of the timing.
+ */
+export function sendEmailInBackground(email: Email, what: string): void {
+  sendEmail(email).catch((error: unknown) => {
+    console.error(`Email (${what}) to ${email.to} failed:`, error);
+  });
+}
+
 export async function sendEmail(email: Email): Promise<void> {
   if (env.NODE_ENV === 'test') {
     testOutbox.push(email);
     return;
   }
   if (!env.RESEND_API_KEY) {
-    if (isProduction) {
-      throw new Error('RESEND_API_KEY is not set');
-    }
+    // Production refuses to start without it (main.ts); here we are in development.
     console.log(`\n✉️  To: ${email.to}\n   Subject: ${email.subject}\n\n${email.text}\n`);
     return;
   }

@@ -27,6 +27,10 @@ const blocked: string[] = [
   'psql -h db.example.com zpevnak',
   'pg_dump --host=db.example.com zpevnak',
   "psql 'host=db.example.com dbname=x'",
+  'psql "$DATABASE_URL_UNPOOLED"',
+  'PGHOST=ep-wild-sun.eu-central-1.aws.neon.tech psql neondb',
+  'echo $(git push -f)',
+  'echo "`git push --force`"',
 ];
 
 // The legitimate commands an agent runs here every day. Each guard needs its false-reject test.
@@ -47,6 +51,10 @@ const allowed: string[] = [
   'docker compose exec db psql -U zpevnak',
   'yarn test',
   'echo "git push -f origin main"',
+  "echo '$(git push -f)'",
+  "cat <<'EOF'\nsee `git push --force` in the docs\nEOF",
+  'PGHOST=localhost psql zpevnak',
+  'echo "today is $(date)"',
 ];
 
 describe('bash guard', () => {

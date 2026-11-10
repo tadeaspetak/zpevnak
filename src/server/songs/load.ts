@@ -3,12 +3,14 @@ import type { SessionUser } from '../auth/sessions.ts';
 import { fail } from '../trpc/trpc.ts';
 import { SONG_COLUMNS, toSongRecord } from './record.ts';
 
-export async function loadSongRow(db: Knex, id: number) {
+/**
+ * The song's row, or NOT_FOUND. Pass a transaction and `forUpdate` to lock it before deciding
+ * anything from it: two saves of one song then take turns instead of overwriting each other.
+ */
+export async function loadSongRow(db: Knex, id: number, { forUpdate = false } = {}) {
   const { rows } = await db.raw(
-    /* sql */ `SELECT ${SONG_COLUMNS} FROM songs s WHERE s.id = :id`,
-    {
-      id,
-    },
+    /* sql */ `SELECT ${SONG_COLUMNS} FROM songs s WHERE s.id = :id ${forUpdate ? 'FOR UPDATE' : ''}`,
+    { id },
   );
   const row = rows[0];
   if (!row) {

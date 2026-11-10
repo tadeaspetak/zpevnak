@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { inviteTokenSchema } from '#shared/validators/index.ts';
 import { fail, publicProcedure } from '../../trpc/trpc.ts';
 
 /**
@@ -6,7 +7,7 @@ import { fail, publicProcedure } from '../../trpc/trpc.ts';
  * The link is the permission: whoever holds it may see the playlist's name and owner.
  */
 export const invitePreview = publicProcedure
-  .input(z.object({ token: z.string().min(16).max(64) }))
+  .input(z.object({ token: inviteTokenSchema }))
   .query(async ({ ctx, input }) => {
     const { rows } = await ctx.db.raw(
       /* sql */ `

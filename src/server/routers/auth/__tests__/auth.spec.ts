@@ -198,11 +198,56 @@ describe('password reset', () => {
     ).rejects.toThrow('INVALID_CREDENTIALS');
   });
 
+  it('takes a reset link once, and never a verification link in its place', async () => {
+    await createUser({ email: 'bob@example.com' });
+    await callerFor(null).auth.requestPasswordReset({ email: 'bob@example.com' });
+    const token = tokenFromLastEmail();
+    await callerFor(null).auth.resetPassword({
+      token,
+      password: 'a brand new passphrase',
+    });
+    await expect(
+      callerFor(null).auth.resetPassword({ token, password: 'yet another passphrase' }),
+    ).rejects.toThrow('INVALID_TOKEN');
+
+    await callerFor(null).auth.signUp({ ...signUpInput, email: 'ana@example.com' });
+    await expect(
+      callerFor(null).auth.resetPassword({
+        token: tokenFromLastEmail(),
+        password: 'a brand new passphrase',
+      }),
+    ).rejects.toThrow('INVALID_TOKEN');
+  });
+
+  it('refuses an expired reset link', async () => {
+    await createUser({ email: 'bob@example.com' });
+    await callerFor(null).auth.requestPasswordReset({ email: 'bob@example.com' });
+    await db.raw(`UPDATE auth_tokens SET expires_at = now() - interval '1 second'`);
+    await expect(
+      callerFor(null).auth.resetPassword({
+        token: tokenFromLastEmail(),
+        password: 'a brand new passphrase',
+      }),
+    ).rejects.toThrow('INVALID_TOKEN');
+  });
+
   it('answers the same for an unknown email, and sends nothing', async () => {
     await expect(
       callerFor(null).auth.requestPasswordReset({ email: 'nobody@example.com' }),
     ).resolves.toEqual({ ok: true });
     expect(testOutbox).toHaveLength(0);
+  });
+});
+
+describe('sessions', () => {
+  it('treats an expired session as signed out', async () => {
+    await createUser({ email: 'bob@example.com' });
+    const { api, cookies } = withCookies(null);
+    await api.auth.logIn({ email: 'bob@example.com', password: PASSWORD });
+    const token = cookies[SESSION_COOKIE] as string;
+    expect(await findSessionUser(db, token)).not.toBeNull();
+    await db.raw(`UPDATE sessions SET expires_at = now() - interval '1 second'`);
+    expect(await findSessionUser(db, token)).toBeNull();
   });
 });
 

@@ -13,10 +13,12 @@ import { editorProcedure } from '../../trpc/trpc.ts';
 export const verify = editorProcedure
   .input(z.object({ id: idSchema, source: songSourceSchema.optional() }))
   .mutation(async ({ ctx, input }) => {
-    const row = await loadSongRow(ctx.db, input.id);
-    const source = input.source ?? row.source;
-    const { title, artist } = readHeader(source);
     await ctx.db.transaction(async (trx) => {
+      // Locked, and read inside: approving "as it is" approves the text as it is now, not as it
+      // was before an author's save that landed in between.
+      const row = await loadSongRow(trx, input.id, { forUpdate: true });
+      const source = input.source ?? row.source;
+      const { title, artist } = readHeader(source);
       await trx.raw(
         /* sql */ `
           UPDATE songs

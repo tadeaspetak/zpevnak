@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { inviteTokenSchema } from '#shared/validators/index.ts';
 import { loadVisiblePlaylist } from '../../playlists/load.ts';
 import { authedProcedure, fail } from '../../trpc/trpc.ts';
 
@@ -8,7 +9,7 @@ import { authedProcedure, fail } from '../../trpc/trpc.ts';
  * playlist at once, and may edit once their email is confirmed.
  */
 export const join = authedProcedure
-  .input(z.object({ token: z.string().min(16).max(64) }))
+  .input(z.object({ token: inviteTokenSchema }))
   .mutation(async ({ ctx, input }) => {
     const { rows } = await ctx.db.raw(
       /* sql */ `SELECT id, owner_id FROM playlists WHERE invite_token = :token`,

@@ -34,6 +34,33 @@ async function shared() {
 }
 
 describe('playlists', () => {
+  it('says a full playlist is full, and still takes songs out of it', async () => {
+    const { owner, a, b } = await setup();
+    const playlist = await callerFor(owner).playlists.create({
+      name: 'Dlouhá noc',
+      isPublic: false,
+      songIds: [],
+    });
+    await db.raw(
+      /* sql */ `
+        INSERT INTO playlist_songs (playlist_id, position, song_id)
+        SELECT :id, n, :songId FROM generate_series(1, 500) n
+      `,
+      { id: playlist.id, songId: a.id },
+    );
+    await expect(
+      callerFor(owner).playlists.edit({
+        id: playlist.id,
+        op: { type: 'add', songId: b.id },
+      }),
+    ).rejects.toThrow('PLAYLIST_FULL');
+    const fewer = await callerFor(owner).playlists.edit({
+      id: playlist.id,
+      op: { type: 'remove', songId: a.id, index: 0 },
+    });
+    expect(fewer.songIds).toHaveLength(499);
+  });
+
   it('creates a playlist with songs in the given order, repeats allowed', async () => {
     const { owner, a, b, c } = await setup();
     const playlist = await callerFor(owner).playlists.create({
@@ -222,6 +249,18 @@ describe('sharing', () => {
         (await callerFor(outsider).playlists.byId({ id: playlist.id })).collaboratorCount,
       ).toBeNull();
     }
+  });
+
+  it('lets an unconfirmed account that joined see who is in, and leave again', async () => {
+    const { token, playlist } = await shared();
+    const fresh = await createUser({ verified: false });
+    await callerFor(fresh).playlists.join({ token });
+    await expect(
+      callerFor(fresh).playlists.members({ id: playlist.id }),
+    ).resolves.toContainEqual(expect.objectContaining({ id: fresh.id }));
+    await expect(
+      callerFor(fresh).playlists.leave({ id: playlist.id }),
+    ).resolves.toBeTruthy();
   });
 
   it('lets an unconfirmed account join (it may edit once its email is confirmed)', async () => {

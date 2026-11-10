@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { idSchema, rejectionReasonSchema } from '#shared/validators/index.ts';
 import type { Locale } from '#shared/validators/index.ts';
-import { sendEmail } from '../../email/send.ts';
+import { sendEmailInBackground } from '../../email/send.ts';
 import { songRejected } from '../../email/templates.ts';
 import { loadSongRow, loadSong } from '../../songs/load.ts';
 import { recordVersion } from '../../songs/versions.ts';
@@ -51,18 +51,15 @@ export const reject = editorProcedure
       );
       const author = rows[0];
       if (author) {
-        // The rejection stands either way; a mail that didn't go out is logged, not an error
-        // for the editor, who can do nothing about it.
-        await sendEmail(
+        sendEmailInBackground(
           songRejected(author.email, author.locale, {
             id: song.id,
             title: song.title,
             reason: input.reason,
             note: input.note || null,
           }),
-        ).catch((error: unknown) => {
-          console.error(`Rejection email for song ${song.id} failed:`, error);
-        });
+          'song rejected',
+        );
       }
     }
     return song;

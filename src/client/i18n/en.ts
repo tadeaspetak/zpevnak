@@ -287,6 +287,7 @@ export const en: Record<keyof typeof cs, string> = {
   'error.TOO_MANY_REQUESTS': 'Too many attempts. Try again in a while.',
   'error.UNDO_EXPIRED': 'Too late to undo. Send the invite link again.',
   'error.REJECTION_NOTE_REQUIRED': 'For another reason, tell the author what’s wrong.',
+  'error.PLAYLIST_FULL': 'The playlist is full: it holds at most 500 songs.',
 
   'notFound.title': "This page doesn't exist",
   'notFound.home': 'Go to the home page',

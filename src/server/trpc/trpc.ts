@@ -1,5 +1,6 @@
 import { initTRPC, TRPCError } from '@trpc/server';
 import type { ErrorCode } from '#shared/errors.ts';
+import { isEditor } from '#shared/songs.ts';
 import type { Context } from './context.ts';
 
 const t = initTRPC.context<Context>().create();
@@ -27,7 +28,7 @@ export const verifiedProcedure = authedProcedure.use(({ ctx, next }) => {
 });
 
 export const editorProcedure = verifiedProcedure.use(({ ctx, next }) => {
-  if (ctx.user.role !== 'editor' && ctx.user.role !== 'admin') {
+  if (!isEditor(ctx.user)) {
     fail('FORBIDDEN', 'FORBIDDEN');
   }
   return next();

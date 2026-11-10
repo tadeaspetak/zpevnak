@@ -87,6 +87,19 @@ describe('songs.update', () => {
     ).rejects.toThrow('SONG_NOT_EDITABLE');
   });
 
+  it('keeps a rejected song rejected when it is saved unchanged', async () => {
+    const { author, editor, song } = await setup();
+    await callerFor(editor).songs.reject({ id: song.id, reason: 'too_many_mistakes' });
+    const saved = await callerFor(author).songs.update({
+      id: song.id,
+      source: song.source,
+    });
+    expect(saved).toMatchObject({
+      status: 'rejected',
+      rejection: { reason: 'too_many_mistakes', note: null },
+    });
+  });
+
   it('resubmits a rejected song as pending when its author fixes it', async () => {
     const { author, editor, song } = await setup();
     await callerFor(editor).songs.reject({ id: song.id, reason: 'too_many_mistakes' });

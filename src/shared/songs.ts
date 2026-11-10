@@ -11,3 +11,25 @@ export function inSearch(
 ): boolean {
   return song.status !== 'rejected' || (viewerId !== null && song.createdBy === viewerId);
 }
+
+type Viewer = { id: number; role: 'user' | 'editor' | 'admin'; emailVerified: boolean };
+
+/** An editor or an admin: they review songs and may change any of them. */
+export function isEditor(user: Pick<Viewer, 'role'> | null): boolean {
+  return user?.role === 'editor' || user?.role === 'admin';
+}
+
+/**
+ * Who may edit or delete a song (D78, D81), the same on both sides: editors any song; its
+ * author while it isn't approved (an approved song belongs to the songbook). Always with a
+ * confirmed email.
+ */
+export function canChangeSong(
+  user: Viewer | null,
+  song: { status: SongStatus; createdBy: number | null },
+): boolean {
+  if (!user?.emailVerified) {
+    return false;
+  }
+  return isEditor(user) || (song.createdBy === user.id && song.status !== 'verified');
+}

@@ -1,4 +1,5 @@
 import type { RejectionReason, SongStatus } from '#shared/validators/index.ts';
+import { isEditor } from '#shared/songs.ts';
 import type { SessionUser } from '../auth/sessions.ts';
 
 /** Columns every song read selects, for `toSongRecord`. */
@@ -19,10 +20,6 @@ export type SongRow = {
   created_at: Date;
   updated_at: Date;
 };
-
-export function isEditor(user: SessionUser | null): boolean {
-  return user?.role === 'editor' || user?.role === 'admin';
-}
 
 /** The song as the client gets it. An allow-list: never spread a row here. */
 export function toSongRecord(row: SongRow, viewer: SessionUser | null) {

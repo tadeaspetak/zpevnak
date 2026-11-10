@@ -10,7 +10,7 @@ import { setSessionCookie } from '../../auth/cookies.ts';
 import { issueEmailToken } from '../../auth/emailTokens.ts';
 import { hashPassword } from '../../auth/password.ts';
 import { createSession } from '../../auth/sessions.ts';
-import { sendEmail } from '../../email/send.ts';
+import { sendEmailInBackground } from '../../email/send.ts';
 import { alreadyRegistered, verifyEmail } from '../../email/templates.ts';
 import { publicProcedure } from '../../trpc/trpc.ts';
 
@@ -51,13 +51,18 @@ export const signUp = publicProcedure
         /* sql */ `SELECT locale FROM users WHERE lower(email) = :email`,
         { email: input.email },
       );
-      await sendEmail(
+      sendEmailInBackground(
         alreadyRegistered(input.email, existing[0]?.locale ?? input.locale),
+        'already registered',
       );
       return { signedIn: false };
     }
     const token = await issueEmailToken(ctx.db, userId, 'verify_email');
-    await sendEmail(verifyEmail(input.email, input.locale, token, input.next ?? null));
+    // The account exists either way: signed in, they can ask for the email again.
+    sendEmailInBackground(
+      verifyEmail(input.email, input.locale, token, input.next ?? null),
+      'verify email',
+    );
     setSessionCookie(ctx.res, await createSession(ctx.db, userId));
     return { signedIn: true };
   });

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { applyOp } from '#shared/playlistOps.ts';
-import { idSchema } from '#shared/validators/index.ts';
+import { idSchema, PLAYLIST_MAX_SONGS } from '#shared/validators/index.ts';
 import { assertMember, loadVisiblePlaylist } from '../../playlists/load.ts';
 import { assertSongsUsable, writeSongs } from '../../playlists/writeSongs.ts';
 import { fail, verifiedProcedure } from '../../trpc/trpc.ts';
@@ -11,8 +11,6 @@ const opSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('remove'), songId: idSchema, index }),
   z.object({ type: z.literal('move'), songId: idSchema, from: index, to: index }),
 ]);
-
-const MAX_SONGS = 500;
 
 /**
  * One change to the song order, by the owner or a collaborator, applied to the playlist as it
@@ -35,8 +33,8 @@ export const edit = verifiedProcedure
       );
       if (input.op.type === 'add') {
         await assertSongsUsable(trx, [input.op.songId], ctx.user);
-        if (rows.length >= MAX_SONGS) {
-          fail('BAD_REQUEST', 'FORBIDDEN');
+        if (rows.length >= PLAYLIST_MAX_SONGS) {
+          fail('BAD_REQUEST', 'PLAYLIST_FULL');
         }
       }
       const next = applyOp(

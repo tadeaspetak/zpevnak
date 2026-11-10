@@ -1,5 +1,9 @@
 import { z } from 'zod';
-import { idSchema, playlistNameSchema } from '#shared/validators/index.ts';
+import {
+  idSchema,
+  playlistNameSchema,
+  PLAYLIST_MAX_SONGS,
+} from '#shared/validators/index.ts';
 import { loadVisiblePlaylist } from '../../playlists/load.ts';
 import { assertSongsUsable, writeSongs } from '../../playlists/writeSongs.ts';
 import { verifiedProcedure } from '../../trpc/trpc.ts';
@@ -9,7 +13,7 @@ export const create = verifiedProcedure
     z.object({
       name: playlistNameSchema,
       isPublic: z.boolean(),
-      songIds: z.array(idSchema).max(500).default([]),
+      songIds: z.array(idSchema).max(PLAYLIST_MAX_SONGS).default([]),
     }),
   )
   .mutation(async ({ ctx, input }) => {

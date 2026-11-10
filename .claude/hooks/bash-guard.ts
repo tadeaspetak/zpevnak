@@ -87,26 +87,43 @@ function simpleCommands(line: string): string[][] {
   return parts.map(words).filter((w) => w.length > 0);
 }
 
-/** Drops what only wraps a command: `VAR=x`, `env`, `command`, `sudo`, a path to the binary. */
-function unwrap(argv: string[]): string[] {
+/**
+ * Drops what only wraps a command: `VAR=x`, `env`, `command`, `sudo`, a path to the binary.
+ * The `VAR=x` assignments are kept aside: `PGHOST=… psql` picks its server through them.
+ */
+function unwrap(argv: string[]): { argv: string[]; assignments: string[] } {
   let rest = [...argv];
+  const assignments: string[] = [];
   for (;;) {
     const head = rest[0];
     if (head === undefined) {
-      return rest;
+      return { argv: rest, assignments };
     }
-    if (
-      /^[A-Za-z_][A-Za-z0-9_]*=/.test(head) ||
-      ['env', 'command', 'sudo', 'exec', 'time'].includes(head)
-    ) {
+    if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(head)) {
+      assignments.push(head);
+      rest = rest.slice(1);
+      continue;
+    }
+    if (['env', 'command', 'sudo', 'exec', 'time'].includes(head)) {
       rest = rest.slice(1);
       continue;
     }
     if (head.includes('/')) {
       rest = [head.slice(head.lastIndexOf('/') + 1), ...rest.slice(1)];
     }
-    return rest;
+    return { argv: rest, assignments };
   }
+}
+
+/**
+ * What `$(…)` and backticks run: commands too, and checked as such. Not inside single quotes or
+ * a quoted heredoc (`<<'EOF'`): the shell runs nothing there, it's text.
+ */
+function substitutions(command: string): string[] {
+  const live = command
+    .replace(/<<-?\s*(['"])(\w+)\1[^\n]*\n[\s\S]*?\n\2(?=\n|$)/g, '')
+    .replace(/'[^']*'/g, "''");
+  return [...live.matchAll(/\$\(([^()]*)\)|`([^`]*)`/g)].map((m) => m[1] ?? m[2] ?? '');
 }
 
 function checkGit(args: string[]): string | null {
@@ -171,8 +188,16 @@ function hostsIn(args: string[]): string[] {
   return hosts;
 }
 
-function checkPostgres(args: string[]): string | null {
-  const remote = hostsIn(args).find((h) => !LOCAL_HOSTS.test(h));
+function checkPostgres(args: string[], assignments: string[]): string | null {
+  // A variable could hold any server, Neon's included: there's no telling which.
+  if (args.some((a) => a.includes('$'))) {
+    return 'A database address from a variable is not allowed: name a local one. Ask the owner to run it.';
+  }
+  const fromEnv = assignments.flatMap((a) => {
+    const match = /^PG(?:HOST|HOSTADDR)=(.*)$/.exec(a);
+    return match?.[1] !== undefined ? [match[1].replace(/^["']|["']$/g, '')] : [];
+  });
+  const remote = [...hostsIn(args), ...fromEnv].find((h) => !LOCAL_HOSTS.test(h));
   return remote
     ? `Connecting to ${remote} is not allowed: only local databases. Ask the owner to run it.`
     : null;
@@ -182,8 +207,14 @@ export function check(command: string, depth = 0): string | null {
   if (depth > 3) {
     return null;
   }
+  for (const inner of substitutions(command)) {
+    const verdict = check(inner, depth + 1);
+    if (verdict) {
+      return verdict;
+    }
+  }
   for (const raw of simpleCommands(command)) {
-    const argv = unwrap(raw);
+    const { argv, assignments } = unwrap(raw);
     const [bin, ...args] = argv;
     if (!bin) {
       continue;
@@ -213,7 +244,7 @@ export function check(command: string, depth = 0): string | null {
         : bin === 'gcloud'
           ? checkGcloud(args)
           : ['psql', 'pg_dump', 'pg_restore', 'pg_dumpall'].includes(bin)
-            ? checkPostgres(args)
+            ? checkPostgres(args, assignments)
             : null;
     if (verdict) {
       return verdict;

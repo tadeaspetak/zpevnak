@@ -41,6 +41,12 @@ export const playlistNameSchema = z.string().trim().min(1).max(100);
 
 export const tokenSchema = z.string().min(20).max(200);
 
+/** A playlist invite link's secret. */
+export const inviteTokenSchema = z.string().min(16).max(64);
+
+/** The most songs a playlist holds: a long evening, with room to spare. */
+export const PLAYLIST_MAX_SONGS = 500;
+
 /**
  * A path inside the app to return to after signing in or confirming an email. Only a local
  * path: "/" first, never "//" (another host) or a backslash (which browsers read as "/").

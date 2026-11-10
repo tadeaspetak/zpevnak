@@ -1,15 +1,16 @@
 import { z } from 'zod';
+import { canChangeSong } from '#shared/songs.ts';
 import { idSchema, songSourceSchema } from '#shared/validators/index.ts';
 import { readHeader } from '../../songs/header.ts';
 import { loadSongRow, loadSong } from '../../songs/load.ts';
-import { isEditor } from '../../songs/record.ts';
 import { recordVersion } from '../../songs/versions.ts';
 import { fail, verifiedProcedure } from '../../trpc/trpc.ts';
 
 /**
- * Editors edit any song; an author their own song while it is pending or rejected. An edit keeps
- * a verified or pending song's status, but a rejected song, once changed, goes back for review
- * as pending, whoever changed it: the rejection was of the old text (D81).
+ * Editors edit any song; an author their own song while it is pending or rejected (D78). An
+ * edit keeps a verified or pending song's status, but a rejected song, once its text changes,
+ * goes back for review as pending, whoever changed it: the rejection was of the old text (D81).
+ * Saved unchanged, it stays rejected.
  *
  * A save that changes the text is a version (D86); one that doesn't changes nothing worth
  * keeping, and would credit someone who only opened and saved.
@@ -17,19 +18,19 @@ import { fail, verifiedProcedure } from '../../trpc/trpc.ts';
 export const update = verifiedProcedure
   .input(z.object({ id: idSchema, source: songSourceSchema }))
   .mutation(async ({ ctx, input }) => {
-    const row = await loadSongRow(ctx.db, input.id);
-    const editor = isEditor(ctx.user);
-    if (!editor) {
-      if (row.created_by !== ctx.user.id) {
-        fail('FORBIDDEN', 'FORBIDDEN');
-      }
-      if (row.status === 'verified') {
-        fail('FORBIDDEN', 'SONG_NOT_EDITABLE');
-      }
-    }
     const { title, artist } = readHeader(input.source);
-    const resubmit = row.status === 'rejected';
     await ctx.db.transaction(async (trx) => {
+      // Locked: an editor approving it meanwhile is seen here, not overwritten.
+      const row = await loadSongRow(trx, input.id, { forUpdate: true });
+      const song = { status: row.status, createdBy: row.created_by };
+      if (!canChangeSong(ctx.user, song)) {
+        fail(
+          'FORBIDDEN',
+          row.created_by === ctx.user.id ? 'SONG_NOT_EDITABLE' : 'FORBIDDEN',
+        );
+      }
+      const changed = input.source !== row.source;
+      const resubmit = row.status === 'rejected' && changed;
       await trx.raw(
         /* sql */ `
           UPDATE songs
@@ -39,7 +40,7 @@ export const update = verifiedProcedure
         `,
         { id: input.id, source: input.source, title, artist },
       );
-      if (input.source !== row.source) {
+      if (changed) {
         await recordVersion(trx, input.id, 'edit', ctx.user.id);
       }
     });

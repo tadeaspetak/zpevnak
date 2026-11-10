@@ -15,6 +15,7 @@ const ERROR_CODES = [
   'TOO_MANY_REQUESTS',
   'UNDO_EXPIRED',
   'REJECTION_NOTE_REQUIRED',
+  'PLAYLIST_FULL',
 ] as const;
 export type ErrorCode = (typeof ERROR_CODES)[number];
 

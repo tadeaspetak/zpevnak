@@ -17,5 +17,7 @@ describe('slugify', () => {
   it('never starts or ends with a dash, and stays short', () => {
     expect(slugify('  ¡Hola!  ')).toBe('hola');
     expect(slugify('x'.repeat(200))).toHaveLength(80);
+    // Cut at a space: the cut must not leave a dash behind.
+    expect(slugify(`${'a'.repeat(79)} bcd`)).toBe('a'.repeat(79));
   });
 });
