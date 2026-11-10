@@ -255,12 +255,15 @@ From the first UX walk of the song view and a playlist session (2026-11-10):
   measured on a hidden copy, so smaller text, a portrait tablet or hidden chords can bring the
   columns on, and larger text takes them off. In practice most songs get columns on a portrait
   tablet and stay in one column on a landscape tablet or laptop. (2026-11-10)
-- **D89. The key is shown, not pressed; a remembered setting shows.** The key between − and +
-  is a label (a tap on it used to reset the transposition silently); reset is in the ⋯ menu. A
-  transposition remembered from last time (D24) shows as its offset beside the key (`G −2`,
-  dropped below 360 px to keep search on screen), and hidden chords as a dot on the Display
-  icon. A disabled diagrams switch says why ("Jen se zapnutými akordy" / "Jen v původní
-  tónině"). (2026-11-10)
+- **D89. The key shows whether the song is transposed, and is the way back.** In the song's
+  own key, the key between − and + is a plain label: a tap does nothing (it used to reset
+  silently). Transposed, a remembered transposition too (D24), it is a filled orange button,
+  the one filled thing in the toolbar: a tap goes back to the song's key, and its tooltip names
+  it ("Zpět na A"). Tried and dropped the same day: an offset beside the key ("Bm −3", busy and
+  wider), an orange edge on the pill (too easy to miss), reset only in the ⋯ menu (nobody finds
+  it there). The control is squared off (a small radius, not a pill) with room around the key,
+  so the filled key reads as a key, not a blob. Hidden chords show as a dot on the Display icon; a disabled diagrams switch says
+  why ("Jen se zapnutými akordy" / "Jen v původní tónině"). (2026-11-10)
 - **D90. Keys belong to what's open.** Esc and the arrows act on the song only when no menu,
   popover or dialog has them: Esc in the ⋯ menu closes the menu and stays on the song.
   (2026-11-10)

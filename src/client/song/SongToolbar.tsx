@@ -9,6 +9,7 @@ import {
   Switch,
   Text,
   Tooltip,
+  UnstyledButton,
 } from '@mantine/core';
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 import {
@@ -23,7 +24,6 @@ import {
   IconPlaylistAdd,
   IconPlus,
   IconTrash,
-  IconRestore,
   IconAdjustmentsHorizontal,
 } from '@tabler/icons-react';
 import { Link } from 'react-router';
@@ -62,6 +62,7 @@ export function SongToolbar(props: Props) {
     backTo,
     backLabel,
     song,
+    originalKey,
     shownKey,
     semitones,
     hasDiagrams,
@@ -78,9 +79,14 @@ export function SongToolbar(props: Props) {
   const [deleting, { open: openDelete, close: closeDelete }] = useDisclosure(false);
   const canDelete = useCanDelete(song);
 
-  // A real minus sign: a hyphen reads as a dash beside a key.
-  const offset =
-    semitones === 0 ? '±0' : semitones > 0 ? `+${semitones}` : `−${-semitones}`;
+  // A song without a {key} shows how far it's transposed instead. A real minus sign: a
+  // hyphen reads as a dash.
+  const keyLabel =
+    shownKey ??
+    (semitones === 0 ? '±0' : semitones > 0 ? `+${semitones}` : `−${-semitones}`);
+  const resetLabel = originalKey
+    ? t('song.backToKey', { key: originalKey })
+    : t('song.transposeReset');
 
   return (
     <>
@@ -112,31 +118,40 @@ export function SongToolbar(props: Props) {
               variant="subtle"
               color="gray"
               size="lg"
-              radius="xl"
               onClick={() => prefs.setTranspose(song.id, semitones - 1)}
               aria-label={t('song.transposeDown')}
             >
               <IconMinus size={18} />
             </ActionIcon>
-            {/* The key only shows: it isn't a button (a tap there used to reset silently).
-                Reset lives in the ⋯ menu. A transposition remembered from last time (D24)
-                shows as its offset beside the key, so it can't go unnoticed. */}
-            <span className={classes.key} aria-live="polite">
-              <IconClef size={18} aria-hidden />
-              <Text fw={700} size="sm" span>
-                {shownKey ?? offset}
-              </Text>
-              {shownKey && semitones !== 0 && (
-                <Text size="xs" fw={600} span className={classes.offset}>
-                  {offset}
+            {/* In the song's own key, the key only shows. Transposed (from last time too,
+                D24), it turns into an orange button that takes the song back: it can't go
+                unnoticed, and the way back is where the eye already is. */}
+            {semitones === 0 ? (
+              <span className={classes.key}>
+                <IconClef size={18} aria-hidden />
+                <Text fw={700} size="sm" span>
+                  {keyLabel}
                 </Text>
-              )}
-            </span>
+              </span>
+            ) : (
+              <Tooltip label={resetLabel}>
+                <UnstyledButton
+                  className={classes.key}
+                  data-changed
+                  onClick={() => prefs.setTranspose(song.id, 0)}
+                  aria-label={`${keyLabel}: ${resetLabel}`}
+                >
+                  <IconClef size={18} aria-hidden />
+                  <Text fw={700} size="sm" span>
+                    {keyLabel}
+                  </Text>
+                </UnstyledButton>
+              </Tooltip>
+            )}
             <ActionIcon
               variant="subtle"
               color="gray"
               size="lg"
-              radius="xl"
               onClick={() => prefs.setTranspose(song.id, semitones + 1)}
               aria-label={t('song.transposeUp')}
             >
@@ -287,14 +302,6 @@ export function SongToolbar(props: Props) {
                     {t('song.fullscreenHint')}
                   </Menu.Label>
                 )
-              )}
-              {semitones !== 0 && (
-                <Menu.Item
-                  leftSection={<IconRestore size={16} />}
-                  onClick={() => prefs.setTranspose(song.id, 0)}
-                >
-                  {t('song.transposeReset')}
-                </Menu.Item>
               )}
               {canAddToPlaylist && (
                 <Menu.Item leftSection={<IconPlaylistAdd size={16} />} onClick={openAdd}>

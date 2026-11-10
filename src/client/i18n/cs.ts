@@ -64,6 +64,7 @@ export const cs = {
   'song.transposeDown': 'O půltón dolů',
   'song.transposeUp': 'O půltón nahoru',
   'song.transposeReset': 'Původní tónina',
+  'song.backToKey': 'Zpět na {key}',
   'song.capo': 'Kapodastr {fret}',
   'song.textSize': 'Velikost písma',
   'song.display': 'Zobrazení',

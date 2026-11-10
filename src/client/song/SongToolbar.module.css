@@ -24,7 +24,7 @@
 
 .transpose {
   border: 1px solid var(--mantine-color-default-border);
-  border-radius: 999px;
+  border-radius: var(--mantine-radius-md);
   padding: 2px;
   margin-right: var(--mantine-spacing-xs);
 }
@@ -32,29 +32,27 @@
 .key {
   min-width: 2.5rem;
   height: 2.25rem;
-  padding: 0 0.25rem;
+  padding: 0 0.5rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 2px;
+  border-radius: var(--mantine-radius-sm);
   /* The key reads as what it is: a chord, in the chords' colour. */
   color: var(--chord-color);
-}
 
-.offset {
-  color: var(--mantine-color-dimmed);
-  margin-left: 2px;
-  font-variant-numeric: tabular-nums;
-}
+  /* Transposed: the one filled thing in the toolbar, and a tap goes back to the song's key. */
+  &[data-changed] {
+    background: var(--mantine-primary-color-filled);
+    color: var(--mantine-primary-color-contrast);
 
-/* A 320 px phone: every pixel goes to keeping search on screen. The key still shows the
-   transposed key; the offset beside it goes. */
-@media (max-width: 22.5em) {
-  .offset {
-    display: none;
+    @mixin hover {
+      background: var(--mantine-primary-color-filled-hover);
+    }
   }
 }
 
+/* A 320 px phone: every pixel goes to keeping search on screen. */
 @media (max-width: 22em) {
   .bar .inner {
     gap: 0;
