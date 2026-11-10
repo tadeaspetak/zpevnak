@@ -32,8 +32,9 @@ createRoot(document.getElementById('root') as HTMLElement).render(
           cssVariablesResolver={cssVariablesResolver}
           defaultColorScheme="auto"
         >
-          <Notifications position="top-center" />
           <I18nProvider>
+            {/* Inside the translations: a toast may hold a component that reads them. */}
+            <Notifications position="top-center" />
             <BrowserRouter>
               <App />
             </BrowserRouter>

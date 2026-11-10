@@ -7,7 +7,12 @@ import { edit } from './playlists.edit.ts';
 import { invite, resetInvite } from './playlists.invite.ts';
 import { invitePreview } from './playlists.invitePreview.ts';
 import { join } from './playlists.join.ts';
-import { leave, members, removeCollaborator } from './playlists.members.ts';
+import {
+  leave,
+  members,
+  removeCollaborator,
+  restoreCollaborator,
+} from './playlists.members.ts';
 import { rename } from './playlists.rename.ts';
 import { setPublic } from './playlists.setPublic.ts';
 
@@ -26,4 +31,5 @@ export const playlistsRouter = router({
   members,
   leave,
   removeCollaborator,
+  restoreCollaborator,
 });

@@ -1,6 +1,11 @@
 import { z } from 'zod';
 import { idSchema } from '#shared/validators/index.ts';
-import { assertMember, assertOwner, type PlaylistRole } from '../../playlists/load.ts';
+import {
+  assertMember,
+  assertOwner,
+  loadVisiblePlaylist,
+  type PlaylistRole,
+} from '../../playlists/load.ts';
 import { fail, verifiedProcedure } from '../../trpc/trpc.ts';
 
 type MemberRow = { id: number; display_name: string; role: PlaylistRole };
@@ -43,16 +48,75 @@ export const leave = verifiedProcedure
     return { ok: true };
   });
 
-/** The owner takes someone out of the playlist. */
+/**
+ * The owner takes someone out of the playlist, at once and with one tap; the removal is kept so
+ * it can be undone (`restoreCollaborator`, D87).
+ */
 export const removeCollaborator = verifiedProcedure
   .input(z.object({ id: idSchema, userId: idSchema }))
   .mutation(async ({ ctx, input }) => {
     await assertOwner(ctx.db, input.id, ctx.user);
     await ctx.db.raw(
       /* sql */ `
-        DELETE FROM playlist_collaborators WHERE playlist_id = :id AND user_id = :userId
+        WITH removed AS (
+          DELETE FROM playlist_collaborators WHERE playlist_id = :id AND user_id = :userId
+          RETURNING playlist_id, user_id, joined_at
+        )
+        INSERT INTO playlist_collaborator_removals (playlist_id, user_id, joined_at)
+        SELECT playlist_id, user_id, joined_at FROM removed
       `,
       input,
     );
-    return { ok: true };
+    return loadVisiblePlaylist(ctx.db, input.id, ctx.user);
+  });
+
+/**
+ * How long a removal can be undone. The undo lives in a toast that closes after seconds; the
+ * window is wider so a slow connection doesn't lose it, and narrow enough that it stays an undo
+ * rather than a way to pull someone back in weeks later.
+ */
+const UNDO_WINDOW = '10 minutes';
+
+/**
+ * Undoes the owner's recent removal: the person is back, as they were, with their original
+ * join date. Only someone this owner removed from this playlist moments ago: an owner can't
+ * use it to add anyone else.
+ */
+export const restoreCollaborator = verifiedProcedure
+  .input(z.object({ id: idSchema, userId: idSchema }))
+  .mutation(async ({ ctx, input }) => {
+    await assertOwner(ctx.db, input.id, ctx.user);
+    await ctx.db.transaction(async (trx) => {
+      const { rows } = await trx.raw(
+        /* sql */ `
+          SELECT id, joined_at FROM playlist_collaborator_removals
+          WHERE playlist_id = :id AND user_id = :userId AND restored_at IS NULL
+            AND removed_at > now() - interval '${UNDO_WINDOW}'
+          ORDER BY removed_at DESC
+          LIMIT 1
+          FOR UPDATE
+        `,
+        input,
+      );
+      const removal = rows[0];
+      if (!removal) {
+        fail('BAD_REQUEST', 'UNDO_EXPIRED');
+      }
+      // They may have come back through the invite link meanwhile: then they are in already.
+      await trx.raw(
+        /* sql */ `
+          INSERT INTO playlist_collaborators (playlist_id, user_id, joined_at)
+          VALUES (:id, :userId, :joinedAt)
+          ON CONFLICT (playlist_id, user_id) DO NOTHING
+        `,
+        { ...input, joinedAt: removal.joined_at },
+      );
+      await trx.raw(
+        /* sql */ `
+          UPDATE playlist_collaborator_removals SET restored_at = now() WHERE id = :removalId
+        `,
+        { removalId: removal.id },
+      );
+    });
+    return loadVisiblePlaylist(ctx.db, input.id, ctx.user);
   });

@@ -239,6 +239,13 @@ entry that says which it replaces and what changed.
   when their author's account goes. Songs from before had one `create` version backfilled from
   their current text, dated and credited as when they were added; the seed's songs have no
   author, so neither do their versions. All are kept: a song is a few kB. (2026-11-10)
+- **D87. Taking someone out of a playlist is one tap, undone by one tap.** The owner's × removes
+  the listmate at once; a toast at the bottom (at the top it would cover the dialog) says
+  "{name} už v playlistu není" with "Beru zpátky" for 8 seconds.
+  Undo puts them back as they were (their join date too). The server keeps every removal
+  (`playlist_collaborator_removals`) and restores only someone this playlist's owner removed in
+  the last 10 minutes, so undo can't add anyone else. No confirmation dialog: an undo costs the
+  rare mistake a tap instead of every removal. (2026-11-10)
 
 ## Engineering
 

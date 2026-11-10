@@ -137,6 +137,8 @@ export const en: Record<keyof typeof cs, string> = {
   'playlists.resetHint': 'The old link stops working. Whoever already joined stays.',
   'playlists.people': 'People',
   'playlists.removePerson': 'Remove {name}',
+  'playlists.removed': '{name} is no longer in the playlist.',
+  'playlists.undoRemove': 'Undo',
   'playlists.leave': 'Leave playlist',
   'playlists.leaveConfirm': "Leave “{name}”? You can come back through the owner's link.",
   'playlists.confirmToEdit': 'Confirm your email, then you can edit the playlist.',
@@ -240,6 +242,7 @@ export const en: Record<keyof typeof cs, string> = {
   'error.SONG_NOT_EDITABLE': 'Verified songs are edited by editors.',
   'error.CANNOT_CHANGE_OWN_ROLE': "You can't change your own role.",
   'error.TOO_MANY_REQUESTS': 'Too many attempts. Try again in a while.',
+  'error.UNDO_EXPIRED': 'Too late to undo. Send the invite link again.',
 
   'notFound.title': "This page doesn't exist",
   'notFound.home': 'Go to the home page',

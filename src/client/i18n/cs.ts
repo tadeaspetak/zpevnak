@@ -139,6 +139,8 @@ export const cs = {
   'playlists.resetHint': 'Starý odkaz přestane fungovat. Kdo už se připojil, zůstává.',
   'playlists.people': 'Lidé',
   'playlists.removePerson': 'Odebrat: {name}',
+  'playlists.removed': '{name} už v playlistu není.',
+  'playlists.undoRemove': 'Beru zpátky',
   'playlists.leave': 'Opustit playlist',
   'playlists.leaveConfirm': 'Opustit „{name}“? Vrátit se můžeš přes odkaz od vlastníka.',
   'playlists.confirmToEdit': 'Potvrď svůj e-mail, pak můžeš playlist upravovat.',
@@ -241,6 +243,7 @@ export const cs = {
   'error.SONG_NOT_EDITABLE': 'Ověřené písničky upravují editoři.',
   'error.CANNOT_CHANGE_OWN_ROLE': 'Vlastní roli si změnit nemůžeš.',
   'error.TOO_MANY_REQUESTS': 'Moc pokusů za sebou. Zkus to za chvíli.',
+  'error.UNDO_EXPIRED': 'Na vrácení už je pozdě. Pošli pozvánku znovu.',
 
   'notFound.title': 'Tahle stránka neexistuje',
   'notFound.home': 'Na hlavní stránku',

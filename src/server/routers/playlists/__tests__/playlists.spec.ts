@@ -336,6 +336,101 @@ describe('sharing', () => {
   });
 });
 
+describe('undoing a removal (D87)', () => {
+  async function removed() {
+    const s = await shared();
+    const { rows } = await db.raw(
+      /* sql */ `SELECT joined_at FROM playlist_collaborators WHERE user_id = :id`,
+      { id: s.collaborator.id },
+    );
+    const record = await callerFor(s.owner).playlists.removeCollaborator({
+      id: s.playlist.id,
+      userId: s.collaborator.id,
+    });
+    return { ...s, joinedAt: rows[0].joined_at as Date, record };
+  }
+  const memberIds = async (owner: Parameters<typeof callerFor>[0], id: number) =>
+    (await callerFor(owner).playlists.members({ id })).map((m) => m.id);
+
+  it('removes at once and answers with the playlist, one fewer', async () => {
+    const { record, owner, playlist, collaborator } = await removed();
+    expect(record.collaboratorCount).toBe(0);
+    expect(await memberIds(owner, playlist.id)).not.toContain(collaborator.id);
+  });
+
+  it('puts the person back as they were, original join date included', async () => {
+    const { owner, playlist, collaborator, joinedAt } = await removed();
+    const record = await callerFor(owner).playlists.restoreCollaborator({
+      id: playlist.id,
+      userId: collaborator.id,
+    });
+    expect(record.collaboratorCount).toBe(1);
+    const { rows } = await db.raw(
+      /* sql */ `SELECT joined_at FROM playlist_collaborators WHERE user_id = :id`,
+      { id: collaborator.id },
+    );
+    expect(rows[0].joined_at).toEqual(joinedAt);
+    expect((await callerFor(collaborator).playlists.byId({ id: playlist.id })).role).toBe(
+      'collaborator',
+    );
+  });
+
+  it('undoes once: a second undo has nothing left to undo', async () => {
+    const { owner, playlist, collaborator } = await removed();
+    const api = callerFor(owner).playlists;
+    await api.restoreCollaborator({ id: playlist.id, userId: collaborator.id });
+    await expect(
+      api.restoreCollaborator({ id: playlist.id, userId: collaborator.id }),
+    ).rejects.toThrow('UNDO_EXPIRED');
+  });
+
+  it("works when they've come back through the link meanwhile", async () => {
+    const { owner, playlist, collaborator, token } = await removed();
+    await callerFor(collaborator).playlists.join({ token });
+    const record = await callerFor(owner).playlists.restoreCollaborator({
+      id: playlist.id,
+      userId: collaborator.id,
+    });
+    expect(record.collaboratorCount).toBe(1);
+  });
+
+  it('refuses once the window has passed', async () => {
+    const { owner, playlist, collaborator } = await removed();
+    await db.raw(/* sql */ `
+        UPDATE playlist_collaborator_removals SET removed_at = now() - interval '11 minutes'
+      `);
+    await expect(
+      callerFor(owner).playlists.restoreCollaborator({
+        id: playlist.id,
+        userId: collaborator.id,
+      }),
+    ).rejects.toThrow('UNDO_EXPIRED');
+  });
+
+  it("can't add someone who was never taken out of the playlist", async () => {
+    const { owner, stranger, playlist } = await removed();
+    await expect(
+      callerFor(owner).playlists.restoreCollaborator({
+        id: playlist.id,
+        userId: stranger.id,
+      }),
+    ).rejects.toThrow('UNDO_EXPIRED');
+    expect(await memberIds(owner, playlist.id)).not.toContain(stranger.id);
+  });
+
+  it("is the owner's alone", async () => {
+    const { owner, stranger, playlist, collaborator, token } = await removed();
+    await callerFor(stranger).playlists.join({ token });
+    await expect(
+      callerFor(stranger).playlists.restoreCollaborator({
+        id: playlist.id,
+        userId: collaborator.id,
+      }),
+    ).rejects.toThrow('FORBIDDEN');
+    expect(await memberIds(owner, playlist.id)).not.toContain(collaborator.id);
+  });
+});
+
 describe('a rejected song in a playlist', () => {
   it('stays in every playlist, in its place, marked: nobody loses a song (D77)', async () => {
     const { owner, stranger, editor, a, b, c } = await setup();

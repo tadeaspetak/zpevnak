@@ -12,6 +12,7 @@ import {
   Title,
   Tooltip,
 } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import {
   IconCheck,
   IconCopy,
@@ -25,7 +26,7 @@ import { leavePlaylist, usePlayer } from '../data/session.ts';
 import { putPlaylist } from '../data/catalog.ts';
 import type { PlaylistRecord } from '../data/store.ts';
 import { useI18n } from '../i18n/index.tsx';
-import { trpc } from '../trpc.ts';
+import { trpc, trpcClient } from '../trpc.ts';
 import { url } from '../urls.ts';
 import { ErrorText } from './ErrorText.tsx';
 
@@ -51,15 +52,39 @@ export function ShareModal({ playlist, opened, onClose }: Props) {
   const reset = trpc.playlists.resetInvite.useMutation({
     onSuccess: (data) => utils.playlists.invite.setData({ id: playlist.id }, data),
   });
-  const remove = trpc.playlists.removeCollaborator.useMutation({
-    onSuccess: async () => {
-      await utils.playlists.members.invalidate({ id: playlist.id });
-      putPlaylist(playlist.id, {
-        ...playlist,
-        collaboratorCount: Math.max(0, (playlist.collaboratorCount ?? 1) - 1),
-      });
-    },
-  });
+  const remove = trpc.playlists.removeCollaborator.useMutation();
+  const removePerson = (person: { id: number; displayName: string }) =>
+    remove.mutate(
+      { id: playlist.id, userId: person.id },
+      {
+        onSuccess: async (record) => {
+          putPlaylist(record.id, record);
+          await utils.playlists.members.invalidate({ id: playlist.id });
+          // One tap removes, so one tap brings them back (D87).
+          const toastId = `removed-${playlist.id}-${person.id}`;
+          notifications.show({
+            id: toastId,
+            autoClose: 8000,
+            // At the top it would cover the dialog it belongs to: its title and close button.
+            position: 'bottom-center',
+            message: (
+              <UndoRemoval
+                name={person.displayName}
+                onUndo={async () => {
+                  const restored = await trpcClient.playlists.restoreCollaborator.mutate({
+                    id: playlist.id,
+                    userId: person.id,
+                  });
+                  putPlaylist(restored.id, restored);
+                  await utils.playlists.members.invalidate({ id: playlist.id });
+                  notifications.hide(toastId);
+                }}
+              />
+            ),
+          });
+        },
+      },
+    );
   const token = invite.data?.token;
   const link = token ? `${window.location.origin}${url.join(token)}` : '';
 
@@ -132,7 +157,7 @@ export function ShareModal({ playlist, opened, onClose }: Props) {
                     color="gray"
                     aria-label={t('playlists.removePerson', { name: person.displayName })}
                     loading={remove.isPending && remove.variables?.userId === person.id}
-                    onClick={() => remove.mutate({ id: playlist.id, userId: person.id })}
+                    onClick={() => removePerson(person)}
                   >
                     <IconX size={16} />
                   </ActionIcon>
@@ -151,6 +176,42 @@ export function ShareModal({ playlist, opened, onClose }: Props) {
         )}
       </Stack>
     </Modal>
+  );
+}
+
+/**
+ * The toast after a removal. It lives outside the dialog, so it calls the server directly and
+ * keeps working after the dialog closes.
+ */
+function UndoRemoval({ name, onUndo }: { name: string; onUndo: () => Promise<void> }) {
+  const { t } = useI18n();
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<unknown>(null);
+  return (
+    <Stack gap={4}>
+      <Group justify="space-between" wrap="nowrap" gap="sm">
+        <Text size="sm">{t('playlists.removed', { name })}</Text>
+        <Button
+          size="xs"
+          variant="default"
+          style={{ flexShrink: 0 }}
+          loading={pending}
+          onClick={async () => {
+            setPending(true);
+            setError(null);
+            try {
+              await onUndo();
+            } catch (e) {
+              setError(e);
+              setPending(false);
+            }
+          }}
+        >
+          {t('playlists.undoRemove')}
+        </Button>
+      </Group>
+      <ErrorText error={error} />
+    </Stack>
   );
 }
 

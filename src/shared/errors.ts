@@ -13,6 +13,7 @@ const ERROR_CODES = [
   'SONG_NOT_EDITABLE',
   'CANNOT_CHANGE_OWN_ROLE',
   'TOO_MANY_REQUESTS',
+  'UNDO_EXPIRED',
 ] as const;
 export type ErrorCode = (typeof ERROR_CODES)[number];
 
