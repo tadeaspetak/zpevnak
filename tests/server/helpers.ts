@@ -15,7 +15,8 @@ export const PASSWORD = 'correct horse battery';
 export function useCleanDatabase() {
   beforeEach(async () => {
     await db.raw(/* sql */ `
-      TRUNCATE users, sessions, auth_tokens, songs, song_deletions, playlists, playlist_songs
+      TRUNCATE users, sessions, auth_tokens, songs, song_versions, song_deletions, playlists,
+        playlist_songs
       RESTART IDENTITY CASCADE
     `);
     testOutbox.length = 0;

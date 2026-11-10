@@ -1,6 +1,7 @@
 # Song history, credits and suggested changes
 
-**State:** next (shaped, not started). Agreed in conversation on 2026-11-09; not urgent.
+**State:** ongoing. Agreed in conversation on 2026-11-09. Slice 1 shipped 2026-11-10 (D86);
+slices 2 and 3 wait until after the Christmas carol gig.
 
 ## Why
 
@@ -21,7 +22,12 @@ All three are answered by keeping a song's versions, and building credits and su
 
 Each slice ships on its own, in this order.
 
-### 1. Version history, recorded quietly
+### 1. Version history, recorded quietly (shipped, D86)
+
+As shipped, it differs from the sketch below in three ways: the kinds are only `create`, `edit`
+and `approve` for now (slice 3 adds `accept_suggestion` and `revert` with the features that use
+them); every approval records a version, not only one with edits; and an edit that leaves the
+text unchanged records nothing. Code: `src/server/songs/versions.ts`.
 
 Every save stores a copy of the song. Nothing shows it yet; it starts the record.
 

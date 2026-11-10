@@ -11,6 +11,7 @@ import { parseSong } from '#shared/chordpro/parse.ts';
 import { hashPassword } from '../auth/password.ts';
 import { env } from '../env.ts';
 import { DEV_PASSWORD, DEV_PERSONAS } from './devPersonas.ts';
+import { recordVersion } from '../songs/versions.ts';
 import { db } from './knex.ts';
 
 const dir = new URL('../../../seeds/songs', import.meta.url).pathname;
@@ -30,18 +31,25 @@ async function seedSongs() {
       continue;
     }
     const artist = song.artist?.trim() || null;
-    const { rows } = await db.raw(
-      /* sql */ `
-        INSERT INTO songs (title, artist, source, status, reviewed_at)
-        SELECT :title, :artist, :source, 'verified', now()
-        WHERE NOT EXISTS (
-          SELECT 1 FROM songs WHERE title = :title AND artist IS NOT DISTINCT FROM :artist
-        )
-        RETURNING id
-      `,
-      { title, artist, source },
-    );
-    console.log(rows.length ? `Added ${title} – ${artist}` : `Already there: ${title}`);
+    const added = await db.transaction(async (trx) => {
+      const { rows } = await trx.raw(
+        /* sql */ `
+          INSERT INTO songs (title, artist, source, status, reviewed_at)
+          SELECT :title, :artist, :source, 'verified', now()
+          WHERE NOT EXISTS (
+            SELECT 1 FROM songs WHERE title = :title AND artist IS NOT DISTINCT FROM :artist
+          )
+          RETURNING id
+        `,
+        { title, artist, source },
+      );
+      if (rows.length) {
+        // Seed songs have no author, so neither does their first version.
+        await recordVersion(trx, rows[0].id, 'create', null);
+      }
+      return rows.length > 0;
+    });
+    console.log(added ? `Added ${title} – ${artist}` : `Already there: ${title}`);
   }
 }
 
@@ -76,14 +84,20 @@ async function seedDevData() {
     /* sql */ `SELECT id FROM users WHERE email = 'user@zpevnak.test'`,
   );
   const userId: number = users[0].id;
-  await db.raw(
-    /* sql */ `
-      INSERT INTO songs (title, artist, source, created_by)
-      SELECT 'Zkušební písnička', 'Testovací kapela', :source, :userId
-      WHERE NOT EXISTS (SELECT 1 FROM songs WHERE title = 'Zkušební písnička')
-    `,
-    { source: PENDING_SONG, userId },
-  );
+  await db.transaction(async (trx) => {
+    const { rows } = await trx.raw(
+      /* sql */ `
+        INSERT INTO songs (title, artist, source, created_by)
+        SELECT 'Zkušební písnička', 'Testovací kapela', :source, :userId
+        WHERE NOT EXISTS (SELECT 1 FROM songs WHERE title = 'Zkušební písnička')
+        RETURNING id
+      `,
+      { source: PENDING_SONG, userId },
+    );
+    if (rows.length) {
+      await recordVersion(trx, rows[0].id, 'create', userId);
+    }
+  });
   const { rows: existing } = await db.raw(
     /* sql */ `SELECT 1 FROM playlists WHERE owner_id = :userId`,
     { userId },

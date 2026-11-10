@@ -17,7 +17,7 @@ entry that says which it replaces and what changed.
   never edit verified songs. (2026-11-09)
 - **D4. Editing is ChordPro.** The editor and the review screen edit the ChordPro source beside
   a live preview. No WYSIWYG editor for now. (2026-11-09)
-- **D5. No version history.** A save overwrites the song. (2026-11-09)
+- **D5. No version history.** A save overwrites the song. (2026-11-09) _Replaced by D86._
 - **D6. Tags stay in the songs and do nothing** for now: no filters, no tag UI. (2026-11-09)
 - **D7. Playlists are public or private**, no other sharing. Anyone, signed in or not, can open
   a public playlist. Only the owner changes it, editors included. (2026-11-09)
@@ -228,6 +228,17 @@ entry that says which it replaces and what changed.
   is a real heading (set once in the theme); "Nahlásit chybu" shows only to people who can't
   edit the song themselves; delete asks "Opravdu chceš smazat …? Nejde to vzít zpátky."
   (2026-11-09)
+
+- **D86. Every song keeps its versions** (replaces D5), recorded quietly before anyone uses the
+  app, so credits, suggested changes and rollback can be built on them later
+  (`.planning/ongoing/song-history-credits-suggestions.md`). A version is the text as stored,
+  with its title, artist, who saved it and when, and a kind: `create`, `edit` (a save that
+  changes the text; one that doesn't records nothing, so opening and saving earns no credit) or
+  `approve` (every approval, edited or not: it pins the approved text and who approved it).
+  Rejecting changes no text and records none. Versions go with a deleted song (D78) and stay
+  when their author's account goes. Songs from before had one `create` version backfilled from
+  their current text, dated and credited as when they were added; the seed's songs have no
+  author, so neither do their versions. All are kept: a song is a few kB. (2026-11-10)
 
 ## Engineering
 

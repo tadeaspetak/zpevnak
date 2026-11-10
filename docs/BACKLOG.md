@@ -19,7 +19,8 @@ All eight shipped the same day: see D50–D58 in `DECISIONS.md`.
 
 ## Bigger work
 
-- Song history, credits and suggested changes: `.planning/next/song-history-credits-suggestions.md`.
+- Song history, credits and suggested changes: `.planning/ongoing/song-history-credits-suggestions.md`.
+  Slice 1 (versions, recorded quietly) shipped as D86; credits and suggestions after the gig.
 
 ## State and loose ends (2026-11-09, end of the first long session)
 
@@ -35,4 +36,4 @@ All eight shipped the same day: see D50–D58 in `DECISIONS.md`.
   bothers in real use, put the title on its own line under the icons on narrow screens.
 - **Importing the old songbook:** deliberately not done (D11). Songs get added one by one, which is
   also how they get checked; `~/dev/projects/songbook` has ~430 ChordPro files to draw from.
-- **Plans:** song history, credits and suggestions in `.planning/next/`.
+- **Plans:** song history, credits and suggestions in `.planning/ongoing/` (slice 1 done, D86).
