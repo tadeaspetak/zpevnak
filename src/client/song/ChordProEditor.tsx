@@ -64,6 +64,7 @@ export function ChordProEditor({ value, onChange, actions, onDiscardDraft, ref }
   const [keepAsIs, setKeepAsIs] = useState(false);
   const [titleAsked, setTitleAsked] = useState(false);
   const textarea = useRef<HTMLTextAreaElement>(null);
+  const previewPane = useRef<HTMLDivElement>(null);
   const deferred = useDeferredValue(value);
   const song = useMemo(() => parseSong(deferred), [deferred]);
   const offerConversion = useMemo(
@@ -94,13 +95,49 @@ export function ChordProEditor({ value, onChange, actions, onDiscardDraft, ref }
       el.setSelectionRange(from, to);
       const style = getComputedStyle(el);
       const lineHeight = parseFloat(style.lineHeight) || 21;
-      const top =
-        el.getBoundingClientRect().top +
-        window.scrollY +
-        parseFloat(style.paddingTop) +
-        (line - 1) * lineHeight;
-      window.scrollTo({ top: top - window.innerHeight / 3, behavior: 'smooth' });
+      const offset = parseFloat(style.paddingTop) + (line - 1) * lineHeight;
+      if (wide) {
+        // The source scrolls in its own pane; bring the pane into view, then the line.
+        el.scrollIntoView({ block: 'nearest' });
+        el.scrollTo({ top: offset - el.clientHeight / 3, behavior: 'smooth' });
+      } else {
+        const top = el.getBoundingClientRect().top + window.scrollY + offset;
+        window.scrollTo({ top: top - window.innerHeight / 3, behavior: 'smooth' });
+      }
+      followCaret();
     });
+  };
+
+  /**
+   * Side by side, the preview shows the part of the song the caret is in: the last section
+   * starting on or before its line. It moves only when that section is out of sight, so typing
+   * within it doesn't make it jump.
+   */
+  const followCaret = () => {
+    const el = textarea.current;
+    const pane = previewPane.current;
+    if (!wide || !el || !pane) {
+      return;
+    }
+    const line = el.value.slice(0, el.selectionStart).split('\n').length;
+    const sections = [...pane.querySelectorAll<HTMLElement>('[data-line]')].filter(
+      (section) => !section.closest('[inert]') && Number(section.dataset.line) <= line,
+    );
+    const section = sections.at(-1);
+    if (!section) {
+      // Above the first section: the heading, at the top.
+      pane.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    const top =
+      section.getBoundingClientRect().top -
+      pane.getBoundingClientRect().top +
+      pane.scrollTop;
+    const bottom = top + section.offsetHeight;
+    const inSight = top >= pane.scrollTop && bottom <= pane.scrollTop + pane.clientHeight;
+    if (!inSight) {
+      pane.scrollTo({ top: top - 12, behavior: 'smooth' });
+    }
   };
 
   useImperativeHandle(ref, () => ({
@@ -135,16 +172,31 @@ export function ChordProEditor({ value, onChange, actions, onDiscardDraft, ref }
       value={value}
       onChange={(e) => onChange(e.currentTarget.value)}
       onPaste={() => setKeepAsIs(false)}
-      autosize
+      onSelect={followCaret}
+      // Side by side, each pane is as tall as the window and scrolls on its own; on a phone,
+      // the source grows with the song and the page scrolls.
+      autosize={!wide}
       minRows={18}
-      classNames={{ input: classes.source }}
+      classNames={
+        wide
+          ? {
+              root: classes.paneRoot,
+              wrapper: classes.paneRoot,
+              input: `${classes.source} ${classes.sourcePane}`,
+            }
+          : { input: classes.source }
+      }
       spellCheck={false}
       autoCapitalize="off"
       autoCorrect="off"
     />
   );
   const preview = (
-    <div className={classes.preview} aria-label={t('editor.preview')}>
+    <div
+      ref={previewPane}
+      className={wide ? classes.previewPane : classes.preview}
+      aria-label={t('editor.preview')}
+    >
       <SongSheet song={song} fontScale={0.9} showDiagrams />
     </div>
   );

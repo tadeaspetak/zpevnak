@@ -72,11 +72,12 @@ export function JoinPage() {
                 <>
                   <Text c="dimmed">{t('join.signIn')}</Text>
                   <Group gap="sm">
-                    <Button component={Link} to={url.logIn(here)}>
-                      {t('auth.logIn')}
-                    </Button>
-                    <Button component={Link} to={url.signUp(here)} variant="default">
+                    {/* Someone opening an invite is most likely new here. */}
+                    <Button component={Link} to={url.signUp(here)}>
                       {t('auth.signUp')}
+                    </Button>
+                    <Button component={Link} to={url.logIn(here)} variant="default">
+                      {t('auth.logIn')}
                     </Button>
                   </Group>
                 </>

@@ -30,7 +30,7 @@
 }
 
 .icon {
-  color: var(--mantine-primary-color-filled);
+  color: var(--brand-text);
   flex-shrink: 0;
 }
 

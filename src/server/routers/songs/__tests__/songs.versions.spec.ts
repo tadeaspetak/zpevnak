@@ -80,7 +80,11 @@ describe('song versions (D86)', () => {
       source: SONG('Kočky', 'Nerez, opraveno'),
     });
     const versions = await versionsOf(song.id);
-    expect(versions.map((v: { kind: string }) => v.kind)).toEqual(['create', 'edit']);
+    expect(versions.map((v: { kind: string }) => v.kind)).toEqual([
+      'create',
+      'reject',
+      'edit',
+    ]);
   });
 
   it('records every approval with the approved text, edited or not', async () => {
@@ -107,10 +111,37 @@ describe('song versions (D86)', () => {
     ]);
   });
 
-  it('records nothing on a rejection, which leaves the text alone', async () => {
+  it('records a rejection with the text it turned down, and why', async () => {
     const { editor, song } = await setup();
-    await callerFor(editor).songs.reject({ id: song.id, reason: 'duplicate' });
-    expect(await versionsOf(song.id)).toHaveLength(1);
+    await callerFor(editor).songs.reject({
+      id: song.id,
+      reason: 'duplicate',
+      note: 'Už je',
+    });
+    const { rows } = await db.raw(
+      /* sql */ `
+        SELECT kind, source, saved_by AS "savedBy", rejection_reason AS reason,
+               rejection_note AS note
+        FROM song_versions WHERE song_id = :id ORDER BY id
+      `,
+      { id: song.id },
+    );
+    expect(rows).toEqual([
+      {
+        kind: 'create',
+        source: SONG('Kočky', 'Nerez'),
+        savedBy: rows[0].savedBy,
+        reason: null,
+        note: null,
+      },
+      {
+        kind: 'reject',
+        source: SONG('Kočky', 'Nerez'),
+        savedBy: editor.id,
+        reason: 'duplicate',
+        note: 'Už je',
+      },
+    ]);
   });
 
   it('records nothing when a save is refused', async () => {

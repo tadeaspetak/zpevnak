@@ -1,8 +1,28 @@
+/* Side by side: both panes as tall as the window less the header and the button bar, each
+   scrolling on its own, so the preview stays beside the part being typed. */
 .split {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--mantine-spacing-md);
-  align-items: start;
+  height: max(24rem, calc(100dvh - 9.5rem));
+  scroll-margin-top: 4.5rem;
+}
+
+.paneRoot {
+  height: 100%;
+}
+
+.sourcePane {
+  height: 100%;
+  resize: none;
+}
+
+.previewPane {
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-md);
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .source {

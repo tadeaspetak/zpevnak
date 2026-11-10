@@ -14,6 +14,7 @@ const ERROR_CODES = [
   'CANNOT_CHANGE_OWN_ROLE',
   'TOO_MANY_REQUESTS',
   'UNDO_EXPIRED',
+  'REJECTION_NOTE_REQUIRED',
 ] as const;
 export type ErrorCode = (typeof ERROR_CODES)[number];
 

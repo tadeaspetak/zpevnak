@@ -21,9 +21,11 @@ export type Block =
       name: string | null;
       label: string | null;
       lines: Line[];
+      /** The source line it starts on, so an editor can show the part being typed. */
+      line: number;
     }
   /** `{chorus}`: repeat the last chorus. `chorus` is a copy of it, null if none came before. */
-  | { type: 'chorusRecall'; label: string | null; chorus: Block | null }
+  | { type: 'chorusRecall'; label: string | null; chorus: Block | null; line: number }
   | { type: 'columnBreak' };
 
 export type ChordDefinition = {

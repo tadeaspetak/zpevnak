@@ -92,7 +92,11 @@ function SectionView({
   }
   const label = block.label ?? (recalled ? t('song.chorus') : null);
   return (
-    <section className={classes[`section_${block.kind}`]} data-kind={block.kind}>
+    <section
+      className={classes[`section_${block.kind}`]}
+      data-kind={block.kind}
+      data-line={block.line}
+    >
       {label && <div className={classes.label}>{label}</div>}
       {block.lines.map((line, i) => (
         <LineView key={i} line={line} showChords={showChords} />
@@ -186,7 +190,11 @@ export function SongSheet({
       return block.chorus?.type === 'section' ? (
         <SectionView
           key={i}
-          block={{ ...block.chorus, label: block.label ?? block.chorus.label }}
+          block={{
+            ...block.chorus,
+            label: block.label ?? block.chorus.label,
+            line: block.line,
+          }}
           recalled
           showChords={showChords}
         />

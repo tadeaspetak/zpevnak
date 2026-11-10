@@ -1,4 +1,4 @@
-import type { Locale } from '#shared/validators/index.ts';
+import type { Locale, RejectionReason } from '#shared/validators/index.ts';
 import { env } from '../env.ts';
 import type { Email } from './send.ts';
 
@@ -54,5 +54,46 @@ export function alreadyRegistered(to: string, locale: Locale): Email {
         to,
         subject: 'You already have a Zpěvňák account',
         text: `Hi,\n\nsomeone (probably you) tried to sign up with this email, but it already has an account. If you forgot your password, set a new one:\n\n${url}\n\nZpěvňák`,
+      };
+}
+
+const REASONS: Record<Locale, Record<RejectionReason, string>> = {
+  cs: {
+    too_many_mistakes: 'příliš mnoho chyb',
+    totally_wrong: 'úplně špatně',
+    duplicate: 'už tu je',
+    other: 'jiný důvod',
+  },
+  en: {
+    too_many_mistakes: 'too many mistakes',
+    totally_wrong: 'totally wrong',
+    duplicate: 'already here',
+    other: 'another reason',
+  },
+};
+
+/** To a song's author, when an editor turns it down: why, and the way to fix it. */
+export function songRejected(
+  to: string,
+  locale: Locale,
+  song: { id: number; title: string; reason: RejectionReason; note: string | null },
+): Email {
+  // The client's url.editSong; the server can't import client code.
+  const url = `${env.APP_URL}/song/${song.id}/edit`;
+  // For "other", the note is the reason.
+  const why =
+    song.reason === 'other' && song.note
+      ? song.note
+      : `${REASONS[locale][song.reason]}${song.note ? `\n${song.note}` : ''}`;
+  return locale === 'cs'
+    ? {
+        to,
+        subject: `Písnička „${song.title}“ potřebuje opravit`,
+        text: `Ahoj,\n\neditor se podíval na tvoji písničku „${song.title}“ a zatím ji neschválil.\n\n${why}\n\nOpravíš ji tady, po uložení půjde ke kontrole znovu:\n\n${url}\n\nZpěvňák`,
+      }
+    : {
+        to,
+        subject: `Your song “${song.title}” needs fixing`,
+        text: `Hi,\n\nan editor looked at your song “${song.title}” and hasn't approved it yet.\n\n${why}\n\nFix it here; once saved, it goes back for review:\n\n${url}\n\nZpěvňák`,
       };
 }

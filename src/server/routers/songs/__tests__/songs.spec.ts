@@ -200,7 +200,7 @@ describe('songs.sync', () => {
 
   it('sends rejected songs to everyone, marked: they stay in playlists (D77)', async () => {
     const { author, editor, song } = await setup();
-    await callerFor(editor).songs.reject({ id: song.id, reason: 'other' });
+    await callerFor(editor).songs.reject({ id: song.id, reason: 'duplicate' });
     for (const viewer of [null, editor, author]) {
       const { songs } = await callerFor(viewer).songs.sync({ since: null });
       expect(songs.map((s) => [s.id, s.status])).toEqual([[song.id, 'rejected']]);

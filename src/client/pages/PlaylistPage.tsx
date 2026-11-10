@@ -293,7 +293,7 @@ export function PlaylistPage() {
 function Position({ n, active = false }: { n: number; active?: boolean }) {
   return (
     <Text
-      c={active ? 'var(--mantine-primary-color-filled)' : 'dimmed'}
+      c={active ? 'var(--brand-text)' : 'dimmed'}
       fw={active ? 800 : 600}
       miw="1.25rem"
       ta="right"

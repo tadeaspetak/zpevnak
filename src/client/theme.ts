@@ -1,6 +1,7 @@
 import {
   Alert,
   createTheme,
+  type MantineColorsTuple,
   Modal,
   defaultVariantColorsResolver,
   type CSSVariablesResolver,
@@ -25,9 +26,31 @@ const variantColorResolver: VariantColorsResolver = (input) => {
   return colors;
 };
 
+/**
+ * The one brand colour (D61), in one place so it can change, or become a setting. Shade 7 is
+ * what buttons are filled with, in both schemes: white on it is 5.2:1 and passes WCAG AA
+ * (Mantine's own orange.8 was 3.6:1, its dark-mode orange.5 2.2:1). As text on the dark
+ * background it is too dark (3.0:1), so text in the brand colour uses `--brand-text`: shade 7
+ * on light, shade 4 on dark (6.9:1).
+ */
+const BRAND: MantineColorsTuple = [
+  '#fff7ed',
+  '#ffedd5',
+  '#fed7aa',
+  '#fdba74',
+  '#fb923c',
+  '#f97316',
+  '#ea580c',
+  '#c2410c',
+  '#9a3412',
+  '#7c2d12',
+];
+
 export const theme = createTheme({
+  // Replaces Mantine's orange, so `color="orange"` and the primary colour are the same thing.
+  colors: { orange: BRAND },
   primaryColor: 'orange',
-  primaryShade: { light: 8, dark: 5 },
+  primaryShade: { light: 7, dark: 7 },
   fontFamily:
     'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
   defaultRadius: 'md',
@@ -45,12 +68,15 @@ export const theme = createTheme({
 });
 
 /**
- * Chords: a deep orange on light (5.2:1 on white; Mantine's orange.9 is only 4.3:1), light
- * orange on dark. Secondary text one
- * step darker than Mantine's default, whose gray.6 is 3.3:1 on white and fails WCAG AA.
+ * The brand colour as text, chords included: the filled shade on light, a lighter one on dark
+ * (see BRAND). Secondary text one step darker than Mantine's default, whose gray.6 is 3.3:1 on
+ * white and fails WCAG AA.
  */
 export const cssVariablesResolver: CSSVariablesResolver = (t) => ({
-  variables: {},
-  light: { '--chord-color': '#c2410c', '--mantine-color-dimmed': t.colors.gray[7] },
-  dark: { '--chord-color': t.colors.orange[4] },
+  variables: { '--chord-color': 'var(--brand-text)' },
+  light: {
+    '--brand-text': t.colors.orange[7],
+    '--mantine-color-dimmed': t.colors.gray[7],
+  },
+  dark: { '--brand-text': t.colors.orange[4] },
 });

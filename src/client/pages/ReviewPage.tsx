@@ -1,5 +1,6 @@
 import {
   ActionIcon,
+  Alert,
   Badge,
   Button,
   Container,
@@ -13,7 +14,13 @@ import {
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
-import { IconCheck, IconPlayerTrackNext, IconTrash, IconX } from '@tabler/icons-react';
+import {
+  IconCheck,
+  IconHistory,
+  IconPlayerTrackNext,
+  IconTrash,
+  IconX,
+} from '@tabler/icons-react';
 import { type ReactNode, useRef, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router';
 import { REJECTION_REASONS, type RejectionReason } from '#shared/validators/index.ts';
@@ -21,8 +28,9 @@ import { DeleteSongModal } from '../components/DeleteSongModal.tsx';
 import { ErrorText } from '../components/ErrorText.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
 import { StatusBadge } from '../components/StatusBadge.tsx';
-import { putSong, syncCatalog } from '../data/catalog.ts';
+import { putSong, syncCatalog, useCatalog } from '../data/catalog.ts';
 import { nextInQueue } from '../data/nextInQueue.ts';
+import { reviewContext } from '../data/reviewContext.ts';
 import { useDraft } from '../hooks/useDraft.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
@@ -36,7 +44,9 @@ import { url } from '../urls.ts';
  * sitting, and a song put off for later comes round again only after the rest.
  */
 export function ReviewPage() {
-  const { t, locale } = useI18n();
+  const i18n = useI18n();
+  const { t, locale } = i18n;
+  const { playlists } = useCatalog();
   const navigate = useNavigate();
   const id = Number(useParams().id);
   const { me, isEditor, known } = useMe();
@@ -188,6 +198,7 @@ export function ReviewPage() {
                 {[
                   entry.authorName && t('queue.addedBy', { name: entry.authorName }),
                   date.format(new Date(entry.createdAt)),
+                  ...reviewContext(entry.id, null, playlists.values(), i18n),
                 ]
                   .filter(Boolean)
                   .join(' · ')}
@@ -200,6 +211,19 @@ export function ReviewPage() {
               </Text>
             )}
           </Group>
+          {entry?.lastRejection && (
+            <Alert
+              variant="default"
+              icon={<IconHistory size={18} />}
+              title={t('queue.lastRejection', {
+                reason: t(`reason.${entry.lastRejection.reason}`),
+              })}
+            >
+              {entry.lastRejection.note && (
+                <Text size="sm">{entry.lastRejection.note}</Text>
+              )}
+            </Alert>
+          )}
           <ErrorText error={save.error ?? verify.error ?? reject.error} />
           <ChordProEditor
             ref={editor}
@@ -246,6 +270,7 @@ export function ReviewPage() {
         </Stack>
       </Container>
       <RejectModal
+        key={id}
         opened={rejecting}
         onClose={closeReject}
         loading={reject.isPending}
@@ -265,20 +290,26 @@ function RejectModal(props: {
   onReject: (reason: RejectionReason, note: string) => void;
 }) {
   const { t } = useI18n();
-  const [reason, setReason] = useState<RejectionReason>('too_many_mistakes');
+  // Nothing chosen for the editor: a reason picked by default is a reason nobody gave.
+  const [reason, setReason] = useState<RejectionReason | null>(null);
   const [note, setNote] = useState('');
+  // "Other" says nothing by itself: the note is the reason.
+  const needsNote = reason === 'other';
+  const ready = reason !== null && (!needsNote || note.trim() !== '');
   return (
     <Modal opened={props.opened} onClose={props.onClose} title={t('queue.rejectTitle')}>
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          props.onReject(reason, note);
+          if (reason && ready) {
+            props.onReject(reason, note);
+          }
         }}
       >
         <Stack>
           <Radio.Group
             label={t('queue.reason')}
-            value={reason}
+            value={reason ?? ''}
             onChange={(v) => setReason(v as RejectionReason)}
           >
             <Stack gap="xs" mt="xs">
@@ -288,7 +319,8 @@ function RejectModal(props: {
             </Stack>
           </Radio.Group>
           <Textarea
-            label={t('queue.note')}
+            label={needsNote ? t('queue.noteRequired') : t('queue.note')}
+            required={needsNote}
             value={note}
             onChange={(e) => setNote(e.currentTarget.value)}
             autosize
@@ -304,7 +336,7 @@ function RejectModal(props: {
             <Button variant="default" onClick={props.onClose}>
               {t('common.cancel')}
             </Button>
-            <Button type="submit" color="red" loading={props.loading}>
+            <Button type="submit" color="red" loading={props.loading} disabled={!ready}>
               {t('queue.reject')}
             </Button>
           </Group>

@@ -216,9 +216,17 @@ export function parseSong(source: string): Song {
     }
   };
 
+  let lineNo = 0;
   const target = (): SectionBlock => {
     if (!current) {
-      current = { type: 'section', kind: 'other', name: null, label: null, lines: [] };
+      current = {
+        type: 'section',
+        kind: 'other',
+        name: null,
+        label: null,
+        lines: [],
+        line: lineNo,
+      };
       explicit = false;
       blocks.push(current);
     }
@@ -228,7 +236,7 @@ export function parseSong(source: string): Song {
   const lines = source.replace(/^\uFEFF/, '').split(/\r\n|\r|\n/);
 
   lines.forEach((rawLine, index) => {
-    const lineNo = index + 1;
+    lineNo = index + 1;
     const line = rawLine.trimEnd();
 
     if (line.trimStart().startsWith('#')) {
@@ -278,6 +286,7 @@ export function parseSong(source: string): Song {
           name: kind === 'other' ? envName : null,
           label: readLabel(value),
           lines: [],
+          line: lineNo,
         };
         blocks.push(section);
         current = section;
@@ -348,6 +357,7 @@ export function parseSong(source: string): Song {
           type: 'chorusRecall',
           label: readLabel(value),
           chorus: lastChorus ? structuredClone(lastChorus) : null,
+          line: lineNo,
         });
         if (!lastChorus) {
           warn({ line: lineNo, code: 'chorusBeforeAny' });

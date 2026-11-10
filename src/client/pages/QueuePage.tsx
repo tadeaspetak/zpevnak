@@ -3,6 +3,8 @@ import { Navigate, Link, useSearchParams } from 'react-router';
 import { ErrorText } from '../components/ErrorText.tsx';
 import { Page } from '../components/Page.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
+import { useCatalog } from '../data/catalog.ts';
+import { reviewContext } from '../data/reviewContext.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc } from '../trpc.ts';
@@ -12,8 +14,10 @@ import rowClasses from '../components/SongRow.module.css';
 type Status = 'pending' | 'rejected';
 
 export function QueuePage() {
-  const { t, locale } = useI18n();
+  const i18n = useI18n();
+  const { t, locale } = i18n;
   const { isEditor, known } = useMe();
+  const { playlists } = useCatalog();
   const [params, setParams] = useSearchParams();
   const status: Status = params.get('status') === 'rejected' ? 'rejected' : 'pending';
   const queue = trpc.songs.queue.useQuery({ status }, { enabled: isEditor });
@@ -101,6 +105,16 @@ export function QueuePage() {
                     .filter(Boolean)
                     .join(' · ')}
                 </Text>
+                {status === 'pending' && (
+                  <Context
+                    parts={reviewContext(
+                      song.id,
+                      song.lastRejection,
+                      playlists.values(),
+                      i18n,
+                    )}
+                  />
+                )}
               </UnstyledButton>
             ))}
           </Stack>
@@ -108,4 +122,13 @@ export function QueuePage() {
       </Page>
     </>
   );
+}
+
+/** Why a song is worth reviewing soon: shown, not dimmed, so it stands out in the list. */
+function Context({ parts }: { parts: string[] }) {
+  return parts.length > 0 ? (
+    <Text size="sm" fw={500} truncate>
+      {parts.join(' · ')}
+    </Text>
+  ) : null;
 }

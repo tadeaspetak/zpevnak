@@ -306,6 +306,26 @@ From the first UX walk of the song view and a playlist session (2026-11-10):
   each with what it does. A search that finds nothing offers "Přidat „…“ jako novou písničku",
   started with that title; from a playlist's song picker the new song goes into the playlist
   too. `/new` waits to know who is signed in before sending anyone to log in. (2026-11-10)
+- **D99. Side by side, the editor's panes are as tall as the window** and scroll on their own;
+  the preview shows the section the caret is in, moving only when it is out of sight. On a
+  phone, unchanged: one at a time, and the page scrolls. (2026-11-10)
+- **D100. An author hears about a rejection by email,** once, in their language: why (for
+  "jiný důvod", the note), and a link to fix it. Nothing on approval. Not to an editor
+  rejecting their own song. A mail that fails is logged; the rejection stands. (2026-11-10)
+- **D101. No rejection reason is preselected,** and "jiný důvod" needs a note, checked on the
+  server too: a reason nobody chose, or "other" with nothing said, tells the author nothing.
+  No "not ChordPro" reason: the converter (D94) covers that. (2026-11-10)
+- **D102. A rejection is a version** (kind `reject`, with its reason and note; extends D86). The
+  song forgets it once fixed (D81); its history doesn't. So the queue says "opraveno po
+  zamítnutí" and the review screen shows what was asked last time. Queue rows and the review
+  screen also name the playlists a song is in, from the editor's catalog. (2026-11-10)
+- **D103. The brand orange passes AA** (D61 stands; this is its shade). One palette in `theme.ts`, built
+  round #C2410C: buttons are filled with it in both schemes (white on it 5.2:1; Mantine's
+  orange was 3.6:1 light, 2.2:1 dark). As text it is `--brand-text`, a lighter shade on dark;
+  chords use it too. In one place so it can change, or become a setting: in the owner's
+  words, "I'm in no way attached to the colours at this point". The app icons keep their old
+  orange until they are redrawn. On `/join`, sign-up is the primary button: someone opening
+  an invite is most likely new. (2026-11-10)
 
 ## Engineering
 

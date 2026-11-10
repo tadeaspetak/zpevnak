@@ -1,8 +1,17 @@
 import { z } from 'zod';
 import { idSchema, rejectionReasonSchema } from '#shared/validators/index.ts';
+import type { Locale } from '#shared/validators/index.ts';
+import { sendEmail } from '../../email/send.ts';
+import { songRejected } from '../../email/templates.ts';
 import { loadSongRow, loadSong } from '../../songs/load.ts';
-import { editorProcedure } from '../../trpc/trpc.ts';
+import { recordVersion } from '../../songs/versions.ts';
+import { editorProcedure, fail } from '../../trpc/trpc.ts';
 
+/**
+ * An editor turns a song down, with a reason. "Other" says nothing by itself, so it needs a
+ * note. The rejection is kept in the song's history (D86), and its author hears about it by
+ * email, unless they rejected it themselves.
+ */
 export const reject = editorProcedure
   .input(
     z.object({
@@ -12,20 +21,49 @@ export const reject = editorProcedure
     }),
   )
   .mutation(async ({ ctx, input }) => {
-    await loadSongRow(ctx.db, input.id);
-    await ctx.db.raw(
-      /* sql */ `
-        UPDATE songs
-        SET status = 'rejected', rejection_reason = :reason, rejection_note = :note,
-            reviewed_by = :userId, reviewed_at = now(), updated_at = now()
-        WHERE id = :id
-      `,
-      {
-        id: input.id,
-        reason: input.reason,
-        note: input.note || null,
-        userId: ctx.user.id,
-      },
-    );
-    return loadSong(ctx.db, input.id, ctx.user);
+    if (input.reason === 'other' && !input.note) {
+      fail('BAD_REQUEST', 'REJECTION_NOTE_REQUIRED');
+    }
+    const row = await loadSongRow(ctx.db, input.id);
+    await ctx.db.transaction(async (trx) => {
+      await trx.raw(
+        /* sql */ `
+          UPDATE songs
+          SET status = 'rejected', rejection_reason = :reason, rejection_note = :note,
+              reviewed_by = :userId, reviewed_at = now(), updated_at = now()
+          WHERE id = :id
+        `,
+        {
+          id: input.id,
+          reason: input.reason,
+          note: input.note || null,
+          userId: ctx.user.id,
+        },
+      );
+      await recordVersion(trx, input.id, 'reject', ctx.user.id);
+    });
+    const song = await loadSong(ctx.db, input.id, ctx.user);
+
+    if (row.created_by !== null && row.created_by !== ctx.user.id) {
+      const { rows } = await ctx.db.raw<{ rows: { email: string; locale: Locale }[] }>(
+        /* sql */ `SELECT email, locale FROM users WHERE id = :id`,
+        { id: row.created_by },
+      );
+      const author = rows[0];
+      if (author) {
+        // The rejection stands either way; a mail that didn't go out is logged, not an error
+        // for the editor, who can do nothing about it.
+        await sendEmail(
+          songRejected(author.email, author.locale, {
+            id: song.id,
+            title: song.title,
+            reason: input.reason,
+            note: input.note || null,
+          }),
+        ).catch((error: unknown) => {
+          console.error(`Rejection email for song ${song.id} failed:`, error);
+        });
+      }
+    }
+    return song;
   });

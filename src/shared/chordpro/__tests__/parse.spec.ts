@@ -91,6 +91,26 @@ describe('parseSong', () => {
     expect(s.warnings).toEqual([]);
   });
 
+  it('knows the source line each part starts on, a repeated chorus included', () => {
+    const s = song(
+      '{title: x}',
+      '',
+      '{soc}',
+      'la',
+      '{eoc}',
+      '',
+      'lo',
+      'li',
+      '',
+      '{chorus}',
+    );
+    expect(s.blocks.map((b) => [b.type, 'line' in b ? b.line : null])).toEqual([
+      ['section', 3],
+      ['section', 7],
+      ['chorusRecall', 10],
+    ]);
+  });
+
   it('groups loose lines into paragraphs split by blank lines', () => {
     const s = song('{c: Intro}', '[A] [D]', '', 'one', 'two', '', '', 'three');
     expect(s.blocks).toHaveLength(3);
