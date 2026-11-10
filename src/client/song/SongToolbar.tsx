@@ -11,7 +11,7 @@ import {
   Tooltip,
   UnstyledButton,
 } from '@mantine/core';
-import { useDisclosure, useMediaQuery } from '@mantine/hooks';
+import { useDisclosure } from '@mantine/hooks';
 import {
   IconArrowLeft,
   IconClef,
@@ -33,6 +33,7 @@ import { mailtoAuthor } from '../contact.ts';
 import { SearchButton } from '../components/SearchButton.tsx';
 import { FONT_SCALES, usePrefs } from '../data/prefs.ts';
 import type { SongRecord } from '../data/store.ts';
+import { useWide } from '../hooks/useBreakpoints.ts';
 import { useFullscreen } from '../hooks/useFullscreen.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { url } from '../urls.ts';
@@ -75,7 +76,7 @@ export function SongToolbar(props: Props) {
   const { t } = useI18n();
   const prefs = usePrefs();
   const fullscreen = useFullscreen();
-  const wide = useMediaQuery('(min-width: 62em)');
+  const wide = useWide();
   const [adding, { open: openAdd, close: closeAdd }] = useDisclosure(false);
   const [deleting, { open: openDelete, close: closeDelete }] = useDisclosure(false);
   const canDelete = useCanDelete(song);

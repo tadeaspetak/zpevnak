@@ -25,7 +25,6 @@ import { EditSongPage, NewSongPage } from './pages/SongEditPage.tsx';
 import { PlaylistSongPage, SongPage } from './pages/SongPage.tsx';
 import { routes, url } from './urls.ts';
 
-/** Keeps the device's catalog in step: on start, on sign-in/out, on return, and every 5 min. */
 /**
  * Brings the device's catalog up to date when the app starts (a reload does it) and when
  * someone signs in or out (each viewer sees different songs). Nothing on a timer or on

@@ -10,7 +10,7 @@ import {
   Text,
   TextInput,
 } from '@mantine/core';
-import { useDisclosure, useMediaQuery } from '@mantine/hooks';
+import { useDisclosure } from '@mantine/hooks';
 import { IconPlus } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
@@ -21,6 +21,7 @@ import { PlaylistRow } from '../components/PlaylistRow.tsx';
 import { putPlaylist, useCatalog } from '../data/catalog.ts';
 import { playlistFacts } from '../data/playlistFacts.ts';
 import { usePlayer } from '../data/session.ts';
+import { usePhone } from '../hooks/useBreakpoints.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc } from '../trpc.ts';
@@ -38,7 +39,7 @@ export function PlaylistsPage() {
   const { me } = useMe();
   const { playlists } = useCatalog();
   const { recentPlaylists } = usePlayer();
-  const wide = useMediaQuery('(min-width: 48em)');
+  const wide = !usePhone();
   const [creating, { open, close }] = useDisclosure(false);
 
   const sorted = useMemo(

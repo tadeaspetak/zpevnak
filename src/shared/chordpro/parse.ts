@@ -131,7 +131,10 @@ function parseFret(token: string): number | null {
 }
 
 type DefinitionProblem =
-  { code: 'chordNoName' } | { code: 'chordNoFrets'; chord: string };
+  { code: 'chordNoName' } | { code: 'chordNoFrets' | 'chordBadFrets'; chord: string };
+
+/** Frets a diagram shows, counted from its base fret. */
+export const DIAGRAM_FRETS = 5;
 
 function readDefinition(value: string): ChordDefinition | DefinitionProblem {
   const tokens = value.split(/\s+/).filter(Boolean);
@@ -166,6 +169,10 @@ function readDefinition(value: string): ChordDefinition | DefinitionProblem {
   }
   if (frets.length === 0) {
     return { code: 'chordNoFrets', chord: name };
+  }
+  // A diagram needs two strings at least, and its dots on the frets it draws.
+  if (frets.length < 2 || frets.some((f) => f !== null && (f < 0 || f > DIAGRAM_FRETS))) {
+    return { code: 'chordBadFrets', chord: name };
   }
   return { name, baseFret, frets, fingers };
 }
@@ -380,6 +387,11 @@ export function parseSong(source: string): Song {
         if ('code' in definition) {
           warn({ ...definition, line: lineNo });
         } else {
+          // Defined again: the later one counts, as in ChordPro.
+          const same = definitions.findIndex((d) => d.name === definition.name);
+          if (same !== -1) {
+            definitions.splice(same, 1);
+          }
           definitions.push(definition);
         }
         return;

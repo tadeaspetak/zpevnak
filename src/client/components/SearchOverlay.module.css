@@ -4,7 +4,7 @@
   max-height: 80dvh;
 }
 
-@media (max-width: 48em) {
+@media (max-width: $mantine-breakpoint-sm) {
   .body {
     max-height: none;
     height: 100dvh;

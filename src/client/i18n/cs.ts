@@ -4,20 +4,16 @@
  */
 export const cs = {
   'app.name': 'Zpěvňák',
-  'app.tagline': 'Zpěvník k ohni i na hraní',
-  'common.back': 'Zpět',
   'common.cancel': 'Zrušit',
   'common.save': 'Uložit',
   'common.saved': 'Uloženo',
   'common.delete': 'Smazat',
   'common.close': 'Zavřít',
-  'common.loading': 'Načítám…',
   'common.offline': 'Offline',
   'common.offlineHint':
     'Jsi offline. Písničky máš v zařízení, změny se uloží, až budeš online.',
   'common.somethingWrong': 'Něco se pokazilo. Zkus to znovu.',
   'common.unverified': 'Neschváleno',
-  'common.verified': 'Schváleno',
   'common.rejected': 'Zamítnuto',
   'common.public': 'Veřejný',
   'common.private': 'Soukromý',
@@ -53,7 +49,6 @@ export const cs = {
   'home.allSongs': 'Všechny písničky',
   'home.emptyCatalog': 'Zatím tu nejsou žádné písničky.',
   'home.loadingCatalog': 'Stahuju písničky…',
-  'home.matchInLyrics': 'v textu',
 
   'session.backTo': 'Zpět do playlistu {name}',
   'session.position': '{position} z {total}',
@@ -91,6 +86,8 @@ export const cs = {
   'song.reportBody': 'Písnička: {link}\n\nCo je špatně:\n',
   'song.addToPlaylist': 'Přidat do playlistu',
   'song.diagrams': 'Diagramy akordů',
+  'song.diagramLabel': 'Akord {name}: {frets}',
+  'song.diagramLabelAt': 'Akord {name}: {frets}, od {fret}. pražce',
   'song.diagramsNeedChords': 'Jen se zapnutými akordy',
   'song.diagramsNeedOriginalKey': 'Jen v původní tónině',
   'song.textSizeValue': '{percent} %',
@@ -189,7 +186,6 @@ export const cs = {
   'editor.cheatSheet': 'Jak na ChordPro',
   'editor.template':
     '{title: {songTitle}}\n{artist: }\n{key: }\n\n{start_of_verse}\n[C]Tady je [G]sloka\n{end_of_verse}\n\n{start_of_chorus}\n[F]Tady je [C]refrén\n{end_of_chorus}\n',
-  'editor.notEditable': 'Ověřené písničky upravují editoři.',
 
   'parse.startInsideSection': '{{directive}} začíná dřív, než skončila předchozí sekce',
   'parse.endWithoutStart': '{{directive}} nemá k sobě začátek',
@@ -200,6 +196,7 @@ export const cs = {
   'parse.sectionNeverClosed': 'Poslední sekce není ukončená',
   'parse.chordNoName': 'Definici akordu chybí název',
   'parse.chordNoFrets': 'Akord {chord} nemá pražce',
+  'parse.chordBadFrets': 'Akord {chord}: diagram potřebuje aspoň dvě struny a pražce 0–5',
   'queue.title': 'Ke kontrole',
   'queue.pending': 'Čeká',
   'queue.rejected': 'Zamítnuté',
@@ -221,7 +218,6 @@ export const cs = {
   'queue.rejectedToast': 'Zamítnuto: {title}',
   'queue.skip': 'Přeskočit, vrátit se k ní později',
   'queue.rejectDropsEdits': 'Tvoje neuložené úpravy se se zamítnutím zahodí.',
-  'queue.next': 'Další ke kontrole',
 
   'account.title': 'Účet',
   'account.language': 'Jazyk',
@@ -239,7 +235,6 @@ export const cs = {
     'Potvrď svůj e-mail. Do té doby nemůžeš přidávat písničky ani playlisty.',
   'account.resend': 'Poslat e-mail znovu',
   'account.resent': 'E-mail je na cestě.',
-  'account.settings': 'Nastavení',
 
   'auth.email': 'E-mail',
   'auth.password': 'Heslo',
@@ -287,6 +282,9 @@ export const cs = {
   'error.UNDO_EXPIRED': 'Na vrácení už je pozdě. Pošli pozvánku znovu.',
   'error.REJECTION_NOTE_REQUIRED': 'U jiného důvodu napiš autorovi, co je špatně.',
   'error.PLAYLIST_FULL': 'Playlist je plný: víc než 500 písniček se do něj nevejde.',
+  'error.crashed':
+    'Tady se něco pokazilo. Písničky máš v zařízení, načtení znovu pomůže.',
+  'error.reload': 'Načíst znovu',
 
   'notFound.title': 'Tahle stránka neexistuje',
   'notFound.home': 'Na hlavní stránku',

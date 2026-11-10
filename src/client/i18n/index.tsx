@@ -1,10 +1,11 @@
 import {
   createContext,
+  type ReactNode,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
-  type ReactNode,
 } from 'react';
 import { isErrorCode } from '#shared/errors.ts';
 import { LOCALES, type Locale } from '#shared/validators/index.ts';
@@ -54,7 +55,16 @@ function makeTranslator(locale: Locale) {
     const message = (error as { message?: unknown } | null)?.message;
     return isErrorCode(message) ? t(`error.${message}`) : t('common.somethingWrong');
   };
-  return { t, tn, tError };
+  const dates = new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'numeric',
+    year: 'numeric',
+  });
+  /** A day, as the reader writes it: "10. 11. 2026". */
+  const formatDate = (iso: string) => dates.format(new Date(iso));
+  /** Text in the reader's alphabetical order (Czech: Č after C, Ch after H), case aside. */
+  const compare = new Intl.Collator(locale, { sensitivity: 'base' }).compare;
+  return { t, tn, tError, formatDate, compare };
 }
 
 type I18n = ReturnType<typeof makeTranslator> & {
@@ -68,9 +78,13 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(initialLocale);
   const setLocale = useCallback((next: Locale) => {
     writeLocal('locale', next);
-    document.documentElement.lang = next;
     setLocaleState(next);
   }, []);
+  // From the first render, not only on a switch: index.html says cs, and a screen reader picks
+  // its voice by it.
+  useEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
   const value = useMemo(
     () => ({ ...makeTranslator(locale), locale, setLocale }),
     [locale, setLocale],

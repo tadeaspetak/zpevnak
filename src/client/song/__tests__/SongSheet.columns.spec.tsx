@@ -1,7 +1,6 @@
-import { render } from '@testing-library/react';
+import { renderApp } from '#tests/client/render.tsx';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { parseSong } from '#shared/chordpro/parse.ts';
-import { I18nProvider } from '../../i18n/index.tsx';
 import { SongSheet } from '../SongSheet.tsx';
 
 const song = parseSong(
@@ -16,15 +15,13 @@ function body(wide: boolean, showColumns: boolean) {
     addEventListener: () => {},
     removeEventListener: () => {},
   }));
-  const { container } = render(
-    <I18nProvider>
-      <SongSheet
-        song={song}
-        fontScale={1}
-        showDiagrams={false}
-        showColumns={showColumns}
-      />
-    </I18nProvider>,
+  const { container } = renderApp(
+    <SongSheet
+      song={song}
+      fontScale={1}
+      showDiagrams={false}
+      showColumns={showColumns}
+    />,
   );
   return {
     columns: container.querySelector('[data-columns]'),

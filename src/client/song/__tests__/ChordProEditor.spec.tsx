@@ -1,8 +1,8 @@
-import { MantineProvider } from '@mantine/core';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, screen } from '@testing-library/react';
 import { createRef, useState } from 'react';
+import { renderApp } from '#tests/client/render.tsx';
 import { describe, expect, it } from 'vitest';
-import { I18nProvider } from '../../i18n/index.tsx';
+import { cs } from '../../i18n/cs.ts';
 import { ChordProEditor, type ChordProEditorHandle } from '../ChordProEditor.tsx';
 
 function Editor({ initial }: { initial: string }) {
@@ -13,13 +13,7 @@ const handle = createRef<ChordProEditorHandle>();
 
 function open(initial: string) {
   localStorage.setItem('zpevnak.locale', 'cs');
-  render(
-    <MantineProvider>
-      <I18nProvider>
-        <Editor initial={initial} />
-      </I18nProvider>
-    </MantineProvider>,
-  );
+  renderApp(<Editor initial={initial} />);
   return screen.getByRole<HTMLTextAreaElement>('textbox', { name: 'ChordPro' });
 }
 
@@ -48,6 +42,16 @@ describe('ChordProEditor', () => {
     expect(
       screen.getByRole('button', { name: /Řádek 2: Capo „druhý“ není číslo pražce/i }),
     ).toBeTruthy();
+  });
+
+  it('warns nothing about the untouched template, until a save asks for the title', () => {
+    const template = cs['editor.template'].replace('{songTitle}', '');
+    open(template);
+    expect(screen.queryByText(/Doplň název/)).toBeNull();
+    act(() => {
+      handle.current?.checkTitle();
+    });
+    expect(screen.getByText(/Doplň název/)).toBeTruthy();
   });
 
   it('stops a song without a title, and lets one with a title through', () => {

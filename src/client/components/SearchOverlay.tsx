@@ -1,9 +1,9 @@
 import { CloseButton, Modal, TextInput } from '@mantine/core';
-import { useMediaQuery } from '@mantine/hooks';
 import { IconSearch } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router';
 import { closeSearch, useSearchOpen } from '../data/omnibox.ts';
+import { usePhone } from '../hooks/useBreakpoints.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { SearchResults, useSearchResults } from './SearchResults.tsx';
 import classes from './SearchOverlay.module.css';
@@ -15,7 +15,7 @@ import classes from './SearchOverlay.module.css';
 export function SearchOverlay() {
   const { t } = useI18n();
   const opened = useSearchOpen();
-  const phone = useMediaQuery('(max-width: 48em)');
+  const phone = usePhone();
   const location = useLocation();
   const [query, setQuery] = useState('');
   const { items, selected, onKeyDown } = useSearchResults(query);

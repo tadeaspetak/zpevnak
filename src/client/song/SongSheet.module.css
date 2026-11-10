@@ -77,7 +77,7 @@
   display: block;
 }
 
-@media (min-width: 62em) {
+@media (min-width: $mantine-breakpoint-md) {
   .bodyColumns {
     column-count: 2;
     column-gap: 3rem;

@@ -1,4 +1,3 @@
-import { useMediaQuery } from '@mantine/hooks';
 import {
   Fragment,
   useLayoutEffect,
@@ -8,6 +7,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { Block, Line, Song } from '#shared/chordpro/types.ts';
+import { useWide } from '../hooks/useBreakpoints.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { ChordDiagram } from './ChordDiagram.tsx';
 import { columnsFit, type Box } from './columnsFit.ts';
@@ -174,7 +174,7 @@ export function SongSheet({
 }: Props) {
   const { t } = useI18n();
   const style = { '--song-scale': fontScale } as CSSProperties;
-  const wide = useMediaQuery('(min-width: 62em)') ?? false;
+  const wide = useWide();
   const columns = useColumnsFit(song.columns > 1 && showColumns && wide);
   // The key isn't repeated here: the toolbar shows it, and changes it (D59). A capo is not
   // in the toolbar, so it stays.

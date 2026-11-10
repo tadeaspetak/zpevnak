@@ -198,6 +198,22 @@ describe('parseSong', () => {
     expect(song('{sov}', 'a', '{eoc}').warnings[0]?.code).toBe('endMismatch');
   });
 
+  it('refuses a chord a diagram could not draw, and keeps the later of two definitions', () => {
+    const s = song(
+      '{define: G frets 3}',
+      '{define: D frets x x 0 2 3 -2}',
+      '{define: E frets 0 2 2 1 0 9}',
+      '{define: A frets x 0 2 2 2 0}',
+      '{define: A frets x 0 2 2 2 2}',
+    );
+    expect(s.warnings).toEqual([
+      { line: 1, code: 'chordBadFrets', chord: 'G' },
+      { line: 2, code: 'chordBadFrets', chord: 'D' },
+      { line: 3, code: 'chordBadFrets', chord: 'E' },
+    ]);
+    expect(s.definitions.map((d) => [d.name, d.frets.at(-1)])).toEqual([['A', 2]]);
+  });
+
   it('gives each warning the values its message needs', () => {
     expect(
       song('{capo: druhý}', '{define: Am}', '{define:}', '{sov}', '{sov}').warnings,

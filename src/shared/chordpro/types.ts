@@ -60,7 +60,7 @@ export type ParseWarning =
   | { line: number; code: 'unsupported'; directive: string }
   | { line: number; code: 'capoNotNumber'; value: string }
   | { line: number; code: 'chorusBeforeAny' | 'sectionNeverClosed' | 'chordNoName' }
-  | { line: number; code: 'chordNoFrets'; chord: string };
+  | { line: number; code: 'chordNoFrets' | 'chordBadFrets'; chord: string };
 
 export type Song = {
   meta: SongMeta;

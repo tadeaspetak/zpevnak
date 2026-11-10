@@ -50,7 +50,7 @@ const RECENT_SONGS = 6;
 const focusOnOpen = window.matchMedia('(pointer: fine)').matches;
 
 export function HomePage() {
-  const { t, tn, locale } = useI18n();
+  const { t, tn, compare } = useI18n();
   const { me, isEditor } = useMe();
   const online = useOnline();
   const { songs, playlists, loaded, synced } = useCatalog();
@@ -76,7 +76,7 @@ export function HomePage() {
     () => [...songs.values()].filter((s) => inSearch(s, me?.id ?? null)),
     [songs, me],
   );
-  const allSongs = useMemo(() => sortByTitle(findable, locale), [findable, locale]);
+  const allSongs = useMemo(() => sortByTitle(findable, compare), [findable, compare]);
   const recentPlaylistList = useMemo(
     () =>
       Object.entries(recentPlaylists)

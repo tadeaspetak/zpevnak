@@ -9,7 +9,7 @@ import {
   Textarea,
   UnstyledButton,
 } from '@mantine/core';
-import { useDisclosure, useMediaQuery } from '@mantine/hooks';
+import { useDisclosure } from '@mantine/hooks';
 import {
   IconAlertTriangle,
   IconChevronDown,
@@ -30,6 +30,7 @@ import {
   looksLikeChordsOverLyrics,
 } from '#shared/chordpro/fromChordsOverLyrics.ts';
 import { parseSong } from '#shared/chordpro/parse.ts';
+import { useWide } from '../hooks/useBreakpoints.ts';
 import { useI18n } from '../i18n/index.tsx';
 import classes from './ChordProEditor.module.css';
 import { SongSheet } from './SongSheet.tsx';
@@ -58,7 +59,7 @@ const TITLE_LINE = /^\s*\{(?:title|t)\s*:/;
  */
 export function ChordProEditor({ value, onChange, actions, onDiscardDraft, ref }: Props) {
   const { t } = useI18n();
-  const wide = useMediaQuery('(min-width: 62em)');
+  const wide = useWide();
   const [view, setView] = useState<'source' | 'preview'>('source');
   const [cheatSheet, { toggle: toggleCheatSheet }] = useDisclosure(false);
   const [keepAsIs, setKeepAsIs] = useState(false);

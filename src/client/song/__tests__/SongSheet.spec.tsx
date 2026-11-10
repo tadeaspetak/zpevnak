@@ -1,7 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
+import { renderApp } from '#tests/client/render.tsx';
 import { describe, expect, it } from 'vitest';
 import { parseSong } from '#shared/chordpro/parse.ts';
-import { I18nProvider } from '../../i18n/index.tsx';
 import { SongSheet } from '../SongSheet.tsx';
 
 const song = parseSong(
@@ -18,10 +18,8 @@ const song = parseSong(
 );
 
 function sheet(showChords: boolean) {
-  return render(
-    <I18nProvider>
-      <SongSheet song={song} fontScale={1} showDiagrams showChords={showChords} />
-    </I18nProvider>,
+  return renderApp(
+    <SongSheet song={song} fontScale={1} showDiagrams showChords={showChords} />,
   );
 }
 

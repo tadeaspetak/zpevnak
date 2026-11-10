@@ -4,9 +4,9 @@ import { useCallback, useEffect, useState } from 'react';
 export function useFullscreen() {
   const supported =
     typeof document !== 'undefined' && document.fullscreenEnabled === true;
-  const [active, setActive] = useState(() => document.fullscreenElement !== null);
+  const [active, setActive] = useState(() => Boolean(document.fullscreenElement));
   useEffect(() => {
-    const onChange = () => setActive(document.fullscreenElement !== null);
+    const onChange = () => setActive(Boolean(document.fullscreenElement));
     document.addEventListener('fullscreenchange', onChange);
     return () => document.removeEventListener('fullscreenchange', onChange);
   }, []);

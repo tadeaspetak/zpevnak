@@ -2,20 +2,16 @@ import type { cs } from './cs.ts';
 
 export const en: Record<keyof typeof cs, string> = {
   'app.name': 'Zpěvňák',
-  'app.tagline': 'The campfire songbook',
-  'common.back': 'Back',
   'common.cancel': 'Cancel',
   'common.save': 'Save',
   'common.saved': 'Saved',
   'common.delete': 'Delete',
   'common.close': 'Close',
-  'common.loading': 'Loading…',
   'common.offline': 'Offline',
   'common.offlineHint':
     "You're offline. Your songs are on this device; changes save once you're back online.",
   'common.somethingWrong': 'Something went wrong. Try again.',
   'common.unverified': 'Not approved',
-  'common.verified': 'Approved',
   'common.rejected': 'Rejected',
   'common.public': 'Public',
   'common.private': 'Private',
@@ -50,7 +46,6 @@ export const en: Record<keyof typeof cs, string> = {
   'home.allSongs': 'All songs',
   'home.emptyCatalog': 'No songs here yet.',
   'home.loadingCatalog': 'Downloading songs…',
-  'home.matchInLyrics': 'in lyrics',
 
   'session.backTo': 'Back to {name}',
   'session.position': '{position} of {total}',
@@ -88,6 +83,8 @@ export const en: Record<keyof typeof cs, string> = {
   'song.reportBody': 'Song: {link}\n\nWhat is wrong:\n',
   'song.addToPlaylist': 'Add to playlist',
   'song.diagrams': 'Chord diagrams',
+  'song.diagramLabel': 'Chord {name}: {frets}',
+  'song.diagramLabelAt': 'Chord {name}: {frets}, from fret {fret}',
   'song.diagramsNeedChords': 'Only with chords on',
   'song.diagramsNeedOriginalKey': 'Only in the original key',
   'song.textSizeValue': '{percent}%',
@@ -189,7 +186,6 @@ export const en: Record<keyof typeof cs, string> = {
   'editor.cheatSheet': 'ChordPro in a nutshell',
   'editor.template':
     '{title: {songTitle}}\n{artist: }\n{key: }\n\n{start_of_verse}\n[C]Here is a [G]verse\n{end_of_verse}\n\n{start_of_chorus}\n[F]Here is the [C]chorus\n{end_of_chorus}\n',
-  'editor.notEditable': 'Verified songs are edited by editors.',
 
   'parse.startInsideSection': '{{directive}} starts before the previous section ended',
   'parse.endWithoutStart': '{{directive}} has no matching start',
@@ -200,6 +196,8 @@ export const en: Record<keyof typeof cs, string> = {
   'parse.sectionNeverClosed': 'The last section is never closed',
   'parse.chordNoName': 'A chord definition needs a name',
   'parse.chordNoFrets': 'Chord {chord} has no frets',
+  'parse.chordBadFrets':
+    'Chord {chord}: a diagram needs two strings at least, and frets 0–5',
   'queue.title': 'To review',
   'queue.pending': 'Pending',
   'queue.rejected': 'Rejected',
@@ -221,7 +219,6 @@ export const en: Record<keyof typeof cs, string> = {
   'queue.rejectedToast': 'Rejected: {title}',
   'queue.skip': 'Skip, come back to it later',
   'queue.rejectDropsEdits': 'Your unsaved edits are dropped with the rejection.',
-  'queue.next': 'Next to review',
 
   'account.title': 'Account',
   'account.language': 'Language',
@@ -239,7 +236,6 @@ export const en: Record<keyof typeof cs, string> = {
     "Confirm your email. Until then you can't add songs or playlists.",
   'account.resend': 'Send the email again',
   'account.resent': 'The email is on its way.',
-  'account.settings': 'Settings',
 
   'auth.email': 'Email',
   'auth.password': 'Password',
@@ -288,6 +284,9 @@ export const en: Record<keyof typeof cs, string> = {
   'error.UNDO_EXPIRED': 'Too late to undo. Send the invite link again.',
   'error.REJECTION_NOTE_REQUIRED': 'For another reason, tell the author what’s wrong.',
   'error.PLAYLIST_FULL': 'The playlist is full: it holds at most 500 songs.',
+  'error.crashed':
+    'Something broke here. Your songs are on the device; reloading will help.',
+  'error.reload': 'Reload',
 
   'notFound.title': "This page doesn't exist",
   'notFound.home': 'Go to the home page',

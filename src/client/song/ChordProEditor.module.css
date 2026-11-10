@@ -73,7 +73,7 @@
   }
 }
 
-@media (max-width: 36em) {
+@media (max-width: $mantine-breakpoint-xs) {
   .cheatSheet {
     grid-template-columns: 1fr;
     gap: 0;

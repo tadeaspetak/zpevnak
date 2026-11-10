@@ -15,7 +15,7 @@ type Status = 'pending' | 'rejected';
 
 export function QueuePage() {
   const i18n = useI18n();
-  const { t, locale } = i18n;
+  const { t, formatDate } = i18n;
   const { isEditor, known } = useMe();
   const { playlists } = useCatalog();
   const [params, setParams] = useSearchParams();
@@ -29,11 +29,6 @@ export function QueuePage() {
   if (known && !isEditor) {
     return <Navigate to={url.home()} replace />;
   }
-  const date = new Intl.DateTimeFormat(locale, {
-    day: 'numeric',
-    month: 'numeric',
-    year: 'numeric',
-  });
 
   return (
     <>
@@ -98,9 +93,7 @@ export function QueuePage() {
                         ]
                           .filter(Boolean)
                           .join(', '),
-                    date.format(
-                      new Date(status === 'pending' ? song.createdAt : song.updatedAt),
-                    ),
+                    formatDate(status === 'pending' ? song.createdAt : song.updatedAt),
                   ]
                     .filter(Boolean)
                     .join(' · ')}

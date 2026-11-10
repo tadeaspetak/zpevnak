@@ -45,7 +45,7 @@ import { url } from '../urls.ts';
  */
 export function ReviewPage() {
   const i18n = useI18n();
-  const { t, locale } = i18n;
+  const { t, formatDate } = i18n;
   const { playlists } = useCatalog();
   const navigate = useNavigate();
   const id = Number(useParams().id);
@@ -136,11 +136,6 @@ export function ReviewPage() {
   const dirty = draft.dirty;
   const position = pending.data ? pending.data.findIndex((s) => s.id === id) + 1 : 0;
   const entry = pending.data?.[position - 1];
-  const date = new Intl.DateTimeFormat(locale, {
-    day: 'numeric',
-    month: 'numeric',
-    year: 'numeric',
-  });
 
   return (
     <>
@@ -197,7 +192,7 @@ export function ReviewPage() {
               <Text size="sm" c="dimmed">
                 {[
                   entry.authorName && t('queue.addedBy', { name: entry.authorName }),
-                  date.format(new Date(entry.createdAt)),
+                  formatDate(entry.createdAt),
                   ...reviewContext(entry.id, null, playlists.values(), i18n),
                 ]
                   .filter(Boolean)

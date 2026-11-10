@@ -15,7 +15,7 @@ import { trpc } from '../trpc.ts';
 import { url } from '../urls.ts';
 
 export function AccountPage() {
-  const { t, locale } = useI18n();
+  const { t, compare } = useI18n();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { me, isAdmin, known } = useMe();
@@ -25,10 +25,10 @@ export function AccountPage() {
       me
         ? sortByTitle(
             [...songs.values()].filter((s) => s.createdBy === me.id),
-            locale,
+            compare,
           )
         : [],
-    [songs, me, locale],
+    [songs, me, compare],
   );
   const resend = trpc.auth.resendVerification.useMutation();
   const logOut = trpc.auth.logOut.useMutation({

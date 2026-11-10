@@ -1,7 +1,10 @@
+import { DIAGRAM_FRETS } from '#shared/chordpro/parse.ts';
 import type { ChordDefinition } from '#shared/chordpro/types.ts';
+import { useI18n } from '../i18n/index.tsx';
 import classes from './SongSheet.module.css';
 
-const FRETS_SHOWN = 5;
+// The parser lets through only what fits: two strings or more, frets within these.
+const FRETS_SHOWN = DIAGRAM_FRETS;
 const W = 60;
 const H = 76;
 const LEFT = 10;
@@ -11,6 +14,16 @@ const GRID_H = 50;
 
 /** A fretboard diagram for a chord the song defines, low E on the left. */
 export function ChordDiagram({ definition }: { definition: ChordDefinition }) {
+  const { t } = useI18n();
+  const frets = definition.frets.map((f) => (f === null ? 'x' : String(f))).join(' ');
+  const label =
+    definition.baseFret > 1
+      ? t('song.diagramLabelAt', {
+          name: definition.name,
+          frets,
+          fret: definition.baseFret,
+        })
+      : t('song.diagramLabel', { name: definition.name, frets });
   const strings = definition.frets.length;
   const stringGap = GRID_W / (strings - 1);
   const fretGap = GRID_H / FRETS_SHOWN;
@@ -18,7 +31,7 @@ export function ChordDiagram({ definition }: { definition: ChordDefinition }) {
   return (
     <figure className={classes.diagram}>
       <figcaption className={classes.diagramName}>{definition.name}</figcaption>
-      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={describe(definition)}>
+      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label}>
         {Array.from({ length: FRETS_SHOWN + 1 }, (_, i) => (
           <line
             key={`f${i}`}
@@ -94,9 +107,4 @@ export function ChordDiagram({ definition }: { definition: ChordDefinition }) {
       </svg>
     </figure>
   );
-}
-
-function describe(d: ChordDefinition): string {
-  const frets = d.frets.map((f) => (f === null ? 'x' : String(f))).join(' ');
-  return `${d.name}: ${frets}${d.baseFret > 1 ? `, fret ${d.baseFret}` : ''}`;
 }

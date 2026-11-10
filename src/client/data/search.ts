@@ -90,18 +90,21 @@ function searchSongs(
  */
 export function useSongSearch(songs: Map<number, SongRecord>) {
   const viewerId = useMe().me?.id ?? null;
-  return useMemo(() => {
-    const index = buildIndex([...songs.values()].filter((s) => inSearch(s, viewerId)));
-    return (query: string) => searchSongs(index, songs, query);
-  }, [songs, viewerId]);
+  return useMemo(() => songSearch(songs, viewerId), [songs, viewerId]);
 }
 
-/** A–Z by title, the way Czech sorts (Č after C, Ch after H). */
-export function sortByTitle(songs: Iterable<SongRecord>, locale: string): SongRecord[] {
-  const collator = new Intl.Collator(locale === 'cs' ? 'cs' : 'en', {
-    sensitivity: 'base',
-  });
-  return [...songs].sort((a, b) => collator.compare(a.title, b.title));
+/** `useSongSearch` without React: a search over `songs` as `viewerId` may find them. */
+export function songSearch(songs: Map<number, SongRecord>, viewerId: number | null) {
+  const index = buildIndex([...songs.values()].filter((s) => inSearch(s, viewerId)));
+  return (query: string) => searchSongs(index, songs, query);
+}
+
+/** A–Z by title, in the reader's order (`compare` from useI18n: Č after C in Czech). */
+export function sortByTitle(
+  songs: Iterable<SongRecord>,
+  compare: (a: string, b: string) => number,
+): SongRecord[] {
+  return [...songs].sort((a, b) => compare(a.title, b.title));
 }
 
 /** Playlists whose name holds every word of the query, diacritics and case aside. */
