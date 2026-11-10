@@ -34,7 +34,6 @@ import { SearchButton } from '../components/SearchButton.tsx';
 import { FONT_SCALES, usePrefs } from '../data/prefs.ts';
 import type { SongRecord } from '../data/store.ts';
 import { useFullscreen } from '../hooks/useFullscreen.ts';
-import { useHideOnScroll } from '../hooks/useHideOnScroll.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { url } from '../urls.ts';
 import classes from './SongToolbar.module.css';
@@ -51,6 +50,8 @@ type Props = {
   hasColumns: boolean;
   canEdit: boolean;
   canAddToPlaylist: boolean;
+  /** Out of the way: scrolled away, or the reader tapped the song (`useHideOnScroll`). */
+  hidden: boolean;
 };
 
 /**
@@ -69,9 +70,9 @@ export function SongToolbar(props: Props) {
     hasColumns,
     canEdit,
     canAddToPlaylist,
+    hidden,
   } = props;
   const { t } = useI18n();
-  const [hidden] = useHideOnScroll();
   const prefs = usePrefs();
   const fullscreen = useFullscreen();
   const wide = useMediaQuery('(min-width: 62em)');

@@ -1,6 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-/** True while the reader scrolls down into the song; false again on scrolling up or at the top. */
+/**
+ * Whether the song's toolbar is out of the way: hidden while the reader scrolls down into the
+ * song, shown again on scrolling up or at the top. `toggle` is the reader's own say (a tap on
+ * the song, D93); the next scroll takes over again.
+ */
 export function useHideOnScroll(threshold = 8) {
   const [hidden, setHidden] = useState(false);
   useEffect(() => {
@@ -19,5 +23,15 @@ export function useHideOnScroll(threshold = 8) {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, [threshold]);
-  return [hidden, setHidden] as const;
+  const toggle = useCallback(() => setHidden((h) => !h), []);
+  return { hidden, toggle };
+}
+
+/**
+ * A tap on the song itself, not a click on something in it (a link, a button) and not the end
+ * of selecting text to copy.
+ */
+export function isPlainTap(target: EventTarget | null) {
+  const selecting = (window.getSelection()?.toString() ?? '') !== '';
+  return !selecting && !(target instanceof Element && target.closest('a, button, input'));
 }

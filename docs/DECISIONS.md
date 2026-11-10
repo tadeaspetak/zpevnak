@@ -273,6 +273,10 @@ From the first UX walk of the song view and a playlist session (2026-11-10):
 - **D92. The playlist page shows where the player is:** the current song has an orange edge and
   number, and Hrát reads "Pokračovat" when it carries on mid-playlist. The pill's close button is
   full size. (2026-11-10)
+- **D93. A tap on the song hides the toolbar, or brings it back,** for when things get tight,
+  like an e-book reader. Scrolling still hides and shows it as before, and takes over again
+  after a tap. No button for it: the phone toolbar has no room. A tap on a link or button, the
+  end of a text selection, or a swipe to the next song doesn't count. (2026-11-10)
 
 ## Engineering
 

@@ -9,6 +9,7 @@ import { useCatalog } from '../data/catalog.ts';
 import { usePrefs } from '../data/prefs.ts';
 import { playPlaylist, songPlayed, usePlayer } from '../data/session.ts';
 import type { SongRecord } from '../data/store.ts';
+import { isPlainTap, useHideOnScroll } from '../hooks/useHideOnScroll.ts';
 import { useKeys } from '../hooks/useKeys.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useSwipe } from '../hooks/useSwipe.ts';
@@ -133,6 +134,7 @@ function SongPlayer({
   const { me, isEditor } = useMe();
   useWakeLock();
   const back = useBack(playlist);
+  const toolbar = useHideOnScroll();
   useCanonicalPath(!playlist && song ? url.song(song) : null);
 
   const semitones = song ? (prefs.transpose[song.id] ?? 0) : 0;
@@ -240,15 +242,26 @@ function SongPlayer({
         hasColumns={(parsed?.columns ?? 1) > 1}
         canEdit={Boolean(canEdit)}
         canAddToPlaylist={Boolean(me?.emailVerified)}
+        hidden={toolbar.hidden}
       />
       <SongStatusBanner song={song} />
-      <SongSheet
-        song={shown}
-        fontScale={prefs.fontScale}
-        showDiagrams={prefs.showDiagrams && semitones === 0}
-        showColumns={prefs.showColumns}
-        showChords={prefs.showChords}
-      />
+      {/* A tap on the song hides the toolbar, or brings it back, when things get tight (D93).
+          A pointer convenience on top of scrolling, which does the same, so no key of its own. */}
+      <div
+        onClick={(e) => {
+          if (isPlainTap(e.target)) {
+            toolbar.toggle();
+          }
+        }}
+      >
+        <SongSheet
+          song={shown}
+          fontScale={prefs.fontScale}
+          showDiagrams={prefs.showDiagrams && semitones === 0}
+          showColumns={prefs.showColumns}
+          showChords={prefs.showChords}
+        />
+      </div>
       {playlist?.removed && (
         <Alert color="gray" variant="light" mx="md" mt="xs">
           {t('song.removedFromPlaylist')}
