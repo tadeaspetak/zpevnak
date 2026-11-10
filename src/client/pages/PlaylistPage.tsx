@@ -188,7 +188,10 @@ export function PlaylistPage() {
                 // The details beside it wrap; the button never shrinks.
                 style={{ flexShrink: 0 }}
               >
-                {t('playlists.play')}
+                {/* Mid-playlist it carries on where the player is; say so. */}
+                {currentPosition !== null && currentPosition > 1
+                  ? t('playlists.continue')
+                  : t('playlists.play')}
               </Button>
             )}
           </Group>
@@ -237,7 +240,9 @@ export function PlaylistPage() {
                     song={song}
                     to={url.playlistSong(playlist, position)}
                     active={currentPosition === position}
-                    leading={<Position n={position} />}
+                    leading={
+                      <Position n={position} active={currentPosition === position} />
+                    }
                   />
                 ) : null;
               })}
@@ -284,9 +289,15 @@ export function PlaylistPage() {
   );
 }
 
-function Position({ n }: { n: number }) {
+function Position({ n, active = false }: { n: number; active?: boolean }) {
   return (
-    <Text c="dimmed" fw={600} miw="1.25rem" ta="right" className={classes.number}>
+    <Text
+      c={active ? 'var(--mantine-primary-color-filled)' : 'dimmed'}
+      fw={active ? 800 : 600}
+      miw="1.25rem"
+      ta="right"
+      className={classes.number}
+    >
       {n}
     </Text>
   );

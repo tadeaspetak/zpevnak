@@ -8,8 +8,10 @@
     background: var(--mantine-color-default-hover);
   }
 
+  /* The song being played: an orange edge, so it shows across the room, not just on hover. */
   &[data-active] {
     background: var(--mantine-color-default-hover);
+    box-shadow: inset 3px 0 0 var(--mantine-primary-color-filled);
   }
 }
 

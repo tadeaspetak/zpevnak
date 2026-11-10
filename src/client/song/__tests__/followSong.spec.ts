@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { followSong } from '../followSong.ts';
+import { followSong, playlistSteps } from '../followSong.ts';
 
 describe('followSong', () => {
   it('stays put when nothing moved', () => {
@@ -22,5 +22,41 @@ describe('followSong', () => {
   it('of a song in twice, follows the appearance nearest where it was', () => {
     // Playing the second 5, at position 4 of [5, 1, 2, 5]; someone put 9 at the top.
     expect(followSong([9, 5, 1, 2, 5], 5, 4)).toEqual({ position: 5, removed: false });
+  });
+});
+
+describe('playlistSteps', () => {
+  it('steps to the neighbours, and names the next song', () => {
+    expect(playlistSteps([1, 2, 3], 2, false)).toEqual({
+      prev: 1,
+      next: 3,
+      nextSongId: 3,
+    });
+  });
+
+  it('has no previous at the start, and no next at the end', () => {
+    expect(playlistSteps([1, 2], 1, false)).toEqual({
+      prev: null,
+      next: 2,
+      nextSongId: 2,
+    });
+    expect(playlistSteps([1, 2], 2, false)).toEqual({
+      prev: 1,
+      next: null,
+      nextSongId: null,
+    });
+  });
+
+  it('goes on to the song that took a removed song’s place, and names that one', () => {
+    // Song 2 was playing at position 2 and was taken out: [1, 3] is left.
+    expect(playlistSteps([1, 3], 2, true)).toEqual({ prev: 1, next: 2, nextSongId: 3 });
+  });
+
+  it('has no next when the removed song was the last', () => {
+    expect(playlistSteps([1, 2], 3, true)).toEqual({
+      prev: 2,
+      next: null,
+      nextSongId: null,
+    });
   });
 });

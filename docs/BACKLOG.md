@@ -24,12 +24,10 @@ All eight shipped the same day: see D50–D58 in `DECISIONS.md`.
 
 ## State and loose ends (2026-11-09, end of the first long session)
 
-- **Not deployed yet:** two local commits on `main` (rejected-song resubmit fix, status banners,
-  schválit wording, chords switch, diagrams off by default, modal titles, yarn verify). The live
-  site runs `0c52da6`; `bf9ac87` (listmates) is pushed but not deployed. Push + `yarn deploy`
-  when the owner says so.
-- **The `/ux` agent hasn't run yet.** A first walk of the song view and of a playlist session on a
-  phone is the natural next step before the gig.
+- **First `/ux` walk done (2026-11-10)**, song view and playlist session: every finding shipped
+  (D88–D92). Not walked: a cold offline start (needs a production build), the screen staying
+  awake, full screen on an iPhone, a 30-song playlist. Check those on a phone against
+  production before the gig.
 - **Home-screen app and updates:** no reload in an installed app; the ↻ button fetches data and
   checks for a new app version (D74, D75). If that proves not enough, consider pull-to-refresh.
 - **Playlist header on a phone:** an owner's four icons squeeze the title ("Vršek 2…"). If it

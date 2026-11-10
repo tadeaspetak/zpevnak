@@ -39,6 +39,7 @@ export function SongRow({ song, to, detail, leading, active }: Props) {
       state={songLinkState(location)}
       className={classes.row}
       data-active={active || undefined}
+      aria-current={active || undefined}
     >
       <Group gap="sm" wrap="nowrap" align="flex-start">
         {leading}

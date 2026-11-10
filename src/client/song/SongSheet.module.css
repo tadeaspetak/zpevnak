@@ -3,6 +3,8 @@
  * their syllable, nothing else on the page competing for the eye.
  */
 .sheet {
+  /* The measuring copy is laid out at the sheet's own width. */
+  position: relative;
   --song-size: calc(1.125rem * var(--song-scale, 1));
   font-size: var(--song-size);
   line-height: 1.35;
@@ -69,7 +71,8 @@
   display: block;
 }
 
-/* Two columns only where they fit: a tablet in landscape or a laptop. */
+/* Two columns only where they fit: a tablet in landscape or a laptop, and only when the whole
+   song fits the screen that way (SongSheet measures it on a hidden copy). */
 .bodyColumns {
   display: block;
 }
@@ -83,6 +86,16 @@
   .columnBreak {
     break-after: column;
   }
+}
+
+.measure {
+  position: absolute;
+  visibility: hidden;
+  pointer-events: none;
+  /* Inside the sheet's padding, so it is exactly as wide as the song's body. */
+  left: var(--mantine-spacing-md);
+  right: var(--mantine-spacing-md);
+  top: 0;
 }
 
 .section_verse,
@@ -120,6 +133,17 @@
   margin: 0;
   white-space: normal;
   overflow-wrap: anywhere;
+}
+
+/* A line too long for the screen wraps with a hanging indent, so its leftover words don't
+   read as the song's next line. Text-indent is inherited: the words inside reset it. */
+.line {
+  padding-left: 1.25em;
+  text-indent: -1.25em;
+}
+
+.line .word {
+  text-indent: 0;
 }
 
 .line + .line {

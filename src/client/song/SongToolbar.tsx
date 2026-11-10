@@ -2,13 +2,13 @@ import {
   ActionIcon,
   Divider,
   Group,
+  Indicator,
   Menu,
   Popover,
   Stack,
   Switch,
   Text,
   Tooltip,
-  UnstyledButton,
 } from '@mantine/core';
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 import {
@@ -78,9 +78,9 @@ export function SongToolbar(props: Props) {
   const [deleting, { open: openDelete, close: closeDelete }] = useDisclosure(false);
   const canDelete = useCanDelete(song);
 
-  const keyLabel =
-    shownKey ??
-    (semitones === 0 ? '±0' : semitones > 0 ? `+${semitones}` : `${semitones}`);
+  // A real minus sign: a hyphen reads as a dash beside a key.
+  const offset =
+    semitones === 0 ? '±0' : semitones > 0 ? `+${semitones}` : `−${-semitones}`;
 
   return (
     <>
@@ -118,19 +118,20 @@ export function SongToolbar(props: Props) {
             >
               <IconMinus size={18} />
             </ActionIcon>
-            <Tooltip label={t('song.transposeReset')} disabled={semitones === 0}>
-              <UnstyledButton
-                className={classes.key}
-                data-changed={semitones !== 0 || undefined}
-                onClick={() => prefs.setTranspose(song.id, 0)}
-                aria-label={`${keyLabel}: ${semitones === 0 ? t('song.transpose') : t('song.transposeReset')}`}
-              >
-                <IconClef size={18} aria-hidden />
-                <Text fw={700} size="sm" span>
-                  {keyLabel}
+            {/* The key only shows: it isn't a button (a tap there used to reset silently).
+                Reset lives in the ⋯ menu. A transposition remembered from last time (D24)
+                shows as its offset beside the key, so it can't go unnoticed. */}
+            <span className={classes.key} aria-live="polite">
+              <IconClef size={18} aria-hidden />
+              <Text fw={700} size="sm" span>
+                {shownKey ?? offset}
+              </Text>
+              {shownKey && semitones !== 0 && (
+                <Text size="xs" fw={600} span className={classes.offset}>
+                  {offset}
                 </Text>
-              </UnstyledButton>
-            </Tooltip>
+              )}
+            </span>
             <ActionIcon
               variant="subtle"
               color="gray"
@@ -149,10 +150,17 @@ export function SongToolbar(props: Props) {
                 variant="subtle"
                 color="gray"
                 size="xl"
-                aria-label={t('song.display')}
+                aria-label={
+                  prefs.showChords
+                    ? t('song.display')
+                    : `${t('song.display')}: ${t('song.chordsHidden')}`
+                }
                 aria-haspopup="dialog"
               >
-                <IconAdjustmentsHorizontal size={22} />
+                {/* Hidden chords are remembered too: a dot says so, from the toolbar. */}
+                <Indicator size={8} offset={2} disabled={prefs.showChords}>
+                  <IconAdjustmentsHorizontal size={22} />
+                </Indicator>
               </ActionIcon>
             </Popover.Target>
             <Popover.Dropdown>
@@ -214,6 +222,13 @@ export function SongToolbar(props: Props) {
                     checked={prefs.showChords && prefs.showDiagrams && semitones === 0}
                     // Diagrams draw chords: with chords hidden or transposed, there's nothing to draw.
                     disabled={!prefs.showChords || semitones !== 0}
+                    description={
+                      !prefs.showChords
+                        ? t('song.diagramsNeedChords')
+                        : semitones !== 0
+                          ? t('song.diagramsNeedOriginalKey')
+                          : undefined
+                    }
                     onChange={(e) => prefs.setShowDiagrams(e.currentTarget.checked)}
                   />
                 )}

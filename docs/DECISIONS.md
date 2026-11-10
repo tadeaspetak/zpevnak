@@ -47,7 +47,7 @@ entry that says which it replaces and what changed.
 - **D24. Transposition keeps the song's note system** (H/B in Czech songs) and is remembered per
   song, per device. (2026-11-09)
 - **D25. Two columns only where they fit** (≥ 62em) and only when the song asks (`{columns}`).
-  (2026-11-09)
+  (2026-11-09) _Narrowed by D88._
 - **D26. The screen stays awake** on a song (Wake Lock). (2026-11-09)
 
 ## Navigation
@@ -79,7 +79,7 @@ entry that says which it replaces and what changed.
   diagrams switch out of the ⋯ menu. The two-columns switch ("Dva sloupce na širokém displeji")
   shows only on screens wide enough for columns, per device, on by default (D25).
 - **D52. The key control is compact and carries a treble clef** (`− 𝄞 A +`), so it reads as
-  the key at a glance.
+  the key at a glance. _The key itself is no longer a reset button: D89._
 - **D53. Settings (language, theme) live behind a cogwheel** on the overview, in a dialog. Not on
   the account page, not at the foot of the overview.
 - **D54. Every page header: page actions, a divider, search.** No ⋯ menu on the playlist page:
@@ -246,6 +246,29 @@ entry that says which it replaces and what changed.
   (`playlist_collaborator_removals`) and restores only someone this playlist's owner removed in
   the last 10 minutes, so undo can't add anyone else. No confirmation dialog: an undo costs the
   rare mistake a tap instead of every removal. (2026-11-10)
+
+From the first UX walk of the song view and a playlist session (2026-11-10):
+
+- **D88. Two columns only when the whole song fits the screen in them** (narrows D25). On a wide
+  screen a `{columns}` song is laid out in columns only if the page, columns and all, needs no
+  scrolling; otherwise columns sent the reader back up mid-song for the second one. It's
+  measured on a hidden copy, so smaller text, a portrait tablet or hidden chords can bring the
+  columns on, and larger text takes them off. In practice most songs get columns on a portrait
+  tablet and stay in one column on a landscape tablet or laptop. (2026-11-10)
+- **D89. The key is shown, not pressed; a remembered setting shows.** The key between − and +
+  is a label (a tap on it used to reset the transposition silently); reset is in the ⋯ menu. A
+  transposition remembered from last time (D24) shows as its offset beside the key (`G −2`,
+  dropped below 360 px to keep search on screen), and hidden chords as a dot on the Display
+  icon. A disabled diagrams switch says why ("Jen se zapnutými akordy" / "Jen v původní
+  tónině"). (2026-11-10)
+- **D90. Keys belong to what's open.** Esc and the arrows act on the song only when no menu,
+  popover or dialog has them: Esc in the ⋯ menu closes the menu and stays on the song.
+  (2026-11-10)
+- **D91. A wrapped lyric line hangs indented,** so on a phone its leftover words don't read as
+  the song's next line. (2026-11-10)
+- **D92. The playlist page shows where the player is:** the current song has an orange edge and
+  number, and Hrát reads "Pokračovat" when it carries on mid-playlist. The pill's close button is
+  full size. (2026-11-10)
 
 ## Engineering
 

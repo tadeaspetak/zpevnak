@@ -47,7 +47,7 @@ export function PlaylistPill() {
         <CloseButton
           onClick={leavePlaylist}
           aria-label={t('session.leave')}
-          size="lg"
+          size="xl"
           className={classes.close}
         />
       </Group>

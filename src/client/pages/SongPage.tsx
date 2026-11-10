@@ -20,7 +20,7 @@ import { SongToolbar } from '../song/SongToolbar.tsx';
 import { PlaylistBar } from '../song/PlaylistBar.tsx';
 import { trpc } from '../trpc.ts';
 import { idFromRef, url } from '../urls.ts';
-import { followSong } from '../song/followSong.ts';
+import { followSong, playlistSteps } from '../song/followSong.ts';
 import { useCanonicalPath } from '../hooks/useCanonicalPath.ts';
 import classes from './SongPage.module.css';
 
@@ -162,23 +162,24 @@ function SongPlayer({
   // swipe and key listeners, which would otherwise re-attach on each one.
   const playlistId = playlist?.id ?? null;
   const playlistName = playlist?.name ?? '';
-  const position = playlist?.position ?? 0;
-  const removed = playlist?.removed ?? false;
+  const steps = playlist
+    ? playlistSteps(playlist.songIds, playlist.position, playlist.removed)
+    : null;
+  const prevPosition = steps?.prev ?? null;
+  const nextPosition = steps?.next ?? null;
   const { prev, next } = useMemo(() => {
     if (playlistId === null) {
       return { prev: undefined, next: undefined };
     }
-    const go = (to: number) => () =>
-      navigate(url.playlistSong({ id: playlistId, name: playlistName }, to), {
-        replace: true,
-      });
-    // A removed song's place is taken by the one that followed it: that one is next.
-    const after = removed ? position : position + 1;
-    return {
-      prev: position > 1 ? go(position - 1) : undefined,
-      next: after <= total ? go(after) : undefined,
-    };
-  }, [navigate, playlistId, playlistName, position, total, removed]);
+    const go = (to: number | null) =>
+      to === null
+        ? undefined
+        : () =>
+            navigate(url.playlistSong({ id: playlistId, name: playlistName }, to), {
+              replace: true,
+            });
+    return { prev: go(prevPosition), next: go(nextPosition) };
+  }, [navigate, playlistId, playlistName, prevPosition, nextPosition]);
 
   useSwipe(useMemo(() => ({ onLeft: next, onRight: prev }), [next, prev]));
   useKeys(
@@ -222,7 +223,6 @@ function SongPlayer({
     (isEditor || (song.createdBy === me.id && song.status !== 'verified'));
   // Jumped out of a playlist to play something else: keep the way back in reach.
   const showPill = !playlist && session !== null;
-  const nextSong = playlist ? playlist.songIds[playlist.position] : undefined;
 
   return (
     <div
@@ -259,7 +259,7 @@ function SongPlayer({
           name={playlist.name}
           position={playlist.position}
           total={total}
-          nextSongId={nextSong}
+          nextSongId={steps?.nextSongId ?? undefined}
           onPrev={prev}
           onNext={next}
         />

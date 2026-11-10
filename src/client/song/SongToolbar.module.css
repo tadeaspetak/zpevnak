@@ -37,17 +37,31 @@
   align-items: center;
   justify-content: center;
   gap: 2px;
-  border-radius: var(--mantine-radius-sm);
   /* The key reads as what it is: a chord, in the chords' colour. */
   color: var(--chord-color);
+}
 
-  &[data-changed] {
-    text-decoration: underline;
-    text-underline-offset: 3px;
+.offset {
+  color: var(--mantine-color-dimmed);
+  margin-left: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A 320 px phone: every pixel goes to keeping search on screen. The key still shows the
+   transposed key; the offset beside it goes. */
+@media (max-width: 22.5em) {
+  .offset {
+    display: none;
+  }
+}
+
+@media (max-width: 22em) {
+  .bar .inner {
+    gap: 0;
   }
 
-  @mixin hover {
-    background: var(--mantine-color-default-hover);
+  .bar .transpose {
+    margin-right: 0;
   }
 }
 
