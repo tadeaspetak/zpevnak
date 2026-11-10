@@ -228,6 +228,7 @@ export function SongToolbar(props: Props) {
                 {hasColumns && wide && (
                   <Switch
                     label={t('song.columns')}
+                    description={t('song.columnsHint')}
                     checked={prefs.showColumns}
                     onChange={(e) => prefs.setShowColumns(e.currentTarget.checked)}
                   />

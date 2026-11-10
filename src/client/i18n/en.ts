@@ -66,6 +66,7 @@ export const en: Record<keyof typeof cs, string> = {
   'song.textSize': 'Text size',
   'song.display': 'Display',
   'song.chords': 'Chords',
+  'song.columnsHint': 'Only when the song fits on the screen. Smaller text helps.',
   'song.chordsHidden': 'chords hidden',
   'song.columns': 'Two columns on a wide screen',
   'song.smaller': 'Smaller text',

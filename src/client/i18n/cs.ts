@@ -69,6 +69,7 @@ export const cs = {
   'song.textSize': 'Velikost písma',
   'song.display': 'Zobrazení',
   'song.chords': 'Akordy',
+  'song.columnsHint': 'Jen když se písnička vejde na obrazovku. Pomůže menší písmo.',
   'song.chordsHidden': 'akordy skryté',
   'song.columns': 'Dva sloupce na širokém displeji',
   'song.smaller': 'Menší písmo',

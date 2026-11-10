@@ -249,13 +249,15 @@ entry that says which it replaces and what changed.
 
 From the first UX walk of the song view and a playlist session (2026-11-10):
 
-- **D88. Two columns only when the song fits the screen in them** (narrows D25). On a wide
-  screen a `{columns}` song is laid out in columns only if the song itself, in columns, fits the
-  window: its title and artist may scroll off (the toolbar slides away too), but a bar fixed at
-  the bottom (the playlist bar or pill) covers room the song can't use. Otherwise columns sent
-  the reader back up mid-song for the second one. It's measured on a hidden copy, so smaller
-  text, a taller window, hidden chords or closing the pill can bring the columns on, and larger
-  text takes them off. Andělská, for one, gets columns at 80 % on a laptop. (2026-11-10)
+- **D88. Two columns only when the song can be read whole in them** (narrows D25). On a wide
+  screen a `{columns}` song is laid out in columns only if, with the song's top at the top of
+  the screen, no text runs past the bottom or under a bar fixed there (the playlist bar, or the
+  pill: a line may end beside the pill). The title, artist and toolbar don't count: they scroll
+  and slide away. Otherwise columns would send the reader back up mid-song for the second one.
+  It's measured on the text of a hidden copy in columns, so smaller text, a taller window, full
+  screen, hidden chords or closing the pill can bring the columns on, and larger text takes
+  them off. The switch says so: "Jen když se písnička vejde na obrazovku. Pomůže menší písmo."
+  If this keeps surprising people, the fallback is a plain switch. (2026-11-10)
 - **D89. The key shows whether the song is transposed, and is the way back.** In the song's
   own key, the key between − and + is a plain label: a tap does nothing (it used to reset
   silently). Transposed, a remembered transposition too (D24), it is a filled orange button,

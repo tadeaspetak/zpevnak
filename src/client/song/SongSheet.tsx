@@ -10,6 +10,7 @@ import {
 import type { Block, Line, Song } from '#shared/chordpro/types.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { ChordDiagram } from './ChordDiagram.tsx';
+import { columnsFit, type Box } from './columnsFit.ts';
 import { hasChords, isChordOnly, layoutLine } from './layout.ts';
 import classes from './SongSheet.module.css';
 
@@ -100,21 +101,33 @@ function SectionView({
   );
 }
 
-/** How much of the window's bottom a fixed bar covers (`data-bottom-overlay`): the playlist bar or pill. */
-function bottomOverlay() {
-  let covered = 0;
-  for (const el of document.querySelectorAll('[data-bottom-overlay]')) {
-    covered = Math.max(covered, window.innerHeight - el.getBoundingClientRect().top);
+/** The text boxes of a song laid out in `copy`, measured from its top. */
+function textBoxes(copy: HTMLElement): Box[] {
+  const top = copy.getBoundingClientRect().top;
+  const range = document.createRange();
+  const boxes: Box[] = [];
+  for (const el of copy.querySelectorAll('section > *')) {
+    // The text's own extent, not its block's: a short line ends where its words end.
+    range.selectNodeContents(el);
+    const r = range.getBoundingClientRect();
+    if (r.height > 0) {
+      boxes.push({
+        top: r.top - top,
+        bottom: r.bottom - top,
+        left: r.left,
+        right: r.right,
+      });
+    }
   }
-  return covered;
+  return boxes;
 }
 
 /**
- * Whether the song, laid out in columns, fits the window, measured on `copy`: the song in
- * columns, out of sight. Only the song has to fit, not its title: the toolbar slides away and
- * the title scrolls off as the reader scrolls into the song (D88). A bar fixed at the bottom
- * covers part of the window, so it doesn't count as room. Columns that run past the bottom
- * would send the reader back up mid-song for the second one, so then the song stays in one.
+ * Whether the song, laid out in columns, can be read whole (`columnsFit`), measured on `copy`:
+ * the song in columns, out of sight. Only the song has to fit, not its title: the toolbar
+ * slides away and the title scrolls off as the reader scrolls into the song (D88). Columns that
+ * run past the bottom would send the reader back up mid-song for the second one, so then the
+ * song stays in one.
  *
  * Every change that moves the answer resizes either the copy (width, text size, chords,
  * transposition) or the page (a bar appearing changes its padding), so it is measured on
@@ -130,7 +143,10 @@ function useColumnsFit(enabled: boolean) {
       return;
     }
     const measure = () => {
-      setFits(copyEl.offsetHeight <= window.innerHeight - bottomOverlay());
+      const bars = [...document.querySelectorAll('[data-bottom-overlay]')].map((el) =>
+        el.getBoundingClientRect(),
+      );
+      setFits(columnsFit(textBoxes(copyEl), bars, window.innerHeight));
     };
     measure();
     const observer = new ResizeObserver(measure);

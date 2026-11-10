@@ -23,8 +23,9 @@ export function PlaylistPill() {
   const position = Math.min(session.position, total);
   const song = songs.get(playlist.songIds[position - 1] ?? -1);
   return (
-    <div className={classes.dock} data-bottom-overlay>
-      <Group gap={0} wrap="nowrap" className={classes.pill}>
+    <div className={classes.dock}>
+      {/* The pill, not its dock: the song can use the room either side of it (D88). */}
+      <Group gap={0} wrap="nowrap" className={classes.pill} data-bottom-overlay>
         <UnstyledButton
           component={Link}
           to={url.playlistSong(playlist, position)}
