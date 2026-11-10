@@ -16,7 +16,6 @@ function toolbar(semitones: number) {
       shownKey={semitones === 0 ? 'A' : 'H'}
       semitones={semitones}
       hasDiagrams={false}
-      hasColumns={false}
       canEdit={false}
       canAddToPlaylist={false}
       hidden={false}

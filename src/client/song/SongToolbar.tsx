@@ -48,8 +48,6 @@ type Props = {
   shownKey: string | null;
   semitones: number;
   hasDiagrams: boolean;
-  /** The song asks for columns ({columns: 2}): the reader may turn them off. */
-  hasColumns: boolean;
   /** May edit the song, and so delete it: the same people (canChangeSong, D78). */
   canEdit: boolean;
   canAddToPlaylist: boolean;
@@ -70,7 +68,6 @@ export function SongToolbar(props: Props) {
     shownKey,
     semitones,
     hasDiagrams,
-    hasColumns,
     canEdit,
     canAddToPlaylist,
     hidden,
@@ -208,7 +205,7 @@ export function SongToolbar(props: Props) {
                   onChange={(e) => prefs.setShowChords(e.currentTarget.checked)}
                 />
                 {/* Columns only ever apply on a wide screen (D25); a phone has nothing to switch. */}
-                {hasColumns && wide && (
+                {wide && (
                   <Switch
                     label={t('song.columns')}
                     description={t('song.columnsHint')}

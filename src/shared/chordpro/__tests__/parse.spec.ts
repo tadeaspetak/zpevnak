@@ -157,7 +157,7 @@ describe('parseSong', () => {
     ]);
   });
 
-  it('reads columns and column breaks', () => {
+  it('reads column breaks, and leaves the number of columns to the reader (D108)', () => {
     const s = song(
       '{columns: 2}',
       '{sov}',
@@ -168,7 +168,7 @@ describe('parseSong', () => {
       'b',
       '{eov}',
     );
-    expect(s.columns).toBe(2);
+    expect(s.warnings).toEqual([]);
     expect(s.blocks.map((b) => b.type)).toEqual(['section', 'columnBreak', 'section']);
   });
 

@@ -30,3 +30,6 @@ if (!('fonts' in document)) {
     value: { addEventListener: () => {}, removeEventListener: () => {} },
   });
 }
+
+// Nor does it lay text out: a range measures as an empty box (the columns check reads them).
+Range.prototype.getBoundingClientRect ??= () => new DOMRect();

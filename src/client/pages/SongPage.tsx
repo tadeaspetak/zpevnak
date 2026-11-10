@@ -239,7 +239,6 @@ function SongPlayer({
         shownKey={shown.meta.key}
         semitones={semitones}
         hasDiagrams={(parsed?.definitions.length ?? 0) > 0}
-        hasColumns={(parsed?.columns ?? 1) > 1}
         canEdit={canEdit}
         canAddToPlaylist={Boolean(me?.emailVerified)}
         hidden={toolbar.hidden}

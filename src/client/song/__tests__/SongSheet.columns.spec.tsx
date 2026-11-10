@@ -4,7 +4,8 @@ import { parseSong } from '#shared/chordpro/parse.ts';
 import { SongSheet } from '../SongSheet.tsx';
 
 const song = parseSong(
-  ['{title: Test}', '{columns: 2}', '{sov}', 'la [Am]la [D]lo', '{eov}'].join('\n'),
+  // No {columns}: any song may go into columns (D108).
+  ['{title: Test}', '{sov}', 'la [Am]la [D]lo', '{eov}'].join('\n'),
 );
 
 /** The song body, on a screen `wide` or not; whether it fits is `columnsFit`'s, tested there. */
@@ -29,7 +30,7 @@ function body(wide: boolean, showColumns: boolean) {
   };
 }
 
-describe('SongSheet columns (D25, D88)', () => {
+describe('SongSheet columns (D88, D108)', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
   });
@@ -40,5 +41,9 @@ describe('SongSheet columns (D25, D88)', () => {
 
   it('keeps one column when the reader turned columns off', () => {
     expect(body(true, false)).toEqual({ columns: null, measured: null });
+  });
+
+  it('tries any song in columns on a wide screen, whether or not it asks', () => {
+    expect(body(true, true).measured).not.toBeNull();
   });
 });

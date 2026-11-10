@@ -175,7 +175,8 @@ export function SongSheet({
   const { t } = useI18n();
   const style = { '--song-scale': fontScale } as CSSProperties;
   const wide = useWide();
-  const columns = useColumnsFit(song.columns > 1 && showColumns && wide);
+  // Any song, when the reader wants columns and the song fits in them (D108).
+  const columns = useColumnsFit(showColumns && wide);
   // The key isn't repeated here: the toolbar shows it, and changes it (D59). A capo is not
   // in the toolbar, so it stays.
   const meta = [song.meta.capo ? t('song.capo', { fret: song.meta.capo }) : null].filter(
@@ -223,7 +224,7 @@ export function SongSheet({
       >
         {blocks}
       </div>
-      {wide && song.columns > 1 && showColumns && (
+      {wide && showColumns && (
         // The same song in columns, out of sight and out of reach: only measured.
         <div
           ref={columns.copy}

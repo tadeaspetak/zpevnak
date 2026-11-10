@@ -67,7 +67,6 @@ export type Song = {
   /** The artist to show and search by: `{artist}`, falling back to `{subtitle}`. */
   artist: string | null;
   noteSystem: NoteSystem;
-  columns: number;
   definitions: ChordDefinition[];
   blocks: Block[];
   warnings: ParseWarning[];

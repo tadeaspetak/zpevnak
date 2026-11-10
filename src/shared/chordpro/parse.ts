@@ -69,6 +69,8 @@ const QUIET_METADATA = new Set([
 
 /** Print-only directives. The screen layout replaces them. */
 const PRINT_ONLY = new Set([
+  // How many columns is the reader's screen's business, not the song's (D108).
+  'columns',
   'new_page',
   'new_physical_page',
   'pagetype',
@@ -206,7 +208,6 @@ export function parseSong(source: string): Song {
   const blocks: Block[] = [];
   const definitions: ChordDefinition[] = [];
   const warnings: ParseWarning[] = [];
-  let columns = 1;
   let declaredSystem: NoteSystem | null = null;
 
   // The section lines are going into: an explicit environment, or an implicit paragraph
@@ -374,13 +375,6 @@ export function parseSong(source: string): Song {
         closeImplicit();
         blocks.push({ type: 'columnBreak' });
         return;
-      case 'columns': {
-        const n = Number(value);
-        if (Number.isInteger(n) && n >= 1) {
-          columns = n;
-        }
-        return;
-      }
       case 'define':
       case 'chord': {
         const definition = readDefinition(value);
@@ -422,7 +416,6 @@ export function parseSong(source: string): Song {
     meta,
     artist: meta.artists.length > 0 ? meta.artists.join(', ') : meta.subtitle,
     noteSystem: declaredSystem ?? detectNoteSystem(meta, blocks),
-    columns,
     definitions,
     blocks: blocks.filter((b) => b.type !== 'section' || b.lines.length > 0 || b.label),
     warnings,

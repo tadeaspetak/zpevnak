@@ -47,7 +47,7 @@ entry that says which it replaces and what changed.
 - **D24. Transposition keeps the song's note system** (H/B in Czech songs) and is remembered per
   song, per device. (2026-11-09)
 - **D25. Two columns only where they fit** (≥ 62em) and only when the song asks (`{columns}`).
-  (2026-11-09) _Narrowed by D88._
+  (2026-11-09) _Narrowed by D88; the song's say replaced by D108._
 - **D26. The screen stays awake** on a song (Wake Lock). (2026-11-09)
 
 ## Navigation
@@ -250,7 +250,7 @@ entry that says which it replaces and what changed.
 From the first UX walk of the song view and a playlist session (2026-11-10):
 
 - **D88. Two columns only when the song can be read whole in them** (narrows D25). On a wide
-  screen a `{columns}` song is laid out in columns only if, with the song's top at the top of
+  screen a song is laid out in columns only if, with the song's top at the top of
   the screen, no text runs past the bottom or under a bar fixed there (the playlist bar, or the
   pill: a line may end beside the pill). The title, artist and toolbar don't count: they scroll
   and slide away. Otherwise columns would send the reader back up mid-song for the second one.
@@ -335,6 +335,12 @@ From the first UX walk of the song view and a playlist session (2026-11-10):
   can't do gets one shared component (`IconButton`: an icon with its tooltip and name;
   `ConfirmModal`; `SongLabel`; `PageLoader`), never a copy per page. Breakpoints are the
   theme's (`useWide`, `usePhone`, `$mantine-breakpoint-*`). (2026-11-10)
+- **D108. Columns are the reader's, for any song** (replaces D25's "when the song asks").
+  How many columns is presentation: it depends on the screen and the reader, not the song, and
+  the fit check (D88) already decides better than a line in the source. Every song on a wide
+  screen goes into two columns when it fits and the reader has them on (the switch is always in
+  Display). `{columns: n}` is accepted and ignored; `{column_break}` stays, as the author's word
+  on where a song splits well. (2026-11-10)
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed
