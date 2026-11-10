@@ -256,7 +256,8 @@ From the first UX walk of the song view and a playlist session (2026-11-10):
   and slide away. Otherwise columns would send the reader back up mid-song for the second one.
   It's measured on the text of a hidden copy in columns, so smaller text, a taller window, full
   screen, hidden chords or closing the pill can bring the columns on, and larger text takes
-  them off. The switch says so: "Jen když se písnička vejde na obrazovku. Pomůže menší písmo."
+  them off. The switch says so: "Jen pokud se celá písnička vejde na obrazovku. Pokud je to o fous, zkus
+  zmenšit písmo!"
   If this keeps surprising people, the fallback is a plain switch. (2026-11-10)
 - **D89. The key shows whether the song is transposed, and is the way back.** In the song's
   own key, the key between − and + is a plain label: a tap does nothing (it used to reset
