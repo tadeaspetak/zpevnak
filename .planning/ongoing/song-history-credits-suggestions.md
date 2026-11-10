@@ -24,10 +24,12 @@ Each slice ships on its own, in this order.
 
 ### 1. Version history, recorded quietly (shipped, D86)
 
-As shipped, it differs from the sketch below in three ways: the kinds are only `create`, `edit`
-and `approve` for now (slice 3 adds `accept_suggestion` and `revert` with the features that use
-them); every approval records a version, not only one with edits; and an edit that leaves the
-text unchanged records nothing. Code: `src/server/songs/versions.ts`.
+As shipped, it differs from the sketch below in four ways: the kinds are `create`, `edit`,
+`approve` and `reject` for now (slice 3 adds `accept_suggestion` and `revert` with the features
+that use them); every approval records a version, not only one with edits; an edit that leaves
+the text unchanged records nothing; and a rejection is a version too, with its reason and note
+(`rejection_reason`, `rejection_note`, D102), so a fixed song can say it was fixed. Code:
+`src/server/songs/versions.ts`.
 
 Every save stores a copy of the song. Nothing shows it yet; it starts the record.
 

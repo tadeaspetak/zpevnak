@@ -45,14 +45,27 @@ printed to the server log.
   `src/server/routers/{domain}/{domain}.{procedure}.ts`, specs in `__tests__/` beside them.
 - **Client:** React 19, Vite, React Router, tRPC + React Query, Mantine for everything around
   the song. The song sheet itself (`src/client/song/`) is plain CSS: it has to be fast and quiet.
+  The providers (theme, translations, queries, toasts, the error boundary) are in
+  `src/client/Providers.tsx`; tests render inside the same ones.
+- **Rules both sides need live in `src/shared/` and nowhere else:** who may change a song
+  (`songs.ts`: `canChangeSong`, `isEditor`), every path (`urls.ts`, emails included), the
+  rejection reasons' wording (`rejectionReasons.ts`), validators and limits
+  (`validators/index.ts`), the ChordPro parser. Never re-derive one of these in a page or a
+  procedure.
 - **Offline first.** The whole catalog (songs and playlists the viewer can see) lives in
   IndexedDB (`src/client/data/`) and is searched on the device with MiniSearch. `songs.sync`
   sends what changed since a cursor; `playlists.all` sends everything (it is small). Reads go
   through `useCatalog()`, not tRPC queries. After a mutation, put the returned record into the
-  catalog (`putSong`, `putPlaylist`).
+  catalog (`putSong`, `putPlaylist`). A change of viewer (sign-in, sign-out) clears the device
+  copy before fetching (`syncCatalog`).
 - **The ChordPro text is the only truth about a song.** Title and artist are read from its
   header on every save (`src/server/songs/header.ts`); never edit them separately.
-- **Production:** Cloud Run (GCP project `zpevnak`, europe-west3) and Neon Postgres. Local
+- **Changing a song** (save, approve, reject, delete) locks its row and decides on it inside the
+  transaction (D104). Save, approve and reject also carry `seenAt`, the song's `updatedAt` as the
+  page loaded it; the server refuses with `SONG_CHANGED` if it moved on (D106).
+- **Requests that write are mutations,** never GETs. Email the request doesn't depend on goes out
+  with `sendEmailInBackground` (a failure is logged; the request stands).
+- **Production:** Cloud Run (GCP project `zpevnak`, europe-west4) and Neon Postgres. Local
   development and tests never touch Neon: the app does not load `.env.local`.
 
 ## Process
@@ -73,8 +86,12 @@ Every change to behaviour ships with its tests in the same commit.
 
 - **Prove logic where it lives.** Parser, transposition, layout and search are pure functions
   with unit specs. API behaviour is tested through the tRPC caller against a real Postgres
-  (`tests/server/helpers.ts`: `useCleanDatabase`, `createUser`, `callerFor`, `withCookies`).
-  End-to-end is for the one happy path through the app, not for permutations.
+  (`tests/server/helpers.ts`: `useCleanDatabase`, `createUser`, `callerFor`, `withCookies`,
+  `seenAt`). Components render with `renderApp` (`tests/client/render.tsx`: the app's own
+  providers and a router). Every test run migrates down and up again (`global-setup.ts`).
+  End-to-end (`tests/e2e/`) is for the main paths through the app, not for permutations.
+- **Every bug caught gets a test** that fails without its fix, in the same commit. Only CSS that
+  a test can't reasonably see (an indent, a tap target) is left to `yarn ux:probe`.
 - **Every guard ships a false-reject test.** A permission check, validator or rate limit gets a
   test proving the legitimate request still succeeds, built the way the real client builds it.
   The negative case is the one you are thinking about; the happy path is the one that breaks.
@@ -104,13 +121,21 @@ Every change to behaviour ships with its tests in the same commit.
 
 ## UI conventions
 
-- **Mobile first.** Phones and tablets on a stand are the main screen. Check 390 px first.
+- **Mobile first** for playing: phones and tablets on a stand are the main screen; check 390 px
+  first. Adding, editing and reviewing songs happens mostly on wider screens: check 1280 px too.
+- **Theme first, then one shared component (D105).** A default that holds everywhere goes in
+  `src/client/theme.ts` (`ActionIcon` subtle grey, `Badge` neutral, `Alert` grey); what a theme
+  can't do gets one component, not a copy per page: `IconButton` (an icon with its tooltip and
+  name), `ConfirmModal`, `SongLabel`, `PageLoader`. Breakpoints are the theme's: `useWide`,
+  `usePhone` in code, `$mantine-breakpoint-*` in CSS.
 - **The back arrow goes one level up** to a fixed parent, and says where ("Back to Vršek
   2026"); history is the browser's back (D60). **Search is
   the last icon at top right on every page**, song view included, so it is always in one place.
 - Buttons inside a row or card are `size="sm"`; `md` is for page-level calls to action.
-- **One orange (D61):** filled = primary, `variant="default"` = secondary, never `light` on
-  buttons or badges. Alerts are coloured by meaning (green/yellow/red) or neutral.
+- **One orange (D61, D103):** filled = primary, `variant="default"` = secondary, never `light`
+  on buttons or badges. Alerts are coloured by meaning (green/yellow/red) or neutral. The
+  palette is `BRAND` in `theme.ts`, built to pass AA (a spec checks it); orange as text is
+  `var(--brand-text)`, lighter on dark.
 - Secondary text uses `c="dimmed"`, which the theme darkens to pass WCAG AA (Mantine's default
   does not). Chords use `var(--chord-color)`.
 
@@ -141,7 +166,8 @@ Live at **https://zpevnak.tadeaspetak.com** (testing it at a Christmas carol gig
 
 ## Guard rails
 
-`.claude/hooks/bash-guard.ts` (tested in its spec) blocks force pushes, remote `psql`, and
+`.claude/hooks/bash-guard.ts` (tested in its spec) blocks force pushes, remote `psql` (a host
+in the arguments, `PGHOST=…`, or a `$VARIABLE` that could hold any), commands hidden in `$(…)`, and
 anything that changes the machine's global gcloud state: the default configuration is the
 owner's work setup and must never change. This repo's gcloud commands run under its own
 `zpevnak` configuration through `CLOUDSDK_ACTIVE_CONFIG_NAME` (`.claude/settings.json`).

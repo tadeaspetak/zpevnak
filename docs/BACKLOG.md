@@ -34,15 +34,33 @@ took the agent's pick on all five open ones; all shipped as D99–D103.
       text (#C2410C, 5.2:1). In the owner's words: "I'm in no way attached to the colours at
       this point, let's change them while it's simple"; a theme that could become configurable.
 
+## Code review (2026-11-10)
+
+A senior review of the whole codebase (server, client data, pages, and every bug fixed so far
+against its regression test). The obvious fixes shipped the same day (D104–D107); then, from the
+owner's call, seen-at checks on song changes, shared paths and reason labels, and the invite as a
+mutation. Deployed as `012a8b3`. Columns for any song (D108) followed as `895b4b3`.
+
+Agreed to leave, for now:
+
+- Expired `sessions` and `auth_tokens` rows are never deleted. Harmless at this size; a periodic
+  cleanup later.
+- The editor pages (`/new`, edit, review) repeat their header-and-column skeleton; one shared
+  skeleton would save little.
+
 ## Bigger work
 
 - Song history, credits and suggested changes: `.planning/ongoing/song-history-credits-suggestions.md`.
   Slice 1 (versions, recorded quietly) shipped as D86; credits and suggestions after the gig.
 
-## State and loose ends (2026-11-09, end of the first long session)
+## State and loose ends (updated 2026-11-10)
 
-- **First `/ux` walk done (2026-11-10)**, song view and playlist session: every finding shipped
-  (D88–D92). Not walked: a cold offline start (needs a production build), the screen staying
+- **`/ux` walks done:** the song view and playlist session (D88–D92), and adding a song (D94–D103).
+  Both shipped whole. Next candidates: playlists and sharing as an owner; the account and sign-in
+  pages.
+- **From the first walk,** not walked: a cold offline start (needs a production build), the screen staying
+  awake, full screen on an iPhone, a 30-song playlist. Check those on a phone against
+  production before the gig. Not walked: a cold offline start (needs a production build), the screen staying
   awake, full screen on an iPhone, a 30-song playlist. Check those on a phone against
   production before the gig.
 - **Home-screen app and updates:** no reload in an installed app; the ↻ button fetches data and

@@ -109,7 +109,7 @@ entry that says which it replaces and what changed.
   outline. No light (tinted) orange anywhere: in dark mode it turns rust brown, reads as an
   error and clashes with the filled orange. Alerts take the colour of their meaning (green
   success, yellow warning, red error) and default to neutral grey; badges are neutral unless
-  they mean something. (2026-11-09)
+  they mean something. (2026-11-09) _Its shade: D103._
 
 - **D62. Editors approve: "Schválit" / "Approve"**, not "Ověřit", which reads like sending a
   song off to be verified. (Superseded in part by D83: the badge says "Neschváleno" too.)
