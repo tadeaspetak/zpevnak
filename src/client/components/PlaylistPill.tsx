@@ -4,7 +4,7 @@ import { Link } from 'react-router';
 import { useCatalog } from '../data/catalog.ts';
 import { leavePlaylist, usePlayer } from '../data/session.ts';
 import { useI18n } from '../i18n/index.tsx';
-import { url } from '../urls.ts';
+import { url } from '#shared/urls.ts';
 import classes from './PlaylistPill.module.css';
 
 /**

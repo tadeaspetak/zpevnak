@@ -1,3 +1,5 @@
+import { REJECTION_REASON_LABELS } from '#shared/rejectionReasons.ts';
+
 /**
  * Czech strings: the source dictionary. `en.ts` must have every key (the type enforces it).
  * `{name}` placeholders are filled by `t('key', { name })`.
@@ -101,10 +103,10 @@ export const cs = {
   'song.rejectedFix': 'Oprav ji a ulož, pošle se ke kontrole znovu.',
   'song.fix': 'Opravit',
 
-  'reason.too_many_mistakes': 'příliš mnoho chyb',
-  'reason.totally_wrong': 'úplně špatně',
-  'reason.duplicate': 'už tu je',
-  'reason.other': 'jiný důvod',
+  'reason.too_many_mistakes': REJECTION_REASON_LABELS.cs.too_many_mistakes,
+  'reason.totally_wrong': REJECTION_REASON_LABELS.cs.totally_wrong,
+  'reason.duplicate': REJECTION_REASON_LABELS.cs.duplicate,
+  'reason.other': REJECTION_REASON_LABELS.cs.other,
 
   'playlists.title': 'Playlisty',
   'playlists.none': 'Zatím žádné playlisty.',
@@ -286,6 +288,8 @@ export const cs = {
   'error.UNDO_EXPIRED': 'Na vrácení už je pozdě. Pošli pozvánku znovu.',
   'error.REJECTION_NOTE_REQUIRED': 'U jiného důvodu napiš autorovi, co je špatně.',
   'error.PLAYLIST_FULL': 'Playlist je plný: víc než 500 písniček se do něj nevejde.',
+  'error.SONG_CHANGED':
+    'Mezitím ji někdo změnil. Načti stránku znovu: tvoje úpravy zůstanou a uvidíš, co se změnilo.',
   'error.crashed':
     'Tady se něco pokazilo. Písničky máš v zařízení, načtení znovu pomůže.',
   'error.reload': 'Načíst znovu',

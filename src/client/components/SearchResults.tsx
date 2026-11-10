@@ -7,7 +7,7 @@ import type { PlaylistRecord } from '../data/store.ts';
 import type { SearchHit } from '../data/search.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
-import { url } from '../urls.ts';
+import { url } from '#shared/urls.ts';
 import { PlaylistRow } from './PlaylistRow.tsx';
 import { SongRow, songLinkState } from './SongRow.tsx';
 

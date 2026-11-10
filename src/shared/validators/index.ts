@@ -41,6 +41,12 @@ export const playlistNameSchema = z.string().trim().min(1).max(100);
 
 export const tokenSchema = z.string().min(20).max(200);
 
+/**
+ * When the client last saw a song (its `updatedAt`): a change to the song is refused if the song
+ * has moved on since, so nobody saves, approves or rejects text they haven't seen (D106).
+ */
+export const seenAtSchema = z.iso.datetime();
+
 /** A playlist invite link's secret. */
 export const inviteTokenSchema = z.string().min(16).max(64);
 

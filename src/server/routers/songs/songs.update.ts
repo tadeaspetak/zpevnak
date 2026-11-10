@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import { canChangeSong } from '#shared/songs.ts';
-import { idSchema, songSourceSchema } from '#shared/validators/index.ts';
+import { idSchema, seenAtSchema, songSourceSchema } from '#shared/validators/index.ts';
 import { readHeader } from '../../songs/header.ts';
-import { loadSongRow, loadSong } from '../../songs/load.ts';
+import { assertUnchanged, loadSongRow, loadSong } from '../../songs/load.ts';
 import { recordVersion } from '../../songs/versions.ts';
 import { fail, verifiedProcedure } from '../../trpc/trpc.ts';
 
@@ -16,7 +16,7 @@ import { fail, verifiedProcedure } from '../../trpc/trpc.ts';
  * keeping, and would credit someone who only opened and saved.
  */
 export const update = verifiedProcedure
-  .input(z.object({ id: idSchema, source: songSourceSchema }))
+  .input(z.object({ id: idSchema, source: songSourceSchema, seenAt: seenAtSchema }))
   .mutation(async ({ ctx, input }) => {
     const { title, artist } = readHeader(input.source);
     await ctx.db.transaction(async (trx) => {
@@ -29,6 +29,7 @@ export const update = verifiedProcedure
           row.created_by === ctx.user.id ? 'SONG_NOT_EDITABLE' : 'FORBIDDEN',
         );
       }
+      assertUnchanged(row, input.seenAt);
       const changed = input.source !== row.source;
       const resubmit = row.status === 'rejected' && changed;
       await trx.raw(

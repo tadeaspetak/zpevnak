@@ -4,7 +4,7 @@ import { Link } from 'react-router';
 import { playlistFacts } from '../data/playlistFacts.ts';
 import type { PlaylistRecord } from '../data/store.ts';
 import { useI18n } from '../i18n/index.tsx';
-import { url } from '../urls.ts';
+import { url } from '#shared/urls.ts';
 import classes from './SongRow.module.css';
 
 /**

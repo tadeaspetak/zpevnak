@@ -5,6 +5,7 @@ import {
   db,
   SONG,
   useCleanDatabase,
+  seenAt,
 } from '#tests/server/helpers.ts';
 
 useCleanDatabase();
@@ -128,7 +129,11 @@ describe('playlists', () => {
     await expect(
       api.create({ name: 'With C', isPublic: false, songIds: [c.id] }),
     ).resolves.toBeTruthy();
-    await callerFor(editor).songs.reject({ id: c.id, reason: 'duplicate' });
+    await callerFor(editor).songs.reject({
+      id: c.id,
+      seenAt: await seenAt(c.id),
+      reason: 'duplicate',
+    });
     await expect(
       api.create({ name: 'With rejected C', isPublic: false, songIds: [c.id] }),
     ).rejects.toThrow('NOT_FOUND');
@@ -215,7 +220,11 @@ describe('editing the songs', () => {
 
   it("refuses adding a song the editor can't see", async () => {
     const { owner, editor, playlist, c } = await shared();
-    await callerFor(editor).songs.reject({ id: c.id, reason: 'duplicate' });
+    await callerFor(editor).songs.reject({
+      id: c.id,
+      seenAt: await seenAt(c.id),
+      reason: 'duplicate',
+    });
     await expect(
       callerFor(owner).playlists.edit({
         id: playlist.id,
@@ -478,7 +487,11 @@ describe('a rejected song in a playlist', () => {
       isPublic: true,
       songIds: [a.id, b.id, c.id],
     });
-    await callerFor(editor).songs.reject({ id: c.id, reason: 'totally_wrong' });
+    await callerFor(editor).songs.reject({
+      id: c.id,
+      seenAt: await seenAt(c.id),
+      reason: 'totally_wrong',
+    });
     for (const viewer of [owner, stranger, null]) {
       expect(
         (await callerFor(viewer).playlists.byId({ id: playlist.id })).songIds,

@@ -8,6 +8,12 @@ useCleanDatabase();
 const app = createApp(db);
 
 describe('the HTTP app', () => {
+  it('never makes or hands out an invite link on a GET (it may write one)', async () => {
+    const input = encodeURIComponent(JSON.stringify({ id: 1 }));
+    const response = await request(app).get(`/trpc/playlists.invite?input=${input}`);
+    expect(response.status).toBe(405);
+  });
+
   it('answers the health check', async () => {
     await request(app).get('/health').expect(200, { ok: true });
   });

@@ -1,4 +1,4 @@
-import { slugify } from '#shared/text.ts';
+import { slugify } from './text.ts';
 
 /**
  * A reference in a path: the id, which is what the app looks up, then a readable slug, which is
@@ -13,7 +13,10 @@ function ref(id: number, text: string): string {
 type SongLink = { id: number; title: string; artist: string | null };
 type PlaylistLink = { id: number; name: string };
 
-/** Every path in the app. Build links with these, never by hand. */
+/**
+ * Every path in the app. Build links with these, never by hand: the client for its pages, the
+ * server for the links in its emails.
+ */
 export const url = {
   home: () => '/',
   song: (song: SongLink) => `/song/${ref(song.id, `${song.title} ${song.artist ?? ''}`)}`,
@@ -45,6 +48,10 @@ export const url = {
   signUp: (next?: string) =>
     next ? `/signup?next=${encodeURIComponent(next)}` : '/signup',
   forgotPassword: () => '/forgot-password',
+  /** The emailed links: confirming an email (then on to `next`), and setting a new password. */
+  verifyEmail: (token: string, next?: string | null) =>
+    `/verify?token=${encodeURIComponent(token)}${next ? `&next=${encodeURIComponent(next)}` : ''}`,
+  resetPassword: (token: string) => `/reset-password?token=${encodeURIComponent(token)}`,
 };
 
 /** Route patterns, kept next to the builders above. */

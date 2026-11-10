@@ -1,7 +1,7 @@
 import { Button, Center, Stack, Title } from '@mantine/core';
 import { Link } from 'react-router';
 import { useI18n } from '../i18n/index.tsx';
-import { url } from '../urls.ts';
+import { url } from '#shared/urls.ts';
 
 export function NotFoundPage() {
   const { t } = useI18n();

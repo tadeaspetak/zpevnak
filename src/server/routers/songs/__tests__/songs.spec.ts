@@ -5,6 +5,7 @@ import {
   db,
   SONG,
   useCleanDatabase,
+  seenAt,
 } from '#tests/server/helpers.ts';
 
 useCleanDatabase();
@@ -66,6 +67,7 @@ describe('songs.update', () => {
     const { author, song } = await setup();
     const updated = await callerFor(author).songs.update({
       id: song.id,
+      seenAt: await seenAt(song.id),
       source: SONG('Kočky!', 'Nerez'),
     });
     expect(updated).toMatchObject({ title: 'Kočky!', status: 'pending' });
@@ -75,23 +77,88 @@ describe('songs.update', () => {
   it("refuses someone else's song", async () => {
     const { other, song } = await setup();
     await expect(
-      callerFor(other).songs.update({ id: song.id, source: SONG() }),
+      callerFor(other).songs.update({
+        id: song.id,
+        seenAt: await seenAt(song.id),
+        source: SONG(),
+      }),
     ).rejects.toThrow('FORBIDDEN');
   });
 
   it('refuses the author once the song is verified', async () => {
     const { author, editor, song } = await setup();
-    await callerFor(editor).songs.verify({ id: song.id });
+    await callerFor(editor).songs.verify({ id: song.id, seenAt: await seenAt(song.id) });
     await expect(
-      callerFor(author).songs.update({ id: song.id, source: SONG() }),
+      callerFor(author).songs.update({
+        id: song.id,
+        seenAt: await seenAt(song.id),
+        source: SONG(),
+      }),
     ).rejects.toThrow('SONG_NOT_EDITABLE');
   });
+});
 
-  it('keeps a rejected song rejected when it is saved unchanged', async () => {
+describe('changes to a song someone else changed meanwhile (D106)', () => {
+  it('refuses a save over text the author never saw, and keeps theirs', async () => {
     const { author, editor, song } = await setup();
-    await callerFor(editor).songs.reject({ id: song.id, reason: 'too_many_mistakes' });
+    await callerFor(editor).songs.update({
+      id: song.id,
+      seenAt: song.updatedAt,
+      source: SONG('Kočky', 'Opravil editor'),
+    });
+    await expect(
+      callerFor(author).songs.update({
+        id: song.id,
+        seenAt: song.updatedAt,
+        source: SONG('Kočky', 'Autor, starší'),
+      }),
+    ).rejects.toThrow('SONG_CHANGED');
+    expect((await callerFor(author).songs.byId({ id: song.id })).artist).toBe(
+      'Opravil editor',
+    );
+  });
+
+  it('refuses to approve or reject text that changed after the editor read it', async () => {
+    const { author, editor, song } = await setup();
+    const read = song.updatedAt;
+    await callerFor(author).songs.update({
+      id: song.id,
+      seenAt: read,
+      source: SONG('Kočky', 'Nerez, opraveno'),
+    });
+    await expect(
+      callerFor(editor).songs.verify({ id: song.id, seenAt: read }),
+    ).rejects.toThrow('SONG_CHANGED');
+    await expect(
+      callerFor(editor).songs.reject({ id: song.id, seenAt: read, reason: 'duplicate' }),
+    ).rejects.toThrow('SONG_CHANGED');
+    expect((await callerFor(editor).songs.byId({ id: song.id })).status).toBe('pending');
+  });
+
+  it('takes a change made on the song as it now is, one after another', async () => {
+    const { author, editor, song } = await setup();
     const saved = await callerFor(author).songs.update({
       id: song.id,
+      seenAt: song.updatedAt,
+      source: SONG('Kočky', 'Nerez, opraveno'),
+    });
+    await expect(
+      callerFor(editor).songs.verify({ id: song.id, seenAt: saved.updatedAt }),
+    ).resolves.toMatchObject({ status: 'verified' });
+  });
+});
+
+describe('songs.update, rejected songs', () => {
+  it('keeps a rejected song rejected when it is saved unchanged', async () => {
+    const { author, editor, song } = await setup();
+    await callerFor(editor).songs.reject({
+      id: song.id,
+      seenAt: await seenAt(song.id),
+      reason: 'too_many_mistakes',
+    });
+    const saved = await callerFor(author).songs.update({
+      id: song.id,
+      seenAt: await seenAt(song.id),
       source: song.source,
     });
     expect(saved).toMatchObject({
@@ -102,8 +169,16 @@ describe('songs.update', () => {
 
   it('resubmits a rejected song as pending when its author fixes it', async () => {
     const { author, editor, song } = await setup();
-    await callerFor(editor).songs.reject({ id: song.id, reason: 'too_many_mistakes' });
-    const fixed = await callerFor(author).songs.update({ id: song.id, source: SONG() });
+    await callerFor(editor).songs.reject({
+      id: song.id,
+      seenAt: await seenAt(song.id),
+      reason: 'too_many_mistakes',
+    });
+    const fixed = await callerFor(author).songs.update({
+      id: song.id,
+      seenAt: await seenAt(song.id),
+      source: SONG(),
+    });
     expect(fixed).toMatchObject({ status: 'pending', rejection: null });
   });
 
@@ -111,9 +186,14 @@ describe('songs.update', () => {
     const admin = await createUser({ role: 'admin' });
     const editor = await createUser({ role: 'editor' });
     const own = await callerFor(admin).songs.create({ source: SONG('Mine') });
-    await callerFor(editor).songs.reject({ id: own.id, reason: 'too_many_mistakes' });
+    await callerFor(editor).songs.reject({
+      id: own.id,
+      seenAt: await seenAt(own.id),
+      reason: 'too_many_mistakes',
+    });
     const fixed = await callerFor(admin).songs.update({
       id: own.id,
+      seenAt: await seenAt(own.id),
       source: SONG('Mine, fixed'),
     });
     expect(fixed).toMatchObject({ status: 'pending', rejection: null });
@@ -121,9 +201,10 @@ describe('songs.update', () => {
 
   it('lets an editor edit any song, keeping its status', async () => {
     const { editor, song } = await setup();
-    await callerFor(editor).songs.verify({ id: song.id });
+    await callerFor(editor).songs.verify({ id: song.id, seenAt: await seenAt(song.id) });
     const edited = await callerFor(editor).songs.update({
       id: song.id,
+      seenAt: await seenAt(song.id),
       source: SONG('Fixed', 'Nerez'),
     });
     expect(edited).toMatchObject({ title: 'Fixed', status: 'verified' });
@@ -135,6 +216,7 @@ describe('review', () => {
     const { editor, song } = await setup();
     const verified = await callerFor(editor).songs.verify({
       id: song.id,
+      seenAt: await seenAt(song.id),
       source: SONG('Kočky', 'Nerez & Co'),
     });
     expect(verified).toMatchObject({ status: 'verified', artist: 'Nerez & Co' });
@@ -144,6 +226,7 @@ describe('review', () => {
     const { author, other, editor, song } = await setup();
     await callerFor(editor).songs.reject({
       id: song.id,
+      seenAt: await seenAt(song.id),
       reason: 'totally_wrong',
       note: 'Wrong song entirely',
     });
@@ -166,13 +249,15 @@ describe('review', () => {
   it('is for editors and admins only', async () => {
     const { author, song } = await setup();
     const admin = await createUser({ role: 'admin' });
-    await expect(callerFor(author).songs.verify({ id: song.id })).rejects.toThrow(
-      'FORBIDDEN',
-    );
+    await expect(
+      callerFor(author).songs.verify({ id: song.id, seenAt: await seenAt(song.id) }),
+    ).rejects.toThrow('FORBIDDEN');
     await expect(callerFor(author).songs.queue({ status: 'pending' })).rejects.toThrow(
       'FORBIDDEN',
     );
-    await expect(callerFor(admin).songs.verify({ id: song.id })).resolves.toMatchObject({
+    await expect(
+      callerFor(admin).songs.verify({ id: song.id, seenAt: await seenAt(song.id) }),
+    ).resolves.toMatchObject({
       status: 'verified',
     });
   });
@@ -181,7 +266,11 @@ describe('review', () => {
     const { author, editor, song } = await setup();
     const second = await callerFor(author).songs.create({ source: SONG('Second') });
     const third = await callerFor(author).songs.create({ source: SONG('Third') });
-    await callerFor(editor).songs.reject({ id: third.id, reason: 'duplicate' });
+    await callerFor(editor).songs.reject({
+      id: third.id,
+      seenAt: await seenAt(third.id),
+      reason: 'duplicate',
+    });
 
     const pending = await callerFor(editor).songs.queue({ status: 'pending' });
     expect(pending.map((s) => s.id)).toEqual([song.id, second.id]);
@@ -198,7 +287,10 @@ describe('songs.sync', () => {
   it('gives anyone the pending and verified songs', async () => {
     const { editor, song } = await setup();
     const other = await callerFor(editor).songs.create({ source: SONG('Other') });
-    await callerFor(editor).songs.verify({ id: other.id });
+    await callerFor(editor).songs.verify({
+      id: other.id,
+      seenAt: await seenAt(other.id),
+    });
 
     const { songs, removedIds, cursor } = await callerFor(null).songs.sync({
       since: null,
@@ -213,7 +305,11 @@ describe('songs.sync', () => {
 
   it('sends rejected songs to everyone, marked: they stay in playlists (D77)', async () => {
     const { author, editor, song } = await setup();
-    await callerFor(editor).songs.reject({ id: song.id, reason: 'duplicate' });
+    await callerFor(editor).songs.reject({
+      id: song.id,
+      seenAt: await seenAt(song.id),
+      reason: 'duplicate',
+    });
     for (const viewer of [null, editor, author]) {
       const { songs } = await callerFor(viewer).songs.sync({ since: null });
       expect(songs.map((s) => [s.id, s.status])).toEqual([[song.id, 'rejected']]);
@@ -228,7 +324,11 @@ describe('songs.sync', () => {
     const { cursor } = await callerFor(null).songs.sync({ since: null });
 
     await callerFor(editor).songs.delete({ id: song.id });
-    await callerFor(author).songs.update({ id: kept.id, source: SONG('Kept, fixed') });
+    await callerFor(author).songs.update({
+      id: kept.id,
+      seenAt: await seenAt(kept.id),
+      source: SONG('Kept, fixed'),
+    });
 
     const delta = await callerFor(null).songs.sync({ since: cursor });
     expect(delta.songs.map((s) => s.title)).toEqual(['Kept, fixed']);
@@ -258,7 +358,7 @@ describe('songs.sync', () => {
 describe('songs.delete', () => {
   it('lets an editor delete any song, approved too; it is gone', async () => {
     const { editor, song } = await setup();
-    await callerFor(editor).songs.verify({ id: song.id });
+    await callerFor(editor).songs.verify({ id: song.id, seenAt: await seenAt(song.id) });
     await callerFor(editor).songs.delete({ id: song.id });
     await expect(callerFor(editor).songs.byId({ id: song.id })).rejects.toThrow(
       'NOT_FOUND',
@@ -271,7 +371,7 @@ describe('songs.delete', () => {
     await expect(callerFor(author).songs.delete({ id: second.id })).resolves.toEqual({
       ok: true,
     });
-    await callerFor(editor).songs.verify({ id: song.id });
+    await callerFor(editor).songs.verify({ id: song.id, seenAt: await seenAt(song.id) });
     await expect(callerFor(author).songs.delete({ id: song.id })).rejects.toThrow(
       'FORBIDDEN',
     );

@@ -8,7 +8,7 @@ import { putPlaylist } from '../data/catalog.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc } from '../trpc.ts';
-import { url } from '../urls.ts';
+import { url } from '#shared/urls.ts';
 import { PageLoader } from '../components/PageLoader.tsx';
 
 /**

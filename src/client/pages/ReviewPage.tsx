@@ -23,7 +23,7 @@ import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { ChordProEditor, type ChordProEditorHandle } from '../song/ChordProEditor.tsx';
 import { trpc } from '../trpc.ts';
-import { url } from '../urls.ts';
+import { url } from '#shared/urls.ts';
 import { IconButton } from '../components/IconButton.tsx';
 
 /**
@@ -81,7 +81,8 @@ function ReviewSong({ id }: { id: number }) {
     onSuccess: (saved) => {
       putSong(saved);
       draft.clear();
-      void utils.songs.byId.invalidate({ id });
+      // Now the song as the editor saw it: approving next goes by this save (D106).
+      utils.songs.byId.setData({ id }, saved);
       notifications.show({ message: t('common.saved') });
     },
   });
@@ -219,7 +220,7 @@ function ReviewSong({ id }: { id: number }) {
                   loading={save.isPending}
                   onClick={() => {
                     if (editor.current?.checkTitle()) {
-                      save.mutate({ id, source: current });
+                      save.mutate({ id, source: current, seenAt: song.data.updatedAt });
                     }
                   }}
                 >
@@ -230,7 +231,11 @@ function ReviewSong({ id }: { id: number }) {
                   loading={verify.isPending}
                   onClick={() => {
                     if (editor.current?.checkTitle()) {
-                      verify.mutate({ id, source: dirty ? current : undefined });
+                      verify.mutate({
+                        id,
+                        source: dirty ? current : undefined,
+                        seenAt: song.data.updatedAt,
+                      });
                     }
                   }}
                 >
@@ -247,7 +252,9 @@ function ReviewSong({ id }: { id: number }) {
         loading={reject.isPending}
         error={reject.error}
         dropsEdits={dirty}
-        onReject={(reason, note) => reject.mutate({ id, reason, note })}
+        onReject={(reason, note) =>
+          reject.mutate({ id, reason, note, seenAt: song.data.updatedAt })
+        }
       />
     </>
   );

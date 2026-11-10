@@ -6,6 +6,7 @@ import {
   db,
   SONG,
   useCleanDatabase,
+  seenAt,
 } from '#tests/server/helpers.ts';
 
 useCleanDatabase();
@@ -21,10 +22,19 @@ describe('songs.reject', () => {
   it('needs a note for "other", which says nothing by itself', async () => {
     const { editor, song } = await setup();
     await expect(
-      callerFor(editor).songs.reject({ id: song.id, reason: 'other' }),
+      callerFor(editor).songs.reject({
+        id: song.id,
+        seenAt: await seenAt(song.id),
+        reason: 'other',
+      }),
     ).rejects.toThrow('REJECTION_NOTE_REQUIRED');
     await expect(
-      callerFor(editor).songs.reject({ id: song.id, reason: 'other', note: '   ' }),
+      callerFor(editor).songs.reject({
+        id: song.id,
+        seenAt: await seenAt(song.id),
+        reason: 'other',
+        note: '   ',
+      }),
     ).rejects.toThrow('REJECTION_NOTE_REQUIRED');
     const { rows } = await db.raw(`SELECT status FROM songs WHERE id = :id`, {
       id: song.id,
@@ -36,6 +46,7 @@ describe('songs.reject', () => {
     const { editor, song } = await setup();
     const rejected = await callerFor(editor).songs.reject({
       id: song.id,
+      seenAt: await seenAt(song.id),
       reason: 'other',
       note: 'Chybí druhá sloka',
     });
@@ -43,6 +54,7 @@ describe('songs.reject', () => {
     const second = await callerFor(editor).songs.create({ source: SONG('Jiná') });
     const plain = await callerFor(editor).songs.reject({
       id: second.id,
+      seenAt: await seenAt(second.id),
       reason: 'duplicate',
     });
     expect(plain.rejection).toEqual({ reason: 'duplicate', note: null });
@@ -52,6 +64,7 @@ describe('songs.reject', () => {
     const { author, editor, song } = await setup();
     await callerFor(editor).songs.reject({
       id: song.id,
+      seenAt: await seenAt(song.id),
       reason: 'too_many_mistakes',
       note: 'Akordy v refrénu nesedí',
     });
@@ -68,6 +81,7 @@ describe('songs.reject', () => {
     const { editor, song } = await setup();
     await callerFor(editor).songs.reject({
       id: song.id,
+      seenAt: await seenAt(song.id),
       reason: 'other',
       note: 'Jiná píseň',
     });
@@ -77,7 +91,11 @@ describe('songs.reject', () => {
   it('emails nobody when the editor rejects their own song', async () => {
     const { editor } = await setup();
     const own = await callerFor(editor).songs.create({ source: SONG('Moje') });
-    await callerFor(editor).songs.reject({ id: own.id, reason: 'duplicate' });
+    await callerFor(editor).songs.reject({
+      id: own.id,
+      seenAt: await seenAt(own.id),
+      reason: 'duplicate',
+    });
     expect(testOutbox).toEqual([]);
   });
 
@@ -86,11 +104,13 @@ describe('songs.reject', () => {
     const untouched = await callerFor(author).songs.create({ source: SONG('Nová') });
     await callerFor(editor).songs.reject({
       id: song.id,
+      seenAt: await seenAt(song.id),
       reason: 'totally_wrong',
       note: 'Jiná melodie',
     });
     await callerFor(author).songs.update({
       id: song.id,
+      seenAt: await seenAt(song.id),
       source: SONG('Kočky', 'Opraveno'),
     });
 

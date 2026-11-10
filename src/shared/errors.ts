@@ -16,6 +16,7 @@ const ERROR_CODES = [
   'UNDO_EXPIRED',
   'REJECTION_NOTE_REQUIRED',
   'PLAYLIST_FULL',
+  'SONG_CHANGED',
 ] as const;
 export type ErrorCode = (typeof ERROR_CODES)[number];
 

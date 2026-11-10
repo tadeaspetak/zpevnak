@@ -20,7 +20,7 @@ import { SongStatusBanner } from '../song/SongStatusBanner.tsx';
 import { SongToolbar } from '../song/SongToolbar.tsx';
 import { PlaylistBar } from '../song/PlaylistBar.tsx';
 import { trpc } from '../trpc.ts';
-import { idFromRef, url } from '../urls.ts';
+import { idFromRef, url } from '#shared/urls.ts';
 import { followSong, playlistSteps } from '../song/followSong.ts';
 import { useCanonicalPath } from '../hooks/useCanonicalPath.ts';
 import classes from './SongPage.module.css';

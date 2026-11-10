@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { idSchema, songSourceSchema } from '#shared/validators/index.ts';
+import { idSchema, seenAtSchema, songSourceSchema } from '#shared/validators/index.ts';
 import { readHeader } from '../../songs/header.ts';
-import { loadSongRow, loadSong } from '../../songs/load.ts';
+import { assertUnchanged, loadSongRow, loadSong } from '../../songs/load.ts';
 import { recordVersion } from '../../songs/versions.ts';
 import { editorProcedure } from '../../trpc/trpc.ts';
 
@@ -11,12 +11,20 @@ import { editorProcedure } from '../../trpc/trpc.ts';
  * (D86).
  */
 export const verify = editorProcedure
-  .input(z.object({ id: idSchema, source: songSourceSchema.optional() }))
+  .input(
+    z.object({
+      id: idSchema,
+      source: songSourceSchema.optional(),
+      seenAt: seenAtSchema,
+    }),
+  )
   .mutation(async ({ ctx, input }) => {
     await ctx.db.transaction(async (trx) => {
       // Locked, and read inside: approving "as it is" approves the text as it is now, not as it
       // was before an author's save that landed in between.
       const row = await loadSongRow(trx, input.id, { forUpdate: true });
+      // And only the text the editor read: not one an author's save replaced meanwhile.
+      assertUnchanged(row, input.seenAt);
       const source = input.source ?? row.source;
       const { title, artist } = readHeader(source);
       await trx.raw(

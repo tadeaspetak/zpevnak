@@ -20,7 +20,7 @@ import { useI18n } from '../i18n/index.tsx';
 import { ChordProEditor, type ChordProEditorHandle } from '../song/ChordProEditor.tsx';
 import { SongStatusBanner } from '../song/SongStatusBanner.tsx';
 import { trpc } from '../trpc.ts';
-import { url } from '../urls.ts';
+import { url } from '#shared/urls.ts';
 
 /**
  * /new: a new song, which goes to the review queue. From a search that found nothing it starts
@@ -167,7 +167,8 @@ export function EditSongPage() {
           onSubmit={(e) => {
             e.preventDefault();
             if (editor.current?.checkTitle() !== false) {
-              update.mutate({ id, source });
+              // The song as this page loaded it: a save over someone else's is refused (D106).
+              update.mutate({ id, source, seenAt: song.updatedAt });
             }
           }}
         >

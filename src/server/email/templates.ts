@@ -1,9 +1,11 @@
 import type { Locale, RejectionReason } from '#shared/validators/index.ts';
+import { REJECTION_REASON_LABELS } from '#shared/rejectionReasons.ts';
+import { url as paths } from '#shared/urls.ts';
 import { env } from '../env.ts';
 import type { Email } from './send.ts';
 
-const link = (path: string, token: string) =>
-  `${env.APP_URL}${path}?token=${encodeURIComponent(token)}`;
+/** An app path as a full link, for an email. */
+const link = (path: string) => `${env.APP_URL}${path}`;
 
 export function verifyEmail(
   to: string,
@@ -12,7 +14,7 @@ export function verifyEmail(
   next: string | null = null,
 ): Email {
   // `next` brings the reader back to where they signed up from (an invite, say).
-  const url = `${link('/verify', token)}${next ? `&next=${encodeURIComponent(next)}` : ''}`;
+  const url = link(paths.verifyEmail(token, next));
   return locale === 'cs'
     ? {
         to,
@@ -27,7 +29,7 @@ export function verifyEmail(
 }
 
 export function resetPassword(to: string, locale: Locale, token: string): Email {
-  const url = link('/reset-password', token);
+  const url = link(paths.resetPassword(token));
   return locale === 'cs'
     ? {
         to,
@@ -43,7 +45,7 @@ export function resetPassword(to: string, locale: Locale, token: string): Email 
 
 /** Sent instead of a second account, so sign-up never reveals which emails are registered. */
 export function alreadyRegistered(to: string, locale: Locale): Email {
-  const url = `${env.APP_URL}/forgot-password`;
+  const url = link(paths.forgotPassword());
   return locale === 'cs'
     ? {
         to,
@@ -57,34 +59,18 @@ export function alreadyRegistered(to: string, locale: Locale): Email {
       };
 }
 
-const REASONS: Record<Locale, Record<RejectionReason, string>> = {
-  cs: {
-    too_many_mistakes: 'příliš mnoho chyb',
-    totally_wrong: 'úplně špatně',
-    duplicate: 'už tu je',
-    other: 'jiný důvod',
-  },
-  en: {
-    too_many_mistakes: 'too many mistakes',
-    totally_wrong: 'totally wrong',
-    duplicate: 'already here',
-    other: 'another reason',
-  },
-};
-
 /** To a song's author, when an editor turns it down: why, and the way to fix it. */
 export function songRejected(
   to: string,
   locale: Locale,
   song: { id: number; title: string; reason: RejectionReason; note: string | null },
 ): Email {
-  // The client's url.editSong; the server can't import client code.
-  const url = `${env.APP_URL}/song/${song.id}/edit`;
+  const url = link(paths.editSong(song.id));
   // For "other", the note is the reason.
   const why =
     song.reason === 'other' && song.note
       ? song.note
-      : `${REASONS[locale][song.reason]}${song.note ? `\n${song.note}` : ''}`;
+      : `${REJECTION_REASON_LABELS[locale][song.reason]}${song.note ? `\n${song.note}` : ''}`;
   return locale === 'cs'
     ? {
         to,

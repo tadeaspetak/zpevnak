@@ -23,7 +23,7 @@ import { QueuePage } from './pages/QueuePage.tsx';
 import { ReviewPage } from './pages/ReviewPage.tsx';
 import { EditSongPage, NewSongPage } from './pages/SongEditPage.tsx';
 import { PlaylistSongPage, SongPage } from './pages/SongPage.tsx';
-import { routes, url } from './urls.ts';
+import { routes, url } from '#shared/urls.ts';
 
 /**
  * Brings the device's catalog up to date when the app starts (a reload does it) and when

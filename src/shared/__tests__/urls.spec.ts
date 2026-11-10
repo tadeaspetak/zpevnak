@@ -25,6 +25,12 @@ describe('url', () => {
     );
   });
 
+  it('builds the emailed links, carrying `next` only when there is one', () => {
+    expect(url.verifyEmail('ab+c')).toBe('/verify?token=ab%2Bc');
+    expect(url.verifyEmail('t', '/join/x')).toBe('/verify?token=t&next=%2Fjoin%2Fx');
+    expect(url.resetPassword('t/1')).toBe('/reset-password?token=t%2F1');
+  });
+
   it('falls back to the bare id when the name has nothing to slug', () => {
     expect(url.playlist({ id: 7, name: '♫♫' })).toBe('/playlist/7');
   });

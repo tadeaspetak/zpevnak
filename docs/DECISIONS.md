@@ -335,6 +335,16 @@ From the first UX walk of the song view and a playlist session (2026-11-10):
   can't do gets one shared component (`IconButton`: an icon with its tooltip and name;
   `ConfirmModal`; `SongLabel`; `PageLoader`), never a copy per page. Breakpoints are the
   theme's (`useWide`, `usePhone`, `$mantine-breakpoint-*`). (2026-11-10)
+- **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
+  send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
+  the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed
+  edits (D95) and shows what changed. With the row lock (D104), an editor can't approve or
+  reject a fix they never read, and an author can't overwrite an editor's correction.
+  (2026-11-10)
+- **D107. Paths and rejection reasons are written once, in `src/shared`:** `urls.ts` builds the
+  client's links and the server's emailed ones; `rejectionReasons.ts` gives the app and the
+  email the same words (they had already drifted). Requests that write are mutations, never
+  GETs: the invite link is asked for when the share dialog opens. (2026-11-10)
 
 ## Engineering
 

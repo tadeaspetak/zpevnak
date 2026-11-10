@@ -107,3 +107,14 @@ export function tokenFromLastEmail(): string {
 
 export const SONG = (title = 'Test Song', artist = 'Someone') =>
   `{title: ${title}}\n{artist: ${artist}}\n\n{sov}\n[A]la la [D]la\n{eov}\n`;
+
+/** When a song was last changed, as a client that has just loaded it would send it (D106). */
+export async function seenAt(songId: number): Promise<string> {
+  const { rows } = await db.raw(
+    /* sql */ `SELECT updated_at FROM songs WHERE id = :songId`,
+    {
+      songId,
+    },
+  );
+  return (rows[0].updated_at as Date).toISOString();
+}

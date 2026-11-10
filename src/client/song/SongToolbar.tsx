@@ -36,7 +36,7 @@ import type { SongRecord } from '../data/store.ts';
 import { useWide } from '../hooks/useBreakpoints.ts';
 import { useFullscreen } from '../hooks/useFullscreen.ts';
 import { useI18n } from '../i18n/index.tsx';
-import { url } from '../urls.ts';
+import { url } from '#shared/urls.ts';
 import classes from './SongToolbar.module.css';
 import { IconButton } from '../components/IconButton.tsx';
 

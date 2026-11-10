@@ -39,7 +39,7 @@ import { useKeys } from '../hooks/useKeys.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useOnline } from '../hooks/useOnline.ts';
 import { useI18n } from '../i18n/index.tsx';
-import { url } from '../urls.ts';
+import { url } from '#shared/urls.ts';
 import classes from './HomePage.module.css';
 import { IconButton } from '../components/IconButton.tsx';
 

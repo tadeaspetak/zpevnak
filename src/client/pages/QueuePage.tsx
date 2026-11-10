@@ -8,7 +8,7 @@ import { reviewContext } from '../data/reviewContext.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc } from '../trpc.ts';
-import { url } from '../urls.ts';
+import { url } from '#shared/urls.ts';
 import rowClasses from '../components/SongRow.module.css';
 import { PageLoader } from '../components/PageLoader.tsx';
 

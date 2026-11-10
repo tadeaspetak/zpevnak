@@ -20,14 +20,14 @@ import {
   IconRefresh,
   IconX,
 } from '@tabler/icons-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { leavePlaylist, usePlayer } from '../data/session.ts';
 import { putPlaylist } from '../data/catalog.ts';
 import type { PlaylistRecord } from '../data/store.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc, trpcClient } from '../trpc.ts';
-import { url } from '../urls.ts';
+import { url } from '#shared/urls.ts';
 import { ErrorText } from './ErrorText.tsx';
 
 type Props = { playlist: PlaylistRecord; opened: boolean; onClose: () => void };
@@ -45,13 +45,15 @@ export function ShareModal({ playlist, opened, onClose }: Props) {
     { id: playlist.id },
     { enabled: opened },
   );
-  const invite = trpc.playlists.invite.useQuery(
-    { id: playlist.id },
-    { enabled: opened && isOwner },
-  );
-  const reset = trpc.playlists.resetInvite.useMutation({
-    onSuccess: (data) => utils.playlists.invite.setData({ id: playlist.id }, data),
-  });
+  // The link is asked for (and made, the first time) when the owner opens this.
+  const invite = trpc.playlists.invite.useMutation();
+  const reset = trpc.playlists.resetInvite.useMutation();
+  const { mutate: askForInvite, isIdle: notAskedYet } = invite;
+  useEffect(() => {
+    if (opened && isOwner && notAskedYet) {
+      askForInvite({ id: playlist.id });
+    }
+  }, [opened, isOwner, notAskedYet, askForInvite, playlist.id]);
   const remove = trpc.playlists.removeCollaborator.useMutation();
   const removePerson = (person: { id: number; displayName: string }) =>
     remove.mutate(
@@ -85,7 +87,8 @@ export function ShareModal({ playlist, opened, onClose }: Props) {
         },
       },
     );
-  const token = invite.data?.token;
+  // A replaced link is the newer one.
+  const token = reset.data?.token ?? invite.data?.token;
   const link = token ? `${window.location.origin}${url.join(token)}` : '';
 
   return (
@@ -101,7 +104,7 @@ export function ShareModal({ playlist, opened, onClose }: Props) {
                 aria-label={t('playlists.copyLink')}
                 style={{ flex: 1 }}
                 onFocus={(e) => e.currentTarget.select()}
-                rightSection={invite.isLoading ? <Loader size="xs" /> : null}
+                rightSection={invite.isPending ? <Loader size="xs" /> : null}
               />
               <CopyButton value={link}>
                 {({ copied, copy }) => (

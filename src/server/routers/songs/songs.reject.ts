@@ -1,9 +1,13 @@
 import { z } from 'zod';
-import { idSchema, rejectionReasonSchema } from '#shared/validators/index.ts';
+import {
+  idSchema,
+  rejectionReasonSchema,
+  seenAtSchema,
+} from '#shared/validators/index.ts';
 import type { Locale } from '#shared/validators/index.ts';
 import { sendEmailInBackground } from '../../email/send.ts';
 import { songRejected } from '../../email/templates.ts';
-import { loadSongRow, loadSong } from '../../songs/load.ts';
+import { assertUnchanged, loadSongRow, loadSong } from '../../songs/load.ts';
 import { recordVersion } from '../../songs/versions.ts';
 import { editorProcedure, fail } from '../../trpc/trpc.ts';
 
@@ -18,14 +22,17 @@ export const reject = editorProcedure
       id: idSchema,
       reason: rejectionReasonSchema,
       note: z.string().trim().max(1000).optional(),
+      seenAt: seenAtSchema,
     }),
   )
   .mutation(async ({ ctx, input }) => {
     if (input.reason === 'other' && !input.note) {
       fail('BAD_REQUEST', 'REJECTION_NOTE_REQUIRED');
     }
-    const row = await loadSongRow(ctx.db, input.id);
-    await ctx.db.transaction(async (trx) => {
+    const row = await ctx.db.transaction(async (trx) => {
+      // Locked, and only the text the editor read: not a fix the author saved meanwhile.
+      const locked = await loadSongRow(trx, input.id, { forUpdate: true });
+      assertUnchanged(locked, input.seenAt);
       await trx.raw(
         /* sql */ `
           UPDATE songs
@@ -41,6 +48,7 @@ export const reject = editorProcedure
         },
       );
       await recordVersion(trx, input.id, 'reject', ctx.user.id);
+      return locked;
     });
     const song = await loadSong(ctx.db, input.id, ctx.user);
 

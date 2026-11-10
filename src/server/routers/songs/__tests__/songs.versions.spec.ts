@@ -5,6 +5,7 @@ import {
   db,
   SONG,
   useCleanDatabase,
+  seenAt,
 } from '#tests/server/helpers.ts';
 
 useCleanDatabase();
@@ -46,10 +47,12 @@ describe('song versions (D86)', () => {
     const { author, editor, song } = await setup();
     await callerFor(author).songs.update({
       id: song.id,
+      seenAt: await seenAt(song.id),
       source: SONG('Kočky!', 'Nerez'),
     });
     await callerFor(editor).songs.update({
       id: song.id,
+      seenAt: await seenAt(song.id),
       source: SONG('Kočky!!', 'Nerez'),
     });
     const versions = await versionsOf(song.id);
@@ -68,15 +71,24 @@ describe('song versions (D86)', () => {
 
   it('records nothing for a save that leaves the text as it was', async () => {
     const { author, song } = await setup();
-    await callerFor(author).songs.update({ id: song.id, source: SONG('Kočky', 'Nerez') });
+    await callerFor(author).songs.update({
+      id: song.id,
+      seenAt: await seenAt(song.id),
+      source: SONG('Kočky', 'Nerez'),
+    });
     expect(await versionsOf(song.id)).toHaveLength(1);
   });
 
   it('records a resubmitted rejected song as an edit', async () => {
     const { author, editor, song } = await setup();
-    await callerFor(editor).songs.reject({ id: song.id, reason: 'too_many_mistakes' });
+    await callerFor(editor).songs.reject({
+      id: song.id,
+      seenAt: await seenAt(song.id),
+      reason: 'too_many_mistakes',
+    });
     await callerFor(author).songs.update({
       id: song.id,
+      seenAt: await seenAt(song.id),
       source: SONG('Kočky', 'Nerez, opraveno'),
     });
     const versions = await versionsOf(song.id);
@@ -89,10 +101,11 @@ describe('song versions (D86)', () => {
 
   it('records every approval with the approved text, edited or not', async () => {
     const { editor, song } = await setup();
-    await callerFor(editor).songs.verify({ id: song.id });
+    await callerFor(editor).songs.verify({ id: song.id, seenAt: await seenAt(song.id) });
     const other = await callerFor(editor).songs.create({ source: SONG('Jiná', 'Někdo') });
     await callerFor(editor).songs.verify({
       id: other.id,
+      seenAt: await seenAt(other.id),
       source: SONG('Jiná!', 'Někdo'),
     });
 
@@ -115,6 +128,7 @@ describe('song versions (D86)', () => {
     const { editor, song } = await setup();
     await callerFor(editor).songs.reject({
       id: song.id,
+      seenAt: await seenAt(song.id),
       reason: 'duplicate',
       note: 'Už je',
     });
@@ -148,7 +162,11 @@ describe('song versions (D86)', () => {
     const { song } = await setup();
     const stranger = await createUser();
     await expect(
-      callerFor(stranger).songs.update({ id: song.id, source: SONG('Cizí', 'Nerez') }),
+      callerFor(stranger).songs.update({
+        id: song.id,
+        seenAt: await seenAt(song.id),
+        source: SONG('Cizí', 'Nerez'),
+      }),
     ).rejects.toThrow('FORBIDDEN');
     expect(await versionsOf(song.id)).toHaveLength(1);
   });
@@ -157,6 +175,7 @@ describe('song versions (D86)', () => {
     const { editor, song } = await setup();
     await callerFor(editor).songs.update({
       id: song.id,
+      seenAt: await seenAt(song.id),
       source: SONG('Kočky!', 'Nerez'),
     });
     await callerFor(editor).songs.delete({ id: song.id });

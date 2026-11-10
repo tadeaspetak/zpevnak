@@ -36,7 +36,7 @@ import type { PlaylistRecord } from '../data/store.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc } from '../trpc.ts';
-import { idFromRef, url } from '../urls.ts';
+import { idFromRef, url } from '#shared/urls.ts';
 import { useCanonicalPath } from '../hooks/useCanonicalPath.ts';
 import classes from './PlaylistPage.module.css';
 import { IconButton } from '../components/IconButton.tsx';

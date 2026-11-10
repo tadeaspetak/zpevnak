@@ -4,10 +4,13 @@ import { newInviteToken } from '../../playlists/invite.ts';
 import { assertOwner } from '../../playlists/load.ts';
 import { verifiedProcedure } from '../../trpc/trpc.ts';
 
-/** The owner's invite token, made on first ask. The same link until it is replaced. */
+/**
+ * The owner's invite token, made on first ask. The same link until it is replaced. A mutation, as
+ * it may write the token: never a GET, which gets refetched and sent along more freely.
+ */
 export const invite = verifiedProcedure
   .input(z.object({ id: idSchema }))
-  .query(async ({ ctx, input }) => {
+  .mutation(async ({ ctx, input }) => {
     await assertOwner(ctx.db, input.id, ctx.user);
     const { rows } = await ctx.db.raw(
       /* sql */ `

@@ -6,7 +6,7 @@ import type { SongRecord } from '../data/store.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc } from '../trpc.ts';
-import { url } from '../urls.ts';
+import { url } from '#shared/urls.ts';
 import { ConfirmModal } from './ConfirmModal.tsx';
 
 /**

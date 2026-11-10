@@ -1,3 +1,4 @@
+import { REJECTION_REASON_LABELS } from '#shared/rejectionReasons.ts';
 import type { cs } from './cs.ts';
 
 export const en: Record<keyof typeof cs, string> = {
@@ -98,10 +99,10 @@ export const en: Record<keyof typeof cs, string> = {
   'song.fix': 'Fix it',
   'song.rejectedFix': 'Fix it and save; it goes back for review.',
 
-  'reason.too_many_mistakes': 'too many mistakes',
-  'reason.totally_wrong': 'totally wrong',
-  'reason.duplicate': 'already here',
-  'reason.other': 'other reason',
+  'reason.too_many_mistakes': REJECTION_REASON_LABELS.en.too_many_mistakes,
+  'reason.totally_wrong': REJECTION_REASON_LABELS.en.totally_wrong,
+  'reason.duplicate': REJECTION_REASON_LABELS.en.duplicate,
+  'reason.other': REJECTION_REASON_LABELS.en.other,
 
   'playlists.title': 'Playlists',
   'playlists.none': 'No playlists yet.',
@@ -287,6 +288,8 @@ export const en: Record<keyof typeof cs, string> = {
   'error.UNDO_EXPIRED': 'Too late to undo. Send the invite link again.',
   'error.REJECTION_NOTE_REQUIRED': 'For another reason, tell the author what’s wrong.',
   'error.PLAYLIST_FULL': 'The playlist is full: it holds at most 500 songs.',
+  'error.SONG_CHANGED':
+    'Someone changed it meanwhile. Reload the page: your edits stay, and you’ll see what changed.',
   'error.crashed':
     'Something broke here. Your songs are on the device; reloading will help.',
   'error.reload': 'Reload',

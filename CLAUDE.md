@@ -92,7 +92,8 @@ Every change to behaviour ships with its tests in the same commit.
   `src/shared/errors.ts`; the client translates it (`tError`). The server never sends prose.
 - **Hide existence.** A private playlist or a rejected song answers NOT_FOUND to someone who
   may not see it, not FORBIDDEN.
-- **URLs come from `src/client/urls.ts`** (`url.song(…)`, `routes`). Never build a path by hand.
+- **URLs come from `src/shared/urls.ts`** (`url.song(…)`, `routes`), on the client and in the
+  server's emails alike. Never build a path by hand.
 - **Translations ship with the code, both languages, every time.** `cs.ts` is the source; `en.ts`
   is typed against it, so a missing key fails `tsc`. Czech: mind the grammar a placeholder lands
   in (prepositions and cases change with the noun; prefer neutral phrasings like `Zpět: {name}`).

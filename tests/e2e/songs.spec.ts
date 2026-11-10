@@ -46,15 +46,19 @@ test('an owner takes a listmate out by mistake, and takes it back', async ({
     data: { name: `Advent ${Date.now()}`, isPublic: false, songIds: [] },
   });
   const playlist = (await created.json()).result.data as { id: number };
-  const invite = await owner.request.get(
-    `/trpc/playlists.invite?input=${encodeURIComponent(JSON.stringify({ id: playlist.id }))}`,
-  );
+  const invite = await owner.request.post('/trpc/playlists.invite', {
+    data: { id: playlist.id },
+  });
   const { token } = (await invite.json()).result.data as { token: string };
   const listmate = await signedIn(browser, 'editor@zpevnak.test');
   await listmate.request.post('/trpc/playlists.join', { data: { token } });
 
   await owner.goto(`/playlist/${playlist.id}`);
   await owner.getByRole('button', { name: 'Listmates' }).click();
+  // The invite link, asked for as the dialog opens: the same one the bandmate joined by.
+  await expect(owner.getByRole('textbox', { name: 'Copy link' })).toHaveValue(
+    new RegExp(`/join/${token}$`),
+  );
   await owner.getByRole('button', { name: 'Remove Erik Editor' }).click();
   // The toast names the person, in the reader's language (it once crashed outside them).
   await expect(
