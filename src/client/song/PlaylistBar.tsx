@@ -26,7 +26,7 @@ export function PlaylistBar({
   const { songs } = useCatalog();
   const nextSong = nextSongId === undefined ? undefined : songs.get(nextSongId);
   return (
-    <nav className={classes.bar} aria-label={name}>
+    <nav className={classes.bar} aria-label={name} data-bottom-overlay>
       <Group gap="xs" wrap="nowrap" className={classes.inner}>
         <ActionIcon
           variant="default"

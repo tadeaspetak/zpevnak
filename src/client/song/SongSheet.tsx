@@ -100,30 +100,37 @@ function SectionView({
   );
 }
 
+/** How much of the window's bottom a fixed bar covers (`data-bottom-overlay`): the playlist bar or pill. */
+function bottomOverlay() {
+  let covered = 0;
+  for (const el of document.querySelectorAll('[data-bottom-overlay]')) {
+    covered = Math.max(covered, window.innerHeight - el.getBoundingClientRect().top);
+  }
+  return covered;
+}
+
 /**
- * Whether the page would fit the window with the song in columns, measured on `copy`: the
- * song laid out in columns, out of sight. Columns that run past the bottom of the screen send
- * the reader back up mid-song for the second one, so then the song stays in one column.
+ * Whether the song, laid out in columns, fits the window, measured on `copy`: the song in
+ * columns, out of sight. Only the song has to fit, not its title: the toolbar slides away and
+ * the title scrolls off as the reader scrolls into the song (D88). A bar fixed at the bottom
+ * covers part of the window, so it doesn't count as room. Columns that run past the bottom
+ * would send the reader back up mid-song for the second one, so then the song stays in one.
  *
  * Every change that moves the answer resizes either the copy (width, text size, chords,
- * transposition) or the page (title, banners, diagrams), so it is measured on those. It
- * can't flip back and forth: switching to columns only ever makes the page shorter.
+ * transposition) or the page (a bar appearing changes its padding), so it is measured on
+ * those. It can't flip back and forth: switching to columns only ever makes the page shorter.
  */
 function useColumnsFit(enabled: boolean) {
   const copy = useRef<HTMLDivElement>(null);
-  const body = useRef<HTMLDivElement>(null);
   const [fits, setFits] = useState(false);
   useLayoutEffect(() => {
     const copyEl = copy.current;
-    const bodyEl = body.current;
-    if (!enabled || !copyEl || !bodyEl) {
+    if (!enabled || !copyEl) {
       setFits(false);
       return;
     }
     const measure = () => {
-      const page = document.documentElement.scrollHeight;
-      const withColumns = page - bodyEl.offsetHeight + copyEl.offsetHeight;
-      setFits(withColumns <= window.innerHeight);
+      setFits(copyEl.offsetHeight <= window.innerHeight - bottomOverlay());
     };
     measure();
     const observer = new ResizeObserver(measure);
@@ -135,7 +142,7 @@ function useColumnsFit(enabled: boolean) {
       window.removeEventListener('resize', measure);
     };
   }, [enabled]);
-  return { copy, body, fits };
+  return { copy, fits };
 }
 
 export function SongSheet({
@@ -187,7 +194,6 @@ export function SongSheet({
         </div>
       )}
       <div
-        ref={columns.body}
         className={columns.fits ? classes.bodyColumns : classes.body}
         data-columns={columns.fits || undefined}
       >

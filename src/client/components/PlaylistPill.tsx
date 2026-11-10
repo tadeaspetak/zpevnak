@@ -23,7 +23,7 @@ export function PlaylistPill() {
   const position = Math.min(session.position, total);
   const song = songs.get(playlist.songIds[position - 1] ?? -1);
   return (
-    <div className={classes.dock}>
+    <div className={classes.dock} data-bottom-overlay>
       <Group gap={0} wrap="nowrap" className={classes.pill}>
         <UnstyledButton
           component={Link}

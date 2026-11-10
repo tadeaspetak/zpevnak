@@ -9,17 +9,19 @@ const song = parseSong(
 );
 
 /**
- * jsdom lays nothing out, so the sizes the sheet measures are set here: the song in one
- * column, the hidden copy in two, the page around it and the window.
+ * jsdom lays nothing out, so the sizes the sheet measures are set here: the song in columns
+ * (the hidden copy), the window, and a bar fixed at its bottom.
  */
-function layout(sizes: { body: number; columns: number; page: number; window: number }) {
-  vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (
-    this: HTMLElement,
-  ) {
-    return this.hasAttribute('inert') ? sizes.columns : sizes.body;
-  });
-  vi.spyOn(document.documentElement, 'scrollHeight', 'get').mockReturnValue(sizes.page);
+function layout(sizes: { columns: number; window: number; bar?: number }) {
+  vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(sizes.columns);
   vi.stubGlobal('innerHeight', sizes.window);
+  if (sizes.bar) {
+    const bar = document.body.appendChild(document.createElement('nav'));
+    bar.setAttribute('data-bottom-overlay', '');
+    vi.spyOn(bar, 'getBoundingClientRect').mockReturnValue({
+      top: sizes.window - sizes.bar,
+    } as DOMRect);
+  }
 }
 
 function bodyOf(container: HTMLElement, wide = true, showColumns = true) {
@@ -49,28 +51,34 @@ describe('SongSheet columns (D25)', () => {
     container = document.body.appendChild(document.createElement('div'));
   });
   afterEach(() => {
+    document.querySelectorAll('[data-bottom-overlay]').forEach((el) => el.remove());
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
 
-  it('lays the song in two columns when the whole page fits the screen that way', () => {
-    // 200 around the song + 600 in columns = 800: exactly the window.
-    layout({ body: 1200, columns: 600, page: 1400, window: 800 });
+  it('lays the song in two columns when the song fits the screen that way', () => {
+    // The title above it doesn't count: it scrolls away.
+    layout({ columns: 800, window: 800 });
     expect(bodyOf(container)?.hasAttribute('data-columns')).toBe(true);
   });
 
   it('keeps one column when the columns would run past the bottom of the screen', () => {
-    layout({ body: 1600, columns: 800, page: 1800, window: 800 });
+    layout({ columns: 801, window: 800 });
+    expect(bodyOf(container)?.hasAttribute('data-columns')).toBe(false);
+  });
+
+  it("doesn't count the room a bar at the bottom covers", () => {
+    layout({ columns: 750, window: 800, bar: 60 });
     expect(bodyOf(container)?.hasAttribute('data-columns')).toBe(false);
   });
 
   it('keeps one column on a narrow screen, however short the song', () => {
-    layout({ body: 400, columns: 200, page: 600, window: 800 });
+    layout({ columns: 200, window: 800 });
     expect(bodyOf(container, false)?.hasAttribute('data-columns')).toBe(false);
   });
 
   it('keeps one column when the reader turned columns off', () => {
-    layout({ body: 400, columns: 200, page: 600, window: 800 });
+    layout({ columns: 200, window: 800 });
     expect(bodyOf(container, true, false)?.hasAttribute('data-columns')).toBe(false);
   });
 });
