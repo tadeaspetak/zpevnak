@@ -86,7 +86,7 @@ export function SongPicker({ opened, onClose, playlistId, songIds, onToggle }: P
             current ? `${listId}-${hits.indexOf(current)}` : undefined
           }
           aria-label={t('playlists.addSongs')}
-          placeholder={t('home.searchPlaceholder')}
+          placeholder={t('playlists.pickerPlaceholder')}
           value={query}
           onChange={(e) => {
             setQuery(e.currentTarget.value);

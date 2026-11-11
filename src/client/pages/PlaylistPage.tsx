@@ -1,13 +1,4 @@
-import {
-  Alert,
-  Button,
-  Center,
-  Group,
-  Stack,
-  Switch,
-  Text,
-  TextInput,
-} from '@mantine/core';
+import { Button, Center, Group, Stack, Switch, Text, TextInput } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import {
   IconCheck,
@@ -20,6 +11,7 @@ import {
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { ConfirmModal } from '../components/ConfirmModal.tsx';
+import { VerifyEmailAlert } from '../components/VerifyEmailAlert.tsx';
 import { Page } from '../components/Page.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
 import { RefreshButton } from '../components/RefreshButton.tsx';
@@ -89,6 +81,8 @@ export function PlaylistPage() {
   // Owner and collaborators change the songs and the name, once their email is confirmed.
   const isMember = playlist.role !== null;
   const canEdit = isMember && Boolean(me?.emailVerified);
+  // Only while they may: someone taken out of the playlist meanwhile leaves the editor.
+  const isEditing = editing && canEdit;
   const { role, visibility } = playlistFacts(playlist, { t, tn });
   const toggle = (songId: number) => {
     const last = playlist.songIds.lastIndexOf(songId);
@@ -108,34 +102,36 @@ export function PlaylistPage() {
           <>
             <RefreshButton playlistId={playlist.id} />
             {canEdit && (
-              <>
-                <IconButton
-                  label={editing ? t('playlists.done') : t('playlists.edit')}
-                  variant={editing ? 'filled' : undefined}
-                  color={editing ? 'orange' : undefined}
-                  onClick={() => setEditing((e) => !e)}
-                  aria-pressed={editing}
-                >
-                  {editing ? <IconCheck size={20} /> : <IconPencil size={20} />}
-                </IconButton>
-                <IconButton
-                  label={t('playlists.share')}
-                  onClick={openShare}
-                  aria-haspopup="dialog"
-                >
-                  <IconUsers size={20} />
-                </IconButton>
-                {playlist.role === 'owner' && (
-                  <IconButton label={t('common.delete')} onClick={confirmDelete}>
-                    <IconTrash size={20} />
-                  </IconButton>
-                )}
-              </>
+              <IconButton
+                label={isEditing ? t('playlists.done') : t('playlists.edit')}
+                variant={isEditing ? 'filled' : undefined}
+                color={isEditing ? 'orange' : undefined}
+                onClick={() => setEditing((e) => !e)}
+                aria-pressed={isEditing}
+              >
+                {isEditing ? <IconCheck size={20} /> : <IconPencil size={20} />}
+              </IconButton>
+            )}
+            {/* Who's in, and the way out: any member, a confirmed email or not (D68). */}
+            {isMember && (
+              <IconButton
+                label={t('playlists.share')}
+                onClick={openShare}
+                aria-haspopup="dialog"
+              >
+                <IconUsers size={20} />
+              </IconButton>
+            )}
+            {canEdit && playlist.role === 'owner' && (
+              <IconButton label={t('common.delete')} onClick={confirmDelete}>
+                <IconTrash size={20} />
+              </IconButton>
             )}
           </>
         }
       />
-      <Page>
+      {/* Playing another playlist: the way back to it (D32). */}
+      <Page pill={session !== null && session.playlistId !== id}>
         <Stack gap="md">
           <Group justify="space-between" wrap="nowrap">
             <Text size="sm" c="dimmed">
@@ -143,7 +139,7 @@ export function PlaylistPage() {
                 ' · ',
               )}
             </Text>
-            {!editing && playlist.songIds.length > 0 && (
+            {!isEditing && playlist.songIds.length > 0 && (
               <Button
                 component={Link}
                 to={url.playlistSong(playlist, currentPosition ?? 1)}
@@ -160,9 +156,9 @@ export function PlaylistPage() {
           </Group>
 
           {isMember && !canEdit && (
-            <Alert color="yellow">{t('playlists.confirmToEdit')}</Alert>
+            <VerifyEmailAlert message={t('playlists.confirmToEdit')} />
           )}
-          {editing && (
+          {isEditing && (
             <PlaylistSettings
               playlist={playlist}
               onRename={edits.rename}
@@ -174,7 +170,7 @@ export function PlaylistPage() {
             <Center py="xl">
               <Stack align="center" gap="sm">
                 <Text c="dimmed">{t('playlists.empty')}</Text>
-                {canEdit && !editing && (
+                {canEdit && !isEditing && (
                   <Button
                     variant="default"
                     leftSection={<IconPlus size={16} />}
@@ -187,7 +183,7 @@ export function PlaylistPage() {
             </Center>
           )}
 
-          {editing ? (
+          {isEditing ? (
             <SortableSongs songIds={playlist.songIds} songs={songs} onEdit={edits.edit} />
           ) : (
             <Stack gap={0} mx="-md">
@@ -209,7 +205,7 @@ export function PlaylistPage() {
             </Stack>
           )}
 
-          {editing && (
+          {isEditing && (
             <Button
               variant="default"
               leftSection={<IconPlus size={16} />}
@@ -232,13 +228,21 @@ export function PlaylistPage() {
       <ConfirmModal
         opened={confirmingDelete}
         onClose={cancelDelete}
-        title={t('common.delete')}
+        title={t('playlists.deleteTitle')}
         confirmLabel={t('common.delete')}
         onConfirm={() => remove.mutate({ id })}
         loading={remove.isPending}
         error={remove.error}
       >
-        <Text>{t('playlists.deleteConfirm', { name: playlist.name })}</Text>
+        <Text>
+          {t('playlists.deleteConfirm', {
+            name: playlist.name,
+            // Listmates lose it too: said only when there are some.
+            listmates: playlist.collaboratorCount
+              ? t('playlists.deleteListmates', { count: playlist.collaboratorCount })
+              : '',
+          })}
+        </Text>
       </ConfirmModal>
     </>
   );
@@ -255,18 +259,29 @@ function PlaylistSettings({
 }) {
   const { t } = useI18n();
   const [name, setName] = useState(playlist.name);
+  // On Enter or on leaving the field. Emptied, it goes back to the name it had.
+  const commit = () => {
+    if (!name.trim()) {
+      setName(playlist.name);
+    } else if (name !== playlist.name) {
+      onRename(name);
+    }
+  };
   return (
     <Stack gap="sm" className={classes.settings}>
-      <TextInput
-        label={t('playlists.name')}
-        value={name}
-        onChange={(e) => setName(e.currentTarget.value)}
-        onBlur={() => {
-          if (name.trim() && name !== playlist.name) {
-            onRename(name);
-          }
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          commit();
         }}
-      />
+      >
+        <TextInput
+          label={t('playlists.name')}
+          value={name}
+          onChange={(e) => setName(e.currentTarget.value)}
+          onBlur={commit}
+        />
+      </form>
       {/* Who can see it is the owner's call. */}
       {playlist.role === 'owner' && (
         <Switch

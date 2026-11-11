@@ -346,6 +346,14 @@ From the first UX walk of the song view and a playlist session (2026-11-10):
   way it no longer counts against two columns (D88): the check runs again once a bar has slid,
   so a song that fits without the bar goes into columns, and back to one when the bar returns.
   The page keeps its bottom padding, so hiding never shortens it mid-scroll. (2026-11-11)
+- **D110. Playlists and sharing, from the third walk.** Any member, a confirmed email or not,
+  opens Souputníci to see who's in and to leave (with D68); the unconfirmed are told why they
+  can't edit, with a resend button right there (`VerifyEmailAlert`). Someone taken out of a
+  playlist leaves its editor. A new invite link asks first and then says the old one is dead.
+  The way back to the playlist being played floats on the playlists page and other playlists'
+  pages too (D32). Rename saves on Enter; an emptied name comes back. Joining and leaving say so.
+  Deleting says what goes (listmates lose it) and what stays. Every dialog's and toast's close
+  button is named, and moving a song is announced, in the reader's language. (2026-11-11)
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed

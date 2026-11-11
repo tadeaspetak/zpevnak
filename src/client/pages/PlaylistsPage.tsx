@@ -66,7 +66,7 @@ export function PlaylistsPage() {
           )
         }
       />
-      <Page>
+      <Page pill>
         <Stack gap="lg">
           {!me && (
             <Alert>
@@ -176,7 +176,8 @@ function NewPlaylistModal({ opened, onClose }: { opened: boolean; onClose: () =>
             checked={isPublic}
             onChange={(e) => setIsPublic(e.currentTarget.checked)}
           />
-          <Button type="submit" loading={create.isPending}>
+          {/* The server trims the name: a name of spaces is no name. */}
+          <Button type="submit" loading={create.isPending} disabled={!name.trim()}>
             {t('playlists.create')}
           </Button>
         </Stack>

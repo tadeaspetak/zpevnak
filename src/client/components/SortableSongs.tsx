@@ -5,7 +5,9 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  type Announcements,
   type DragEndEvent,
+  type UniqueIdentifier,
 } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -16,9 +18,10 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { ActionIcon, Stack, Text } from '@mantine/core';
 import { IconGripVertical, IconX } from '@tabler/icons-react';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import type { PlaylistOp } from '#shared/playlistOps.ts';
 import type { SongRecord } from '../data/store.ts';
+import { refocusWithin } from '../focus.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { SongLabel } from './SongRow.tsx';
 import classes from './SortableSongs.module.css';
@@ -64,6 +67,43 @@ export function SortableSongs({
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
+  const { t } = useI18n();
+  const list = useRef<HTMLDivElement>(null);
+  // What a screen reader hears while a song is moved: its title and place, in the reader's
+  // language (dnd-kit's own are English, with internal ids).
+  const total = keys.length;
+  const titleOf = (id: UniqueIdentifier) =>
+    songs.get(Number(String(id).split('#')[0]))?.title ?? '';
+  const placeOf = (id: UniqueIdentifier | undefined) =>
+    id === undefined ? 0 : keys.indexOf(String(id)) + 1;
+  const accessibility = {
+    screenReaderInstructions: { draggable: t('playlists.dragInstructions') },
+    announcements: {
+      onDragStart: ({ active }) =>
+        t('playlists.dragPicked', {
+          title: titleOf(active.id),
+          position: placeOf(active.id),
+          total,
+        }),
+      onDragOver: ({ active, over }) =>
+        t('playlists.dragOver', {
+          title: titleOf(active.id),
+          position: placeOf(over?.id ?? active.id),
+          total,
+        }),
+      onDragEnd: ({ active, over }) =>
+        t('playlists.dragDropped', {
+          title: titleOf(active.id),
+          position: placeOf(over?.id ?? active.id),
+          total,
+        }),
+      onDragCancel: ({ active }) =>
+        t('playlists.dragCancelled', {
+          title: titleOf(active.id),
+          position: placeOf(active.id),
+        }),
+    } satisfies Announcements,
+  };
   const onDragEnd = ({ active, over }: DragEndEvent) => {
     if (!over || active.id === over.id) {
       return;
@@ -77,9 +117,10 @@ export function SortableSongs({
       sensors={sensors}
       collisionDetection={closestCenter}
       onDragEnd={onDragEnd}
+      accessibility={accessibility}
     >
       <SortableContext items={keys} strategy={verticalListSortingStrategy}>
-        <Stack gap={0} mx="-md">
+        <Stack gap={0} mx="-md" ref={list}>
           {keys.map((key, index) => {
             const song = songs.get(songIds[index] ?? -1);
             return song ? (
@@ -88,9 +129,10 @@ export function SortableSongs({
                 id={key}
                 song={song}
                 position={index + 1}
-                onRemove={() =>
-                  onEdit({ type: 'remove', songId: songIds[index] as number, index })
-                }
+                onRemove={() => {
+                  onEdit({ type: 'remove', songId: songIds[index] as number, index });
+                  refocusWithin(list.current);
+                }}
               />
             ) : null;
           })}
@@ -144,7 +186,7 @@ function SortableRow({
         color="red"
         size="xl"
         onClick={onRemove}
-        aria-label={t('playlists.remove')}
+        aria-label={t('playlists.remove', { title: song.title })}
       >
         <IconX size={18} />
       </ActionIcon>

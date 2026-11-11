@@ -1,5 +1,4 @@
 import {
-  ActionIcon,
   Button,
   CopyButton,
   Divider,
@@ -10,7 +9,6 @@ import {
   Text,
   TextInput,
   Title,
-  Tooltip,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
@@ -20,7 +18,7 @@ import {
   IconRefresh,
   IconX,
 } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { leavePlaylist, usePlayer } from '../data/session.ts';
 import { putPlaylist } from '../data/catalog.ts';
@@ -28,7 +26,9 @@ import type { PlaylistRecord } from '../data/store.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc, trpcClient } from '../trpc.ts';
 import { url } from '#shared/urls.ts';
+import { refocusWithin } from '../focus.ts';
 import { ErrorText } from './ErrorText.tsx';
+import { IconButton } from './IconButton.tsx';
 
 type Props = { playlist: PlaylistRecord; opened: boolean; onClose: () => void };
 
@@ -55,6 +55,8 @@ export function ShareModal({ playlist, opened, onClose }: Props) {
     }
   }, [opened, isOwner, notAskedYet, askForInvite, playlist.id]);
   const remove = trpc.playlists.removeCollaborator.useMutation();
+  const [confirmingReset, setConfirmingReset] = useState(false);
+  const people = useRef<HTMLDivElement>(null);
   const removePerson = (person: { id: number; displayName: string }) =>
     remove.mutate(
       { id: playlist.id, userId: person.id },
@@ -62,6 +64,7 @@ export function ShareModal({ playlist, opened, onClose }: Props) {
         onSuccess: async (record) => {
           putPlaylist(record.id, record);
           await utils.playlists.members.invalidate({ id: playlist.id });
+          refocusWithin(people.current);
           // One tap removes, so one tap brings them back (D87).
           const toastId = `removed-${playlist.id}-${person.id}`;
           notifications.show({
@@ -120,28 +123,61 @@ export function ShareModal({ playlist, opened, onClose }: Props) {
                 )}
               </CopyButton>
             </Group>
-            <Stack gap={4} align="flex-start">
-              <Button
-                variant="default"
-                size="xs"
-                leftSection={<IconRefresh size={14} />}
-                loading={reset.isPending}
-                onClick={() => reset.mutate({ id: playlist.id })}
-              >
-                {t('playlists.resetLink')}
-              </Button>
-              <Text size="xs" c="dimmed">
-                {t('playlists.resetHint')}
-              </Text>
-            </Stack>
+            {/* The old link stops working for everyone it was sent to: ask first, then say so. */}
+            {confirmingReset ? (
+              <Stack gap="xs">
+                <Text size="sm">{t('playlists.resetHint')}</Text>
+                <Group gap="xs">
+                  <Button
+                    variant="default"
+                    size="xs"
+                    onClick={() => setConfirmingReset(false)}
+                  >
+                    {t('common.cancel')}
+                  </Button>
+                  <Button
+                    size="xs"
+                    color="red"
+                    loading={reset.isPending}
+                    onClick={() =>
+                      reset.mutate(
+                        { id: playlist.id },
+                        { onSuccess: () => setConfirmingReset(false) },
+                      )
+                    }
+                  >
+                    {t('playlists.resetConfirm')}
+                  </Button>
+                </Group>
+              </Stack>
+            ) : (
+              <Stack gap={4} align="flex-start">
+                <Button
+                  variant="default"
+                  size="xs"
+                  leftSection={<IconRefresh size={14} />}
+                  onClick={() => setConfirmingReset(true)}
+                >
+                  {t('playlists.resetLink')}
+                </Button>
+                {reset.isSuccess && (
+                  <Text size="sm" fw={600} role="status">
+                    {t('playlists.resetDone')}
+                  </Text>
+                )}
+              </Stack>
+            )}
             <ErrorText error={invite.error ?? reset.error} />
           </Stack>
         )}
 
-        <Stack gap={4}>
-          <Title order={3} fz="sm" fw={700}>
-            {t('playlists.people')}
-          </Title>
+        <Stack gap={4} ref={people}>
+          {/* Under the invite, a heading tells the two apart; alone, the dialog's title says it. */}
+          {isOwner && (
+            <Title order={3} fz="sm" fw={700}>
+              {t('playlists.people')}
+            </Title>
+          )}
           {members.isLoading && <Loader size="sm" />}
           {members.data?.map((person) => (
             <Group key={person.id} justify="space-between" wrap="nowrap">
@@ -152,17 +188,13 @@ export function ShareModal({ playlist, opened, onClose }: Props) {
                 </Text>
               </div>
               {isOwner && person.role === 'collaborator' && (
-                <Tooltip
+                <IconButton
                   label={t('playlists.removePerson', { name: person.displayName })}
+                  loading={remove.isPending && remove.variables?.userId === person.id}
+                  onClick={() => removePerson(person)}
                 >
-                  <ActionIcon
-                    aria-label={t('playlists.removePerson', { name: person.displayName })}
-                    loading={remove.isPending && remove.variables?.userId === person.id}
-                    onClick={() => removePerson(person)}
-                  >
-                    <IconX size={16} />
-                  </ActionIcon>
-                </Tooltip>
+                  <IconX size={18} />
+                </IconButton>
               )}
             </Group>
           ))}
@@ -226,6 +258,7 @@ function LeaveButton({ playlist }: { playlist: PlaylistRecord }) {
       if (session?.playlistId === playlist.id) {
         leavePlaylist();
       }
+      notifications.show({ message: t('playlists.left', { name: playlist.name }) });
       // A public playlist stays visible after leaving, just no longer as yours.
       putPlaylist(
         playlist.id,

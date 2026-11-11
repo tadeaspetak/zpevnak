@@ -1,11 +1,11 @@
-import { Alert, Anchor, Badge, Button, Group, Stack, Text, Title } from '@mantine/core';
+import { Anchor, Badge, Button, Group, Stack, Text, Title } from '@mantine/core';
 import { useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router';
-import { ErrorText } from '../components/ErrorText.tsx';
 import { Page } from '../components/Page.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
 import { SongRow } from '../components/SongRow.tsx';
+import { VerifyEmailAlert } from '../components/VerifyEmailAlert.tsx';
 import { syncCatalog, useCatalog } from '../data/catalog.ts';
 import { writeLocalJson } from '../data/local.ts';
 import { sortByTitle } from '../data/search.ts';
@@ -30,7 +30,6 @@ export function AccountPage() {
         : [],
     [songs, me, compare],
   );
-  const resend = trpc.auth.resendVerification.useMutation();
   const logOut = trpc.auth.logOut.useMutation({
     onSuccess: async () => {
       writeLocalJson('me', null);
@@ -56,29 +55,7 @@ export function AccountPage() {
       />
       <Page>
         <Stack gap="xl">
-          {!me.emailVerified && (
-            <Alert color="yellow">
-              <Stack gap="xs">
-                <Text size="sm">{t('account.verifyBanner')}</Text>
-                {resend.isSuccess ? (
-                  <Text size="sm" fw={600}>
-                    {t('account.resent')}
-                  </Text>
-                ) : (
-                  <Button
-                    size="xs"
-                    variant="default"
-                    w="fit-content"
-                    loading={resend.isPending}
-                    onClick={() => resend.mutate()}
-                  >
-                    {t('account.resend')}
-                  </Button>
-                )}
-                <ErrorText error={resend.error} />
-              </Stack>
-            </Alert>
-          )}
+          {!me.emailVerified && <VerifyEmailAlert message={t('account.verifyBanner')} />}
 
           <section>
             <Group gap="xs">

@@ -1,18 +1,5 @@
-import { expect, test, type Browser, type Page } from '@playwright/test';
-
-const BASE = 'http://localhost:3101';
-
-/** A page signed in as a dev persona (seeded for e2e), in English. */
-async function signedIn(browser: Browser, email: string): Promise<Page> {
-  const context = await browser.newContext({ baseURL: BASE });
-  await context.addInitScript(() => localStorage.setItem('zpevnak.locale', 'en'));
-  const page = await context.newPage();
-  const response = await page.request.post('/trpc/auth.logIn', {
-    data: { email, password: 'zpevnak-dev-password' },
-  });
-  expect(response.ok()).toBe(true);
-  return page;
-}
+import { expect, test } from '@playwright/test';
+import { signedIn } from './helpers.ts';
 
 test('a contributor pastes chords above lyrics, converts them, and an editor approves the song', async ({
   browser,
@@ -36,34 +23,4 @@ test('a contributor pastes chords above lyrics, converts them, and an editor app
   await editor.getByRole('link', { name: new RegExp(title) }).click();
   await editor.getByRole('button', { name: 'Approve' }).click();
   await expect(editor.getByText(`Approved: ${title}`)).toBeVisible();
-});
-
-test('an owner takes a listmate out by mistake, and takes it back', async ({
-  browser,
-}) => {
-  const owner = await signedIn(browser, 'user@zpevnak.test');
-  const created = await owner.request.post('/trpc/playlists.create', {
-    data: { name: `Advent ${Date.now()}`, isPublic: false, songIds: [] },
-  });
-  const playlist = (await created.json()).result.data as { id: number };
-  const invite = await owner.request.post('/trpc/playlists.invite', {
-    data: { id: playlist.id },
-  });
-  const { token } = (await invite.json()).result.data as { token: string };
-  const listmate = await signedIn(browser, 'editor@zpevnak.test');
-  await listmate.request.post('/trpc/playlists.join', { data: { token } });
-
-  await owner.goto(`/playlist/${playlist.id}`);
-  await owner.getByRole('button', { name: 'Listmates' }).click();
-  // The invite link, asked for as the dialog opens: the same one the bandmate joined by.
-  await expect(owner.getByRole('textbox', { name: 'Copy link' })).toHaveValue(
-    new RegExp(`/join/${token}$`),
-  );
-  await owner.getByRole('button', { name: 'Remove Erik Editor' }).click();
-  // The toast names the person, in the reader's language (it once crashed outside them).
-  await expect(
-    owner.getByText('Erik Editor is no longer in the playlist.'),
-  ).toBeVisible();
-  await owner.getByRole('button', { name: 'Undo' }).click();
-  await expect(owner.getByRole('button', { name: 'Remove Erik Editor' })).toBeVisible();
 });

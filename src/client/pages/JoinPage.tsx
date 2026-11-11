@@ -1,4 +1,5 @@
 import { Button, Group, Loader, Stack, Text } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { useEffect, useRef } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { ErrorText } from '../components/ErrorText.tsx';
@@ -24,6 +25,7 @@ export function JoinPage() {
   const join = trpc.playlists.join.useMutation({
     onSuccess: (playlist) => {
       putPlaylist(playlist.id, playlist);
+      notifications.show({ message: t('playlists.joined', { name: playlist.name }) });
       navigate(url.playlist(playlist), { replace: true });
     },
   });
