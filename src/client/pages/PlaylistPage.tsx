@@ -1,4 +1,4 @@
-import { Button, Center, Group, Stack, Switch, Text, TextInput } from '@mantine/core';
+import { Button, Center, Group, Stack, Text, TextInput, Title } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import {
   IconCheck,
@@ -12,6 +12,8 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { ConfirmModal } from '../components/ConfirmModal.tsx';
 import { VerifyEmailAlert } from '../components/VerifyEmailAlert.tsx';
+import type { PlaylistOp } from '#shared/playlistOps.ts';
+import { showUndoToast } from '../components/UndoToast.tsx';
 import { Page } from '../components/Page.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
 import { RefreshButton } from '../components/RefreshButton.tsx';
@@ -27,7 +29,7 @@ import { leavePlaylist, usePlayer } from '../data/session.ts';
 import type { PlaylistRecord } from '../data/store.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
-import { trpc } from '../trpc.ts';
+import { trpc, trpcClient } from '../trpc.ts';
 import { idFromRef, url } from '#shared/urls.ts';
 import { useCanonicalPath } from '../hooks/useCanonicalPath.ts';
 import classes from './PlaylistPage.module.css';
@@ -91,11 +93,31 @@ export function PlaylistPage() {
     );
   };
   const currentPosition = session?.playlistId === id ? session.position : null;
+  // Taking a song out is one tap, so putting it back is one tap too, in its place (D87).
+  const editWithUndo = (op: PlaylistOp) => {
+    edits.edit(op);
+    const song = op.type === 'remove' ? songs.get(op.songId) : undefined;
+    if (op.type === 'remove' && song) {
+      showUndoToast({
+        id: `song-removed-${id}-${op.songId}-${op.index}`,
+        message: t('playlists.songRemoved', { title: song.title }),
+        // The toast may outlive this page: straight to the server, then into the catalog.
+        onUndo: async () => {
+          const back = await trpcClient.playlists.edit.mutate({
+            id,
+            op: { type: 'add', songId: op.songId, at: op.index },
+          });
+          putPlaylist(back.id, back);
+        },
+      });
+    }
+  };
 
   return (
     <>
       <PageHeader
         title={playlist.name}
+        titleOnPhone="page"
         backTo={url.playlists()}
         backLabel={backLabel}
         actions={
@@ -133,6 +155,10 @@ export function PlaylistPage() {
       {/* Playing another playlist: the way back to it (D32). */}
       <Page pill={session !== null && session.playlistId !== id}>
         <Stack gap="md">
+          {/* On a phone the header has no room for the name beside its icons: here, whole. */}
+          <Title order={1} size="h3" hiddenFrom="sm">
+            {playlist.name}
+          </Title>
           <Group justify="space-between" wrap="nowrap">
             <Text size="sm" c="dimmed">
               {[tn('common.songs', playlist.songIds.length), role, visibility].join(
@@ -158,33 +184,22 @@ export function PlaylistPage() {
           {isMember && !canEdit && (
             <VerifyEmailAlert message={t('playlists.confirmToEdit')} />
           )}
-          {isEditing && (
-            <PlaylistSettings
-              playlist={playlist}
-              onRename={edits.rename}
-              onPublic={edits.setPublic}
-            />
-          )}
+          {isEditing && <PlaylistSettings playlist={playlist} onRename={edits.rename} />}
 
           {playlist.songIds.length === 0 && (
             <Center py="xl">
               <Stack align="center" gap="sm">
                 <Text c="dimmed">{t('playlists.empty')}</Text>
-                {canEdit && !isEditing && (
-                  <Button
-                    variant="default"
-                    leftSection={<IconPlus size={16} />}
-                    onClick={openAdd}
-                  >
-                    {t('playlists.addSongs')}
-                  </Button>
-                )}
               </Stack>
             </Center>
           )}
 
           {isEditing ? (
-            <SortableSongs songIds={playlist.songIds} songs={songs} onEdit={edits.edit} />
+            <SortableSongs
+              songIds={playlist.songIds}
+              songs={songs}
+              onEdit={editWithUndo}
+            />
           ) : (
             <Stack gap={0} mx="-md">
               {playlist.songIds.map((songId, index) => {
@@ -205,11 +220,14 @@ export function PlaylistPage() {
             </Stack>
           )}
 
-          {isEditing && (
+          {/* In reach whenever they may add, not only in the editor (with the empty list's
+              message above it). */}
+          {canEdit && (
             <Button
               variant="default"
               leftSection={<IconPlus size={16} />}
               onClick={openAdd}
+              style={playlist.songIds.length === 0 ? { alignSelf: 'center' } : undefined}
             >
               {t('playlists.addSongs')}
             </Button>
@@ -251,11 +269,9 @@ export function PlaylistPage() {
 function PlaylistSettings({
   playlist,
   onRename,
-  onPublic,
 }: {
   playlist: PlaylistRecord;
   onRename: (name: string) => void;
-  onPublic: (isPublic: boolean) => void;
 }) {
   const { t } = useI18n();
   const [name, setName] = useState(playlist.name);
@@ -282,14 +298,6 @@ function PlaylistSettings({
           onBlur={commit}
         />
       </form>
-      {/* Who can see it is the owner's call. */}
-      {playlist.role === 'owner' && (
-        <Switch
-          label={t('playlists.isPublic')}
-          checked={playlist.isPublic}
-          onChange={(e) => onPublic(e.currentTarget.checked)}
-        />
-      )}
     </Stack>
   );
 }

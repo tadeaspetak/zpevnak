@@ -7,7 +7,7 @@ import { useI18n } from '../i18n/index.tsx';
 
 function Translated() {
   const { t } = useI18n();
-  return <span>{t('playlists.undoRemove')}</span>;
+  return <span>{t('common.undo')}</span>;
 }
 
 describe('Providers', () => {

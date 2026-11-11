@@ -34,29 +34,29 @@ took the agent's pick on all five open ones; all shipped as D99–D103.
       text (#C2410C, 5.2:1). In the owner's words: "I'm in no way attached to the colours at
       this point, let's change them while it's simple"; a theme that could become configurable.
 
-## Playlists and sharing walk: waiting on the owner (2026-11-11)
+## Playlists and sharing walk: the owner's answers (2026-11-11)
 
 The third `/ux` walk (report https://claude.ai/artifact/KxbjNZaPvxuFJ1TURcG5iB, handover
-`.ux-walk/handover-playlists-sharing-2026-11-11.md`). Its "do now" list shipped as D110. These
-are the owner's call; the agent's pick is first.
+`.ux-walk/handover-playlists-sharing-2026-11-11.md`). Its "do now" list shipped as D110. The owner
+took the agent's pick on all seven; shipped as D111 (the dialog renamed "Sdílení").
 
-- [ ] **F3 The playlist name cut to "Koledy …" on phones.** A: below the phone breakpoint the
+- [x] **F3 The playlist name cut to "Koledy …" on phones.** A: below the phone breakpoint the
       name is the page's first line (bold, wraps), not in the header. B: two-line header title.
       C: trash into the edit panel (re-opens D54).
-- [ ] **F5 Sharing in two places; no view-only link in the app.** A: the dialog opens with "Kdo
+- [x] **F5 Sharing in two places; no view-only link in the app.** A: the dialog opens with "Kdo
       ho vidí" (the public switch moves there, and "Kopírovat odkaz na playlist" when public),
       then the invite as editing access; a public playlist's join page offers "Jen se podívat";
       `navigator.share` where it exists. B: only add the view-only link to the dialog. Sub-question:
       rename the dialog "Sdílení" (D80 named it Souputníci).
-- [ ] **F6 Removing a song is silent, with no undo.** A: a D87-style toast "{title} je pryč ·
+- [x] **F6 Removing a song is silent, with no undo.** A: a D87-style toast "{title} je pryč ·
       Beru zpátky" (8 s), undone through the same edits (no server change). B: confirm each.
-- [ ] **F8 Adding to a non-empty playlist needs edit mode.** A: keep "Přidat písničky" under the
+- [x] **F8 Adding to a non-empty playlist needs edit mode.** A: keep "Přidat písničky" under the
       list in view mode for editors. B: a + in the header (no room on phones).
-- [ ] **Undo for a removed listmate while the dialog is open.** A: the row stays, greyed, with
+- [x] **Undo for a removed listmate while the dialog is open.** A: the row stays, greyed, with
       "Beru zpátky" until the dialog closes (the toast is outside the dialog's focus trap). B: as is.
-- [ ] **New or joined playlists on the overview** (D33). A: creating or joining counts as a
+- [x] **New or joined playlists on the overview** (D33). A: creating or joining counts as a
       touch in recent playlists. B: only playing does.
-- [ ] **"od Uršula Uživatelová" doesn't decline** (re-opens D79/D70). A: "Vlastník: {name}".
+- [x] **"od Uršula Uživatelová" doesn't decline** (re-opens D79/D70). A: "Vlastník: {name}".
       B: the name alone with a person icon.
 
 ## Code review (2026-11-10)

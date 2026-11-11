@@ -35,6 +35,24 @@ async function shared() {
 }
 
 describe('playlists', () => {
+  it('puts a song back at its place, for an undone removal', async () => {
+    const { owner, a, b, c } = await setup();
+    const playlist = await callerFor(owner).playlists.create({
+      name: 'Zpátky',
+      isPublic: false,
+      songIds: [a.id, b.id, c.id],
+    });
+    await callerFor(owner).playlists.edit({
+      id: playlist.id,
+      op: { type: 'remove', songId: b.id, index: 1 },
+    });
+    const back = await callerFor(owner).playlists.edit({
+      id: playlist.id,
+      op: { type: 'add', songId: b.id, at: 1 },
+    });
+    expect(back.songIds).toEqual([a.id, b.id, c.id]);
+  });
+
   it('says a full playlist is full, and still takes songs out of it', async () => {
     const { owner, a, b } = await setup();
     const playlist = await callerFor(owner).playlists.create({
@@ -303,10 +321,18 @@ describe('sharing', () => {
   });
 
   it("previews an invite's playlist to anyone holding the link, signed in or not", async () => {
-    const { owner, token } = await shared();
+    const { owner, token, playlist } = await shared();
     await expect(callerFor(null).playlists.invitePreview({ token })).resolves.toEqual({
       name: 'Vánoce',
       ownerName: owner.displayName,
+      // Private: nothing to look at without joining, and no id to look for.
+      publicId: null,
+    });
+    await callerFor(owner).playlists.setPublic({ id: playlist.id, isPublic: true });
+    await expect(
+      callerFor(null).playlists.invitePreview({ token }),
+    ).resolves.toMatchObject({
+      publicId: playlist.id,
     });
     await expect(
       callerFor(null).playlists.invitePreview({ token: 'x'.repeat(22) }),

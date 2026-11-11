@@ -8,7 +8,8 @@
  * now happens to sit at the old index. Indexes count from 0.
  */
 export type PlaylistOp =
-  | { type: 'add'; songId: number }
+  /** At the end, or at `at` (putting a removed song back where it was). */
+  | { type: 'add'; songId: number; at?: number }
   | { type: 'remove'; songId: number; index: number }
   | { type: 'move'; songId: number; from: number; to: number };
 
@@ -29,7 +30,8 @@ export function nearestIndex(songIds: number[], songId: number, index: number): 
  */
 export function applyOp(songIds: number[], op: PlaylistOp): number[] {
   if (op.type === 'add') {
-    return [...songIds, op.songId];
+    const at = Math.max(0, Math.min(songIds.length, op.at ?? songIds.length));
+    return [...songIds.slice(0, at), op.songId, ...songIds.slice(at)];
   }
   const at = nearestIndex(songIds, op.songId, op.type === 'remove' ? op.index : op.from);
   if (at === -1) {

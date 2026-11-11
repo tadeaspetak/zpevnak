@@ -61,7 +61,7 @@ entry that says which it replaces and what changed.
   their query. (2026-11-09)
 - **D32. Leaving a playlist doesn't end it.** While a playlist is being played, a pill at the
   bottom of other pages leads back to the current song, until closed. (2026-11-09)
-- **D33. Playlists sort by when they were last played** on this device. (2026-11-09)
+- **D33. Playlists sort by when they were last played** on this device. (2026-11-09) _Playlists made or joined count as recent: D111._
 - **D34. In a playlist, previous/next** are a bar at the bottom, swipe, arrow keys, and Page
   Up/Down (a page-turner pedal: scroll, and at the end of the song, turn the page). (2026-11-09)
 - **D35. The overview focuses the search box only with a fine pointer.** On a phone, focusing
@@ -203,11 +203,11 @@ entry that says which it replaces and what changed.
 - **D79. Playlist details by who's looking.** Search results and the overview show a playlist
   briefly: its songs and whose it is ("3 písničky · od Tadeáš"), or the viewer's own role. The
   playlists page adds visibility, and for the playlist's own people how many souputníci it has;
-  the server sends that count to nobody else. Replaces D70's "shared (n)". (2026-11-09)
+  the server sends that count to nobody else. Replaces D70's "shared (n)". (2026-11-09) _"od {name}" became "Vlastník: {name}": D111._
 - **D80. Collaborators are souputníci** (listmates in English, made up on purpose: "bandmate"
   would claim band membership): a songbook with attitude, not an
   office. The role is Souputník / Listmate, the people dialog is Souputníci / Listmates, and an invite reads
-  "{owner} tě zve, ať se přidáš k playlistu". (2026-11-09)
+  "{owner} tě zve, ať se přidáš k playlistu". (2026-11-09) _The dialog is "Sdílení" now, with "Souputníci" a section in it: D111._
 
 - **D81. Changing a rejected song sends it back for review**, whoever changes it, an editor or
   admin too (their own song included): the rejection was of the old text. Edits keep a pending
@@ -247,7 +247,7 @@ entry that says which it replaces and what changed.
   the last 10 minutes, so undo can't add anyone else. No confirmation dialog: an undo costs the
   rare mistake a tap instead of every removal. (2026-11-10)
 
-From the first UX walk of the song view and a playlist session (2026-11-10):
+From the first UX walk of the song view and a playlist session (2026-11-10): _In the dialog the removed row offers the undo; the toast after it closes: D111._
 
 - **D88. Two columns only when the song can be read whole in them** (narrows D25). On a wide
   screen a song is laid out in columns only if, with the song's top at the top of
@@ -354,6 +354,18 @@ From the first UX walk of the song view and a playlist session (2026-11-10):
   pages too (D32). Rename saves on Enter; an emptied name comes back. Joining and leaving say so.
   Deleting says what goes (listmates lose it) and what stays. Every dialog's and toast's close
   button is named, and moving a song is announced, in the reader's language. (2026-11-11)
+- **D111. Sharing in one place, and one tap back for songs too** (the owner's picks from the
+  third walk). The dialog is **Sdílení**: the owner first sets **Kdo ho vidí** (the public
+  switch, moved out of the editor, and when public a link just to look), then **Souputníci**
+  (the invite link, the people). Links go out through the phone's share sheet where there is
+  one, else a copy. A public playlist's invite page also offers "Jen se podívat". A listmate
+  removed while the dialog is open stays as a greyed row with "Beru zpátky" (the keyboard can
+  reach it there); closing the dialog hands the undo to a toast. Removing a song shows "… je z
+  playlistu pryč · Beru zpátky" and undoing puts it back in its place (`add` takes `at`).
+  "Přidat písničky" is under the list whenever the viewer may add. On a phone a playlist's name
+  is the page's first line, not squeezed into the header. A playlist made or joined on this
+  device is among the recent ones on the overview. The owner is "Vlastník: {name}".
+  (2026-11-11)
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed

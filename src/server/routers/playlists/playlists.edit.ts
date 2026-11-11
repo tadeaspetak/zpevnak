@@ -7,7 +7,7 @@ import { fail, verifiedProcedure } from '../../trpc/trpc.ts';
 
 const index = z.number().int().min(0).max(1000);
 const opSchema = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('add'), songId: idSchema }),
+  z.object({ type: z.literal('add'), songId: idSchema, at: index.optional() }),
   z.object({ type: z.literal('remove'), songId: idSchema, index }),
   z.object({ type: z.literal('move'), songId: idSchema, from: index, to: index }),
 ]);

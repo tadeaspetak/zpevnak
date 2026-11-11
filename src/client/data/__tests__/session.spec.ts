@@ -1,6 +1,12 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { leavePlaylist, playPlaylist, songPlayed, usePlayer } from '../session.ts';
+import {
+  leavePlaylist,
+  playPlaylist,
+  songPlayed,
+  touchPlaylist,
+  usePlayer,
+} from '../session.ts';
 
 describe('the player session', () => {
   it('remembers recent songs, newest first, each once, twelve at most', () => {
@@ -12,6 +18,13 @@ describe('the player session', () => {
       songPlayed(5);
     });
     expect(result.current.recentSongs).toEqual([5, 14, 13, 12, 11, 10, 9, 8, 7, 6, 4, 3]);
+  });
+
+  it('counts a playlist made or joined here as recent, without playing it (D33)', () => {
+    const { result } = renderHook(() => usePlayer());
+    act(() => touchPlaylist(42));
+    expect(result.current.recentPlaylists[42]).toBeTypeOf('number');
+    expect(result.current.session?.playlistId).not.toBe(42);
   });
 
   it('follows the playlist being played, and forgets it on leaving', () => {

@@ -1,4 +1,4 @@
-import { Button, Group, Loader, Stack, Text } from '@mantine/core';
+import { Anchor, Button, Group, Loader, Stack, Text } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useEffect, useRef } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
@@ -6,6 +6,7 @@ import { ErrorText } from '../components/ErrorText.tsx';
 import { Page } from '../components/Page.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
 import { putPlaylist } from '../data/catalog.ts';
+import { touchPlaylist } from '../data/session.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc } from '../trpc.ts';
@@ -25,6 +26,7 @@ export function JoinPage() {
   const join = trpc.playlists.join.useMutation({
     onSuccess: (playlist) => {
       putPlaylist(playlist.id, playlist);
+      touchPlaylist(playlist.id);
       notifications.show({ message: t('playlists.joined', { name: playlist.name }) });
       navigate(url.playlist(playlist), { replace: true });
     },
@@ -82,6 +84,19 @@ export function JoinPage() {
                       {t('auth.logIn')}
                     </Button>
                   </Group>
+                  {/* A public playlist can be looked at without joining. */}
+                  {preview.data.publicId !== null && (
+                    <Anchor
+                      component={Link}
+                      to={url.playlist({
+                        id: preview.data.publicId,
+                        name: preview.data.name,
+                      })}
+                      size="sm"
+                    >
+                      {t('playlists.justLook')}
+                    </Anchor>
+                  )}
                 </>
               )}
             </>

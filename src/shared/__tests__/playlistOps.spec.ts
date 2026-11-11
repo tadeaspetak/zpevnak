@@ -6,6 +6,12 @@ describe('applyOp', () => {
     expect(applyOp([1, 2], { type: 'add', songId: 3 })).toEqual([1, 2, 3]);
   });
 
+  it('adds at a place, for putting a removed song back, kept within the list', () => {
+    expect(applyOp([1, 2, 3], { type: 'add', songId: 9, at: 1 })).toEqual([1, 9, 2, 3]);
+    expect(applyOp([1, 2], { type: 'add', songId: 9, at: 99 })).toEqual([1, 2, 9]);
+    expect(applyOp([1, 2], { type: 'add', songId: 9, at: 0 })).toEqual([9, 1, 2]);
+  });
+
   it('removes the song at the index', () => {
     expect(applyOp([1, 2, 3], { type: 'remove', songId: 2, index: 1 })).toEqual([1, 3]);
   });

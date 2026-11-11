@@ -34,10 +34,22 @@ export function playPlaylist(playlistId: number, position: number) {
     return;
   }
   const session = { playlistId, position };
-  const recentPlaylists = { ...state.recentPlaylists, [playlistId]: Date.now() };
   writeLocalJson('session', session);
+  update({ session, recentPlaylists: touched(playlistId) });
+}
+
+/**
+ * A playlist this device just made or joined: among the recent ones on the overview straight
+ * away, as if played (D33), so it is one tap away when the evening starts.
+ */
+export function touchPlaylist(playlistId: number) {
+  update({ recentPlaylists: touched(playlistId) });
+}
+
+function touched(playlistId: number): Record<number, number> {
+  const recentPlaylists = { ...state.recentPlaylists, [playlistId]: Date.now() };
   writeLocalJson('recentPlaylists', recentPlaylists);
-  update({ session, recentPlaylists });
+  return recentPlaylists;
 }
 
 export function leavePlaylist() {

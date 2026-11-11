@@ -20,7 +20,7 @@ import { PageHeader } from '../components/PageHeader.tsx';
 import { PlaylistRow } from '../components/PlaylistRow.tsx';
 import { putPlaylist, useCatalog } from '../data/catalog.ts';
 import { playlistFacts } from '../data/playlistFacts.ts';
-import { usePlayer } from '../data/session.ts';
+import { touchPlaylist, usePlayer } from '../data/session.ts';
 import { usePhone } from '../hooks/useBreakpoints.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
@@ -150,6 +150,7 @@ function NewPlaylistModal({ opened, onClose }: { opened: boolean; onClose: () =>
   const create = trpc.playlists.create.useMutation({
     onSuccess: (playlist) => {
       putPlaylist(playlist.id, playlist);
+      touchPlaylist(playlist.id);
       onClose();
       navigate(url.playlist(playlist));
     },

@@ -10,7 +10,7 @@ test('an owner takes a listmate out by mistake, takes it back, and replaces the 
   await listmate.request.post('/trpc/playlists.join', { data: { token } });
 
   await owner.goto(`/playlist/${playlist.id}`);
-  await owner.getByRole('button', { name: 'Listmates' }).click();
+  await owner.getByRole('button', { name: 'Sharing' }).click();
   // The invite link, asked for as the dialog opens: the same one the bandmate joined by.
   const link = owner.getByRole('textbox', { name: 'Copy link' });
   await expect(link).toHaveValue(new RegExp(`/join/${token}$`));
@@ -61,7 +61,7 @@ test('a listmate without a confirmed email sees who is in, and can leave', async
   await fresh.goto(`/playlist/${playlist.id}`);
   // Why they can't edit yet, and the way to fix it right there.
   await expect(fresh.getByRole('button', { name: 'Send the email again' })).toBeVisible();
-  await fresh.getByRole('button', { name: 'Listmates' }).click();
+  await fresh.getByRole('button', { name: 'Sharing' }).click();
   await expect(fresh.getByText('Uršula Uživatelová')).toBeVisible();
   await fresh.getByRole('button', { name: 'Leave playlist' }).click();
   await fresh.getByRole('button', { name: 'Leave playlist' }).last().click();
@@ -82,4 +82,67 @@ test('an owner renames a playlist with Enter, and an emptied name comes back', a
   await name.fill('   ');
   await name.press('Enter');
   await expect(name).toHaveValue('Koledy na náměstí');
+});
+
+test('an owner takes a song out by mistake and puts it back in its place', async ({
+  browser,
+}) => {
+  const owner = await signedIn(browser, 'user@zpevnak.test');
+  const sync = await (
+    await owner.request.get(
+      `/trpc/songs.sync?input=${encodeURIComponent('{"since":null}')}`,
+    )
+  ).json();
+  const ids = (sync.result.data.songs as { id: number; status: string }[])
+    .filter((s) => s.status === 'verified')
+    .slice(0, 3)
+    .map((s) => s.id);
+  const created = await owner.request.post('/trpc/playlists.create', {
+    data: { name: `Pořadí ${Date.now()}`, isPublic: false, songIds: ids },
+  });
+  const playlist = (await created.json()).result.data as { id: number };
+  await owner.goto(`/playlist/${playlist.id}`);
+
+  await owner.getByRole('button', { name: 'Edit playlist' }).click();
+  await owner
+    .getByRole('button', { name: /^Remove / })
+    .nth(1)
+    .click();
+  await expect(owner.getByText(/is out of the playlist\.$/)).toBeVisible();
+  await owner.getByRole('button', { name: 'Undo' }).click();
+  await owner.getByRole('button', { name: 'Done' }).click();
+  // Back where it was, for everyone: the server has the same order as before.
+  await expect
+    .poll(async () => {
+      const response = await owner.request.get(
+        `/trpc/playlists.byId?input=${encodeURIComponent(JSON.stringify({ id: playlist.id }))}`,
+      );
+      return (await response.json()).result.data.songIds;
+    })
+    .toEqual(ids);
+});
+
+test('an owner shares a public playlist to look at, and the invite offers just looking', async ({
+  browser,
+}) => {
+  const owner = await signedIn(browser, 'user@zpevnak.test');
+  const { playlist, token } = await playlistWithInvite(owner, `Náves ${Date.now()}`);
+  await owner.goto(`/playlist/${playlist.id}`);
+  await owner.getByRole('button', { name: 'Sharing' }).click();
+  // Flips once the server has it.
+  const isPublic = owner.getByLabel(/^Public/);
+  await isPublic.click({ force: true });
+  await expect(isPublic).toBeChecked();
+  await expect(
+    owner.getByText('Anyone with the link can look', { exact: false }),
+  ).toBeVisible();
+
+  // Someone signed out with the invite: they can join, or only look.
+  const stranger = await browser.newPage();
+  await stranger.addInitScript(() => localStorage.setItem('zpevnak.locale', 'en'));
+  await stranger.goto(`http://localhost:3101/join/${token}`);
+  await stranger.getByRole('link', { name: 'Just look' }).click();
+  await expect(
+    stranger.getByRole('heading', { level: 1, name: playlist.name }),
+  ).toBeVisible();
 });

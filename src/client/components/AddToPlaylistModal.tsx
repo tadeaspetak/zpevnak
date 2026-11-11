@@ -11,6 +11,7 @@ import { notifications } from '@mantine/notifications';
 import { IconCheck, IconPlus } from '@tabler/icons-react';
 import { useState } from 'react';
 import { putPlaylist, useCatalog } from '../data/catalog.ts';
+import { touchPlaylist } from '../data/session.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc } from '../trpc.ts';
 import { ErrorText } from './ErrorText.tsx';
@@ -35,7 +36,12 @@ export function AddToPlaylistModal({ songId, onClose }: Props) {
   };
   // A failure shows in the dialog through `.error`; the next opening starts clean.
   const edit = trpc.playlists.edit.useMutation({ onSuccess: added });
-  const create = trpc.playlists.create.useMutation({ onSuccess: added });
+  const create = trpc.playlists.create.useMutation({
+    onSuccess: (playlist) => {
+      touchPlaylist(playlist.id);
+      added(playlist);
+    },
+  });
   const close = () => {
     setName('');
     edit.reset();
