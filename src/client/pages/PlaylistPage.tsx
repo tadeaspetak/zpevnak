@@ -19,6 +19,7 @@ import { PageHeader } from '../components/PageHeader.tsx';
 import { RefreshButton } from '../components/RefreshButton.tsx';
 import { ShareModal } from '../components/ShareModal.tsx';
 import { SongPicker } from '../components/SongPicker.tsx';
+import { PublicMark } from '../components/PlaylistRow.tsx';
 import { SongRow } from '../components/SongRow.tsx';
 import { Position, SortableSongs } from '../components/SortableSongs.tsx';
 import { putPlaylist, useCatalog } from '../data/catalog.ts';
@@ -85,7 +86,7 @@ export function PlaylistPage() {
   const canEdit = isMember && Boolean(me?.emailVerified);
   // Only while they may: someone taken out of the playlist meanwhile leaves the editor.
   const isEditing = editing && canEdit;
-  const { role, visibility } = playlistFacts(playlist, { t, tn });
+  const facts = playlistFacts(playlist, { t, tn });
   const toggle = (songId: number) => {
     const last = playlist.songIds.lastIndexOf(songId);
     edits.edit(
@@ -160,11 +161,12 @@ export function PlaylistPage() {
             {playlist.name}
           </Title>
           <Group justify="space-between" wrap="nowrap">
-            <Text size="sm" c="dimmed">
-              {[tn('common.songs', playlist.songIds.length), role, visibility].join(
-                ' · ',
-              )}
-            </Text>
+            <Group gap={6} wrap="nowrap">
+              <Text size="sm" c="dimmed">
+                {facts.line}
+              </Text>
+              {facts.isPublic && <PublicMark />}
+            </Group>
             {!isEditing && playlist.songIds.length > 0 && (
               <Button
                 component={Link}

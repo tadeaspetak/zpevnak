@@ -54,7 +54,7 @@ entry that says which it replaces and what changed.
 
 - **D30. Search is the last icon at top right on every page**, song view included. It opens the
   overview with the search box focused. Moving it between pages was tried and rejected: a global
-  control must stay in one place. (2026-11-09)
+  control must stay in one place. (2026-11-09) _Settings sit beside search, on every page: D113._
 - **D31. Back says where it goes**, in its tooltip and accessible name ("Back to Vršek 2026",
   "Back to search results", "Back home"; Czech "Zpět: …", because the preposition would change
   with the noun). Back from a song returns to the page it was opened from; search results keep
@@ -203,7 +203,7 @@ entry that says which it replaces and what changed.
 - **D79. Playlist details by who's looking.** Search results and the overview show a playlist
   briefly: its songs and whose it is ("3 písničky · od Tadeáš"), or the viewer's own role. The
   playlists page adds visibility, and for the playlist's own people how many souputníci it has;
-  the server sends that count to nobody else. Replaces D70's "shared (n)". (2026-11-09) _"od {name}" became "Vlastník: {name}": D111._
+  the server sends that count to nobody else. Replaces D70's "shared (n)". (2026-11-09) _"od {name}" became "Vlastník: {name}": D111._ _Playlists are grouped by whose, and someone else's names the owner alone: D112._
 - **D80. Collaborators are souputníci** (listmates in English, made up on purpose: "bandmate"
   would claim band membership): a songbook with attitude, not an
   office. The role is Souputník / Listmate, the people dialog is Souputníci / Listmates, and an invite reads
@@ -366,6 +366,20 @@ From the first UX walk of the song view and a playlist session (2026-11-10): _In
   is the page's first line, not squeezed into the header. A playlist made or joined on this
   device is among the recent ones on the overview. The owner is "Vlastník: {name}".
   (2026-11-11)
+- **D112. Playlists are listed by whose they are,** not in a table: **Moje**, **Sdílené se
+  mnou**, **Veřejné** (empty ones left out), the most recent first in each. Under the name: the
+  songs; for someone else's, the owner's name alone (as an artist under a song); for one's own,
+  the listmates when there are any. Public is a small globe; private, the normal case, is
+  unmarked. The same line wherever a playlist shows (`playlistFacts`). (2026-11-11)
+- **D113. One settings panel, everywhere; sharing in boxes; the account in tabs.** The sliders
+  icon beside search on every page opens every setting on this device: how songs are shown
+  (size, chords, columns, diagrams), full screen as a switch (so it says whether it's on; the
+  separate icon left the song toolbar), and language and look. The sharing dialog sets who sees
+  the playlist with Soukromý | Veřejný, then gives each link a box saying what it gives: an eye
+  for "Odkaz na prohlížení", a pencil for "Pozvánka pro souputníky", under the listmates; the
+  link shows small, so a new one visibly replaces the old. The account page puts log out beside
+  the name; admins get tabs, "Moje písničky" and "Uživatelé" (the old users page; its address
+  redirects there). (2026-11-11)
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed

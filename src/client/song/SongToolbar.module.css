@@ -62,26 +62,3 @@
     margin-right: 0;
   }
 }
-
-.hint {
-  white-space: normal;
-  text-transform: none;
-  font-weight: 400;
-  line-height: 1.4;
-}
-
-/* On a phone the toolbar is full: full screen moves from its button into the ⋯ menu.
-   Exactly one of the two shows at any width. */
-.narrowOnly {
-  display: none;
-}
-
-@media (max-width: 30em) {
-  .wideOnly {
-    display: none;
-  }
-
-  .narrowOnly {
-    display: flex;
-  }
-}

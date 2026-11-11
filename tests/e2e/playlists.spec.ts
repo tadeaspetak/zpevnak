@@ -12,8 +12,8 @@ test('an owner takes a listmate out by mistake, takes it back, and replaces the 
   await owner.goto(`/playlist/${playlist.id}`);
   await owner.getByRole('button', { name: 'Sharing' }).click();
   // The invite link, asked for as the dialog opens: the same one the bandmate joined by.
-  const link = owner.getByRole('textbox', { name: 'Copy link' });
-  await expect(link).toHaveValue(new RegExp(`/join/${token}$`));
+  const link = owner.getByText(new RegExp(`/join/${token}$`));
+  await expect(link).toBeVisible();
   await owner.getByRole('button', { name: 'Remove Erik Editor' }).click();
   // The toast names the person, in the reader's language (it once crashed outside them).
   await expect(
@@ -25,11 +25,13 @@ test('an owner takes a listmate out by mistake, takes it back, and replaces the 
   // A new link asks first (the old one stops working for everyone), then says so.
   await owner.getByRole('button', { name: 'Make a new link' }).click();
   await owner.getByRole('button', { name: 'Cancel' }).click();
-  await expect(link).toHaveValue(new RegExp(`/join/${token}$`));
+  await expect(link).toBeVisible();
   await owner.getByRole('button', { name: 'Make a new link' }).click();
   await owner.getByRole('button', { name: 'Make a new one' }).click();
   await expect(owner.getByText('The new link is ready.', { exact: false })).toBeVisible();
-  await expect(link).not.toHaveValue(new RegExp(`/join/${token}$`));
+  // The new link replaces the old one where it shows.
+  await expect(link).toBeHidden();
+  await expect(owner.getByText(/\/join\/\S+$/)).toBeVisible();
 });
 
 test('a listmate taken out while editing leaves the editor', async ({ browser }) => {
@@ -129,13 +131,13 @@ test('an owner shares a public playlist to look at, and the invite offers just l
   const { playlist, token } = await playlistWithInvite(owner, `Náves ${Date.now()}`);
   await owner.goto(`/playlist/${playlist.id}`);
   await owner.getByRole('button', { name: 'Sharing' }).click();
-  // Flips once the server has it.
-  const isPublic = owner.getByLabel(/^Public/);
-  await isPublic.click({ force: true });
-  await expect(isPublic).toBeChecked();
+  await expect(owner.getByText('Only listmates see it.')).toBeVisible();
+  await owner.getByText('Public', { exact: true }).click();
+  // Once the server has it: who sees it, and the link just to look.
   await expect(
     owner.getByText('Anyone with the link can look', { exact: false }),
   ).toBeVisible();
+  await expect(owner.getByText('Link to look')).toBeVisible();
 
   // Someone signed out with the invite: they can join, or only look.
   const stranger = await browser.newPage();

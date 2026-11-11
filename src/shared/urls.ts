@@ -42,8 +42,8 @@ export const url = {
   join: (token: string) => `/join/${token}`,
   queue: () => '/queue',
   review: (id: number) => `/queue/${id}`,
-  account: () => '/account',
-  adminUsers: () => '/admin/users',
+  /** `users`: the admin's tab of everyone's accounts. */
+  account: (tab?: 'users') => (tab ? `/account?tab=${tab}` : '/account'),
   logIn: (next?: string) => (next ? `/login?next=${encodeURIComponent(next)}` : '/login'),
   signUp: (next?: string) =>
     next ? `/signup?next=${encodeURIComponent(next)}` : '/signup',

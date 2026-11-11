@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 
 import classes from './PageHeader.module.css';
 import { SearchButton } from './SearchButton.tsx';
+import { SettingsButton } from './SettingsButton.tsx';
 import { IconButton } from './IconButton.tsx';
 
 type Props = {
@@ -12,7 +13,8 @@ type Props = {
   backTo: string;
   /** Where that is, in words: the tooltip and the accessible name ("Back to playlists"). */
   backLabel: string;
-  /** This page's own actions. They sit left of a divider; search sits right of it (D30). */
+  /** This page's own actions. They sit left of a divider; settings and search right of it
+   * (D30, D113). */
   actions?: ReactNode;
   /** The page's own column width, so the header lines up with it: wide for the editors. */
   width?: '48rem' | '80rem';
@@ -55,6 +57,7 @@ export function PageHeader({
           <Group gap={4} wrap="nowrap">
             {actions}
             {actions && <Divider orientation="vertical" my={6} mx={4} />}
+            <SettingsButton />
             <SearchButton />
           </Group>
         </Group>

@@ -22,14 +22,15 @@ import {
   IconWifiOff,
   IconX,
 } from '@tabler/icons-react';
-import { useMemo, useRef, type ReactNode } from 'react';
+import { useMemo, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { Footer } from '../components/Footer.tsx';
 import { PlaylistPill } from '../components/PlaylistPill.tsx';
+import { ListSection } from '../components/ListSection.tsx';
 import { PlaylistRow } from '../components/PlaylistRow.tsx';
 import { SearchResults, useSearchResults } from '../components/SearchResults.tsx';
 import { RefreshButton } from '../components/RefreshButton.tsx';
-import { SettingsButton } from '../components/SettingsModal.tsx';
+import { SettingsButton } from '../components/SettingsButton.tsx';
 import { SongRow } from '../components/SongRow.tsx';
 import { inSearch } from '#shared/songs.ts';
 import { useCatalog } from '../data/catalog.ts';
@@ -198,7 +199,7 @@ export function HomePage() {
         ) : (
           <Stack gap="xl" pt="sm">
             {recentPlaylistList.length > 0 && (
-              <Section
+              <ListSection
                 title={t('home.recentPlaylists')}
                 aside={
                   <Anchor component={Link} to={url.playlists()} size="sm">
@@ -209,18 +210,18 @@ export function HomePage() {
                 {recentPlaylistList.map((p) => (
                   <PlaylistRow key={p.id} playlist={p} />
                 ))}
-              </Section>
+              </ListSection>
             )}
 
             {recentSongList.length > 0 && (
-              <Section title={t('home.recentSongs')}>
+              <ListSection title={t('home.recentSongs')}>
                 {recentSongList.map((song) => (
                   <SongRow key={song.id} song={song} to={url.song(song)} />
                 ))}
-              </Section>
+              </ListSection>
             )}
 
-            <Section
+            <ListSection
               title={t('home.allSongs')}
               aside={
                 <Text size="sm" c="dimmed">
@@ -237,40 +238,12 @@ export function HomePage() {
                   <SongRow key={song.id} song={song} to={url.song(song)} />
                 ))
               )}
-            </Section>
+            </ListSection>
           </Stack>
         )}
         <Footer />
       </Container>
       <PlaylistPill />
     </div>
-  );
-}
-
-/**
- * A titled group of rows. The title is a real heading, bold and set on a rule, so it reads as
- * structure and not as one more row.
- */
-function Section({
-  title,
-  aside,
-  children,
-}: {
-  title: string;
-  aside?: ReactNode;
-  children: ReactNode;
-}) {
-  return (
-    <section>
-      <Group justify="space-between" align="baseline" className={classes.sectionHead}>
-        <Title order={2} fz="lg" fw={700}>
-          {title}
-        </Title>
-        {aside}
-      </Group>
-      <Stack gap={0} mx="-md">
-        {children}
-      </Stack>
-    </section>
   );
 }

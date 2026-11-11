@@ -1,17 +1,18 @@
 import {
+  Anchor,
   Button,
   Divider,
   Group,
   Loader,
   Modal,
+  Paper,
+  SegmentedControl,
   Stack,
-  Switch,
   Text,
-  TextInput,
   Title,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconDoorExit, IconRefresh, IconX } from '@tabler/icons-react';
+import { IconDoorExit, IconEye, IconPencil, IconX } from '@tabler/icons-react';
 import { type ReactNode, type Ref, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { url } from '#shared/urls.ts';
@@ -100,100 +101,46 @@ export function ShareModal({ playlist, opened, onClose }: Props) {
 
   return (
     <Modal opened={opened} onClose={close} title={t('playlists.share')}>
-      <Stack gap="lg">
-        {isOwner && (
-          <Section title={t('playlists.whoSees')}>
-            <Switch
-              label={t('playlists.isPublic')}
-              checked={playlist.isPublic}
-              onChange={(e) => edits.setPublic(e.currentTarget.checked)}
+      <Stack gap="xl">
+        <Section title={t('playlists.whoSees')}>
+          {isOwner ? (
+            <SegmentedControl
+              fullWidth
+              aria-label={t('playlists.whoSees')}
+              value={playlist.isPublic ? 'public' : 'private'}
+              onChange={(v) => edits.setPublic(v === 'public')}
+              data={[
+                { value: 'private', label: t('playlists.visibilityPrivate') },
+                { value: 'public', label: t('playlists.visibilityPublic') },
+              ]}
             />
-            {playlist.isPublic && (
-              <Stack gap="xs" mt="xs" align="flex-start">
-                <Text size="sm" c="dimmed">
-                  {t('playlists.viewLinkHint')}
-                </Text>
-                {/* Secondary: the invite below is the dialog's main act. */}
-                <ShareLinkButton
-                  link={viewLink}
-                  title={playlist.name}
-                  copyLabel={t('playlists.copyViewLink')}
-                  sendLabel={t('playlists.sendViewLink')}
-                  variant="default"
-                />
-              </Stack>
-            )}
-          </Section>
-        )}
-
-        <Section title={t('playlists.people')} ref={people}>
-          {isOwner && (
-            <Stack gap="xs" mb="xs">
-              <Text size="sm">{t('playlists.inviteIntro')}</Text>
-              <Group gap="xs" wrap="nowrap" align="flex-end">
-                <TextInput
-                  readOnly
-                  value={inviteLink}
-                  aria-label={t('playlists.copyLink')}
-                  style={{ flex: 1 }}
-                  onFocus={(e) => e.currentTarget.select()}
-                  rightSection={invite.isPending ? <Loader size="xs" /> : null}
-                />
-                <ShareLinkButton
-                  link={inviteLink}
-                  title={playlist.name}
-                  copyLabel={t('playlists.copyLink')}
-                  sendLabel={t('playlists.sendLink')}
-                />
-              </Group>
-              {/* The old link stops working for everyone it was sent to: ask first, then
-                  say so. */}
-              {confirmingReset ? (
-                <Stack gap="xs">
-                  <Text size="sm">{t('playlists.resetHint')}</Text>
-                  <Group gap="xs">
-                    <Button
-                      variant="default"
-                      size="xs"
-                      onClick={() => setConfirmingReset(false)}
-                    >
-                      {t('common.cancel')}
-                    </Button>
-                    <Button
-                      size="xs"
-                      color="red"
-                      loading={reset.isPending}
-                      onClick={() =>
-                        reset.mutate(
-                          { id: playlist.id },
-                          { onSuccess: () => setConfirmingReset(false) },
-                        )
-                      }
-                    >
-                      {t('playlists.resetConfirm')}
-                    </Button>
-                  </Group>
-                </Stack>
-              ) : (
-                <Stack gap={4} align="flex-start">
-                  <Button
-                    variant="default"
-                    size="xs"
-                    leftSection={<IconRefresh size={14} />}
-                    onClick={() => setConfirmingReset(true)}
-                  >
-                    {t('playlists.resetLink')}
-                  </Button>
-                  {reset.isSuccess && (
-                    <Text size="sm" fw={600} role="status">
-                      {t('playlists.resetDone')}
-                    </Text>
-                  )}
-                </Stack>
-              )}
-              <ErrorText error={invite.error ?? reset.error} />
-            </Stack>
+          ) : null}
+          <Text size="sm" c="dimmed">
+            {playlist.isPublic ? t('playlists.viewLinkHint') : t('playlists.privateHint')}
+          </Text>
+          {playlist.isPublic && (
+            <LinkBox
+              icon={<IconEye size={18} />}
+              title={t('playlists.viewLinkTitle')}
+              description={t('playlists.viewLinkWhat')}
+              link={viewLink}
+            >
+              <ShareLinkButton
+                link={viewLink}
+                title={playlist.name}
+                copyLabel={t('playlists.copyViewLink')}
+                sendLabel={t('playlists.sendViewLink')}
+                variant="default"
+              />
+            </LinkBox>
           )}
+        </Section>
+
+        <Section
+          title={t('playlists.people')}
+          aside={t('playlists.peopleHint')}
+          ref={people}
+        >
           {members.isLoading && <Loader size="sm" />}
           {shown?.map((person) => (
             <Group key={person.id} justify="space-between" wrap="nowrap">
@@ -225,6 +172,69 @@ export function ShareModal({ playlist, opened, onClose }: Props) {
             />
           ))}
           <ErrorText error={members.error ?? remove.error} />
+
+          {isOwner && (
+            <LinkBox
+              icon={<IconPencil size={18} />}
+              title={t('playlists.inviteTitle')}
+              description={t('playlists.inviteIntro')}
+              link={inviteLink}
+            >
+              {/* The old link stops working for everyone it was sent to: ask first, then
+                  say so. */}
+              {confirmingReset ? (
+                <Stack gap="xs">
+                  <Text size="sm">{t('playlists.resetHint')}</Text>
+                  <Group gap="xs">
+                    <Button
+                      variant="default"
+                      size="xs"
+                      onClick={() => setConfirmingReset(false)}
+                    >
+                      {t('common.cancel')}
+                    </Button>
+                    <Button
+                      size="xs"
+                      color="red"
+                      loading={reset.isPending}
+                      onClick={() =>
+                        reset.mutate(
+                          { id: playlist.id },
+                          { onSuccess: () => setConfirmingReset(false) },
+                        )
+                      }
+                    >
+                      {t('playlists.resetConfirm')}
+                    </Button>
+                  </Group>
+                </Stack>
+              ) : (
+                <Group gap="md" wrap="wrap" align="center">
+                  <ShareLinkButton
+                    link={inviteLink}
+                    title={playlist.name}
+                    copyLabel={t('playlists.copyLink')}
+                    sendLabel={t('playlists.sendLink')}
+                  />
+                  <Anchor
+                    component="button"
+                    type="button"
+                    size="sm"
+                    c="dimmed"
+                    onClick={() => setConfirmingReset(true)}
+                  >
+                    {t('playlists.resetLink')}
+                  </Anchor>
+                </Group>
+              )}
+              {reset.isSuccess && !confirmingReset && (
+                <Text size="sm" fw={600} role="status">
+                  {t('playlists.resetDone')}
+                </Text>
+              )}
+              <ErrorText error={invite.error ?? reset.error} />
+            </LinkBox>
+          )}
         </Section>
 
         {playlist.role === 'collaborator' && (
@@ -238,20 +248,66 @@ export function ShareModal({ playlist, opened, onClose }: Props) {
   );
 }
 
+/**
+ * One link and what it gives whoever opens it: a box each, the two never confused (D113).
+ * The link itself shows small, so a new one visibly replaces the old.
+ */
+function LinkBox({
+  icon,
+  title,
+  description,
+  link,
+  children,
+}: {
+  icon: ReactNode;
+  title: string;
+  description: string;
+  link: string;
+  children: ReactNode;
+}) {
+  return (
+    <Paper withBorder p="sm" radius="md">
+      <Stack gap="xs">
+        <Group gap="xs" wrap="nowrap">
+          {icon}
+          <Text fw={600} size="sm">
+            {title}
+          </Text>
+        </Group>
+        <Text size="sm">{description}</Text>
+        <Text size="xs" c="dimmed" truncate>
+          {link || '…'}
+        </Text>
+        {children}
+      </Stack>
+    </Paper>
+  );
+}
+
 function Section({
   title,
+  aside,
   children,
   ref,
 }: {
   title: string;
+  /** A word on what the section is, beside its title. */
+  aside?: string;
   children: ReactNode;
   ref?: Ref<HTMLDivElement>;
 }) {
   return (
-    <Stack gap={4} ref={ref}>
-      <Title order={3} fz="sm" fw={700}>
-        {title}
-      </Title>
+    <Stack gap="xs" ref={ref}>
+      <Group gap="xs" align="baseline">
+        <Title order={3} fz="md" fw={700}>
+          {title}
+        </Title>
+        {aside && (
+          <Text size="sm" c="dimmed">
+            {aside}
+          </Text>
+        )}
+      </Group>
       {children}
     </Stack>
   );

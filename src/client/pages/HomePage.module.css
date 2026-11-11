@@ -20,9 +20,3 @@
 .brand {
   letter-spacing: -0.01em;
 }
-
-.sectionHead {
-  padding-bottom: var(--mantine-spacing-xs);
-  margin-bottom: var(--mantine-spacing-xs);
-  border-bottom: 1px solid var(--mantine-color-default-border);
-}

@@ -1,12 +1,10 @@
 import {
   Alert,
-  Anchor,
   Button,
   Group,
   Modal,
   Stack,
   Switch,
-  Table,
   Text,
   TextInput,
 } from '@mantine/core';
@@ -19,38 +17,34 @@ import { Page } from '../components/Page.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
 import { PlaylistRow } from '../components/PlaylistRow.tsx';
 import { putPlaylist, useCatalog } from '../data/catalog.ts';
-import { playlistFacts } from '../data/playlistFacts.ts';
+import { groupPlaylists } from '../data/playlistFacts.ts';
+import { ListSection } from '../components/ListSection.tsx';
 import { touchPlaylist, usePlayer } from '../data/session.ts';
-import { usePhone } from '../hooks/useBreakpoints.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc } from '../trpc.ts';
 import { url } from '#shared/urls.ts';
-import classes from './PlaylistsPage.module.css';
 
 /**
- * Every playlist the viewer can open, in one list: their own, those they collaborate on, and
- * everyone else's public ones, most recently played first. A table where it fits; on a phone,
- * rows with the same facts under the name.
+ * Every playlist the viewer can open, by whose it is (D112): their own, those shared with them,
+ * and everyone else's public ones; in each, the most recently played first.
  */
 export function PlaylistsPage() {
-  const { t, tn } = useI18n();
-  const navigate = useNavigate();
+  const { t } = useI18n();
   const { me } = useMe();
   const { playlists } = useCatalog();
   const { recentPlaylists } = usePlayer();
-  const wide = !usePhone();
   const [creating, { open, close }] = useDisclosure(false);
 
-  const sorted = useMemo(
-    () =>
-      [...playlists.values()].sort(
-        (a, b) =>
-          (recentPlaylists[b.id] ?? 0) - (recentPlaylists[a.id] ?? 0) ||
-          b.updatedAt.localeCompare(a.updatedAt),
-      ),
+  const { mine, shared, others } = useMemo(
+    () => groupPlaylists(playlists.values(), recentPlaylists),
     [playlists, recentPlaylists],
   );
+  const sections = [
+    { title: t('playlists.mine'), list: mine },
+    { title: t('playlists.sharedWithMe'), list: shared },
+    { title: t('playlists.public'), list: others },
+  ].filter((section) => section.list.length > 0);
 
   return (
     <>
@@ -83,57 +77,16 @@ export function PlaylistsPage() {
               </Group>
             </Alert>
           )}
-          {sorted.length === 0 ? (
+          {sections.length === 0 ? (
             <Text c="dimmed">{t('playlists.none')}</Text>
-          ) : wide ? (
-            <Table highlightOnHover verticalSpacing="sm">
-              <Table.Thead>
-                <Table.Tr>
-                  <Table.Th>{t('playlists.colName')}</Table.Th>
-                  <Table.Th>{t('playlists.colRole')}</Table.Th>
-                  <Table.Th>{t('playlists.colVisibility')}</Table.Th>
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>
-                {sorted.map((p) => {
-                  const { role, visibility } = playlistFacts(p, { t, tn });
-                  return (
-                    <Table.Tr
-                      key={p.id}
-                      className={classes.row}
-                      onClick={(e) => {
-                        // The title link handles its own click; the rest of the row follows it.
-                        if (!(e.target as HTMLElement).closest('a')) {
-                          navigate(url.playlist(p));
-                        }
-                      }}
-                    >
-                      <Table.Td>
-                        <Anchor
-                          component={Link}
-                          to={url.playlist(p)}
-                          fw={600}
-                          c="inherit"
-                        >
-                          {p.name}
-                        </Anchor>
-                        <Text size="sm" c="dimmed">
-                          {tn('common.songs', p.songIds.length)}
-                        </Text>
-                      </Table.Td>
-                      <Table.Td>{role}</Table.Td>
-                      <Table.Td>{visibility}</Table.Td>
-                    </Table.Tr>
-                  );
-                })}
-              </Table.Tbody>
-            </Table>
           ) : (
-            <Stack gap={0} mx="-md">
-              {sorted.map((p) => (
-                <PlaylistRow key={p.id} playlist={p} full />
-              ))}
-            </Stack>
+            sections.map((section) => (
+              <ListSection key={section.title} title={section.title}>
+                {section.list.map((p) => (
+                  <PlaylistRow key={p.id} playlist={p} />
+                ))}
+              </ListSection>
+            ))
           )}
         </Stack>
       </Page>

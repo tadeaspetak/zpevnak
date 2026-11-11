@@ -2,11 +2,7 @@ import {
   ActionIcon,
   Divider,
   Group,
-  Indicator,
   Menu,
-  Popover,
-  Stack,
-  Switch,
   Text,
   Tooltip,
   UnstyledButton,
@@ -17,24 +13,20 @@ import {
   IconClef,
   IconDots,
   IconEdit,
-  IconMaximize,
-  IconMinimize,
   IconMessageReport,
   IconMinus,
   IconPlaylistAdd,
   IconPlus,
   IconTrash,
-  IconAdjustmentsHorizontal,
 } from '@tabler/icons-react';
 import { Link } from 'react-router';
 import { AddToPlaylistModal } from '../components/AddToPlaylistModal.tsx';
 import { DeleteSongModal } from '../components/DeleteSongModal.tsx';
 import { mailtoAuthor } from '../contact.ts';
 import { SearchButton } from '../components/SearchButton.tsx';
-import { FONT_SCALES, usePrefs } from '../data/prefs.ts';
+import { SettingsButton } from '../components/SettingsButton.tsx';
+import { usePrefs } from '../data/prefs.ts';
 import type { SongRecord } from '../data/store.ts';
-import { useWide } from '../hooks/useBreakpoints.ts';
-import { useFullscreen } from '../hooks/useFullscreen.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { url } from '#shared/urls.ts';
 import classes from './SongToolbar.module.css';
@@ -74,8 +66,6 @@ export function SongToolbar(props: Props) {
   } = props;
   const { t } = useI18n();
   const prefs = usePrefs();
-  const fullscreen = useFullscreen();
-  const wide = useWide();
   const [adding, { open: openAdd, close: closeAdd }] = useDisclosure(false);
   const [deleting, { open: openDelete, close: closeDelete }] = useDisclosure(false);
 
@@ -146,110 +136,6 @@ export function SongToolbar(props: Props) {
             </ActionIcon>
           </Group>
 
-          <Popover position="bottom-end" shadow="md" withArrow width={300}>
-            <Popover.Target>
-              <ActionIcon
-                size="xl"
-                aria-label={
-                  prefs.showChords
-                    ? t('song.display')
-                    : `${t('song.display')}: ${t('song.chordsHidden')}`
-                }
-                aria-haspopup="dialog"
-              >
-                {/* Hidden chords are remembered too: a dot says so, from the toolbar. */}
-                <Indicator size={8} offset={2} disabled={prefs.showChords}>
-                  <IconAdjustmentsHorizontal size={22} />
-                </Indicator>
-              </ActionIcon>
-            </Popover.Target>
-            <Popover.Dropdown>
-              {/* How the song is shown, on this device: everything a reader tunes in one place. */}
-              <Stack gap="sm">
-                <Group justify="space-between" wrap="nowrap">
-                  <Text size="sm" fw={500} style={{ whiteSpace: 'nowrap' }}>
-                    {t('song.textSize')}
-                  </Text>
-                  <Group
-                    gap={0}
-                    wrap="nowrap"
-                    role="group"
-                    aria-label={t('song.textSize')}
-                  >
-                    <ActionIcon
-                      size="lg"
-                      onClick={() => prefs.stepFont(-1)}
-                      disabled={prefs.fontScale <= (FONT_SCALES[0] ?? 0)}
-                      aria-label={t('song.smaller')}
-                    >
-                      <IconMinus size={16} />
-                    </ActionIcon>
-                    <Text size="sm" fw={600} w="3rem" ta="center" aria-live="polite">
-                      {t('song.textSizeValue', {
-                        percent: Math.round(prefs.fontScale * 100),
-                      })}
-                    </Text>
-                    <ActionIcon
-                      size="lg"
-                      onClick={() => prefs.stepFont(1)}
-                      disabled={prefs.fontScale >= (FONT_SCALES.at(-1) ?? 0)}
-                      aria-label={t('song.larger')}
-                    >
-                      <IconPlus size={16} />
-                    </ActionIcon>
-                  </Group>
-                </Group>
-                <Switch
-                  label={t('song.chords')}
-                  checked={prefs.showChords}
-                  onChange={(e) => prefs.setShowChords(e.currentTarget.checked)}
-                />
-                {/* Columns only ever apply on a wide screen (D25); a phone has nothing to switch. */}
-                {wide && (
-                  <Switch
-                    label={t('song.columns')}
-                    description={t('song.columnsHint')}
-                    checked={prefs.showColumns}
-                    onChange={(e) => prefs.setShowColumns(e.currentTarget.checked)}
-                  />
-                )}
-                {hasDiagrams && (
-                  <Switch
-                    label={t('song.diagrams')}
-                    checked={prefs.showChords && prefs.showDiagrams && semitones === 0}
-                    // Diagrams draw chords: with chords hidden or transposed, there's nothing to draw.
-                    disabled={!prefs.showChords || semitones !== 0}
-                    description={
-                      !prefs.showChords
-                        ? t('song.diagramsNeedChords')
-                        : semitones !== 0
-                          ? t('song.diagramsNeedOriginalKey')
-                          : undefined
-                    }
-                    onChange={(e) => prefs.setShowDiagrams(e.currentTarget.checked)}
-                  />
-                )}
-              </Stack>
-            </Popover.Dropdown>
-          </Popover>
-
-          {fullscreen.supported && (
-            <ActionIcon
-              size="xl"
-              onClick={fullscreen.toggle}
-              aria-label={
-                fullscreen.active ? t('song.exitFullscreen') : t('song.fullscreen')
-              }
-              className={classes.wideOnly}
-            >
-              {fullscreen.active ? (
-                <IconMinimize size={22} />
-              ) : (
-                <IconMaximize size={22} />
-              )}
-            </ActionIcon>
-          )}
-
           <Menu position="bottom-end" width={260}>
             <Menu.Target>
               <ActionIcon size="xl" aria-label={t('song.more')}>
@@ -257,27 +143,6 @@ export function SongToolbar(props: Props) {
               </ActionIcon>
             </Menu.Target>
             <Menu.Dropdown>
-              {fullscreen.supported ? (
-                <Menu.Item
-                  className={classes.narrowOnly}
-                  leftSection={
-                    fullscreen.active ? (
-                      <IconMinimize size={16} />
-                    ) : (
-                      <IconMaximize size={16} />
-                    )
-                  }
-                  onClick={fullscreen.toggle}
-                >
-                  {fullscreen.active ? t('song.exitFullscreen') : t('song.fullscreen')}
-                </Menu.Item>
-              ) : (
-                !fullscreen.standalone && (
-                  <Menu.Label className={classes.hint}>
-                    {t('song.fullscreenHint')}
-                  </Menu.Label>
-                )
-              )}
               {canAddToPlaylist && (
                 <Menu.Item leftSection={<IconPlaylistAdd size={16} />} onClick={openAdd}>
                   {t('song.addToPlaylist')}
@@ -320,9 +185,10 @@ export function SongToolbar(props: Props) {
               )}
             </Menu.Dropdown>
           </Menu>
-          {/* Song controls to the left, the whole app to the right: search sits last on
-              every page's header, so it is always in the same place. */}
+          {/* Song controls to the left, the whole app to the right: settings, then search,
+              last on every page's header, so they are always in the same place. */}
           <Divider orientation="vertical" my={10} />
+          <SettingsButton size="xl" song={{ hasDiagrams, semitones }} />
           <SearchButton size="xl" />
         </Group>
       </header>

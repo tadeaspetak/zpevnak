@@ -1,12 +1,11 @@
 import { useEffect, useMemo } from 'react';
-import { Route, Routes, useLocation } from 'react-router';
+import { Navigate, Route, Routes, useLocation } from 'react-router';
 import { SearchOverlay } from './components/SearchOverlay.tsx';
 import { syncCatalog } from './data/catalog.ts';
 import { openSearch } from './data/omnibox.ts';
 import { useKeys } from './hooks/useKeys.ts';
 import { useMe } from './hooks/useMe.ts';
 import { AccountPage } from './pages/AccountPage.tsx';
-import { AdminUsersPage } from './pages/AdminUsersPage.tsx';
 import {
   ForgotPasswordPage,
   LogInPage,
@@ -62,7 +61,11 @@ export function App() {
         <Route path={routes.queue} element={<QueuePage />} />
         <Route path={routes.review} element={<ReviewPage />} />
         <Route path={routes.account} element={<AccountPage />} />
-        <Route path={routes.adminUsers} element={<AdminUsersPage />} />
+        {/* Users became a tab of the account page (D113); old links still land there. */}
+        <Route
+          path={routes.adminUsers}
+          element={<Navigate to={url.account('users')} replace />}
+        />
         <Route path={routes.logIn} element={<LogInPage />} />
         <Route path={routes.signUp} element={<SignUpPage />} />
         <Route path={routes.forgotPassword} element={<ForgotPasswordPage />} />
