@@ -134,8 +134,9 @@ function textBoxes(copy: HTMLElement): Box[] {
  * song stays in one.
  *
  * Every change that moves the answer resizes either the copy (width, text size, chords,
- * transposition) or the page (a bar appearing changes its padding), so it is measured on
- * those. It can't flip back and forth: switching to columns only ever makes the page shorter.
+ * transposition) or the page (a bar appearing changes its padding), or slides a bar in or out
+ * of the way (D109), so it is measured on those. It can't flip back and forth: switching to
+ * columns only ever makes the page shorter.
  */
 function useColumnsFit(enabled: boolean) {
   const copy = useRef<HTMLDivElement>(null);
@@ -157,9 +158,17 @@ function useColumnsFit(enabled: boolean) {
     observer.observe(copyEl);
     observer.observe(document.body);
     window.addEventListener('resize', measure);
+    // Once a bar has finished sliding: measured mid-way, it would be in neither place.
+    const slid = (e: TransitionEvent) => {
+      if (e.target instanceof Element && e.target.matches('[data-bottom-overlay]')) {
+        measure();
+      }
+    };
+    document.addEventListener('transitionend', slid);
     return () => {
       observer.disconnect();
       window.removeEventListener('resize', measure);
+      document.removeEventListener('transitionend', slid);
     };
   }, [enabled]);
   return { copy, fits };

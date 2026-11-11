@@ -8,6 +8,12 @@
   border-top: 1px solid var(--mantine-color-default-border);
   padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
   padding-bottom: max(var(--mantine-spacing-xs), env(safe-area-inset-bottom));
+  transition: transform 180ms ease;
+
+  /* Away with the toolbar, for just the song (D109). Swipes and arrows still go on. */
+  &[data-hidden] {
+    transform: translateY(100%);
+  }
 }
 
 .inner {

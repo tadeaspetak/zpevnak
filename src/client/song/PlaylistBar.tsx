@@ -11,9 +11,14 @@ type Props = {
   nextSongId: number | undefined;
   onPrev: (() => void) | undefined;
   onNext: (() => void) | undefined;
+  /** Out of the way, with the toolbar: scrolled into the song, or the reader tapped it. */
+  hidden: boolean;
 };
 
-/** Previous and next, always in reach at the bottom while playing a playlist. */
+/**
+ * Previous and next, at the bottom while playing a playlist. It goes away with the toolbar
+ * (D109); swiping and the arrow keys still move through the playlist meanwhile.
+ */
 export function PlaylistBar({
   name,
   position,
@@ -21,12 +26,18 @@ export function PlaylistBar({
   nextSongId,
   onPrev,
   onNext,
+  hidden,
 }: Props) {
   const { t } = useI18n();
   const { songs } = useCatalog();
   const nextSong = nextSongId === undefined ? undefined : songs.get(nextSongId);
   return (
-    <nav className={classes.bar} aria-label={name} data-bottom-overlay>
+    <nav
+      className={classes.bar}
+      aria-label={name}
+      data-bottom-overlay
+      data-hidden={hidden || undefined}
+    >
       <Group gap="xs" wrap="nowrap" className={classes.inner}>
         <ActionIcon
           variant="default"

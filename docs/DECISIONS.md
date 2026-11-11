@@ -279,7 +279,7 @@ From the first UX walk of the song view and a playlist session (2026-11-10):
 - **D93. A tap on the song hides the toolbar, or brings it back,** for when things get tight,
   like an e-book reader. Scrolling still hides and shows it as before, and takes over again
   after a tap. No button for it: the phone toolbar has no room. A tap on a link or button, the
-  end of a text selection, or a swipe to the next song doesn't count. (2026-11-10)
+  end of a text selection, or a swipe to the next song doesn't count. (2026-11-10) _The playlist bar goes with it: D109._
 - **D94. Chords above the lyrics are converted, on offer.** Text pasted from chord sites puts
   chords on a line of their own; the editor spots such lines and offers "Převést do ChordPro?".
   Converting puts each chord inside the line below at its column, turns `[Verse 1]`, `Refrén:`,
@@ -341,6 +341,11 @@ From the first UX walk of the song view and a playlist session (2026-11-10):
   screen goes into two columns when it fits and the reader has them on (the switch is always in
   Display). `{columns: n}` is accepted and ignored; `{column_break}` stays, as the author's word
   on where a song splits well. (2026-11-10)
+- **D109. The playlist bar goes away with the toolbar,** on the same tap or scroll (D93), for
+  just the song: swipes and the arrow keys still go to the previous and next song. Out of the
+  way it no longer counts against two columns (D88): the check runs again once a bar has slid,
+  so a song that fits without the bar goes into columns, and back to one when the bar returns.
+  The page keeps its bottom padding, so hiding never shortens it mid-scroll. (2026-11-11)
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed

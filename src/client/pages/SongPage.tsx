@@ -244,7 +244,8 @@ function SongPlayer({
         hidden={toolbar.hidden}
       />
       <SongStatusBanner song={song} fixTo={canEdit ? url.editSong(song.id) : undefined} />
-      {/* A tap on the song hides the toolbar, or brings it back, when things get tight (D93).
+      {/* A tap on the song hides the toolbar and the playlist bar, or brings them back, when
+          things get tight (D93, D109).
           A pointer convenience on top of scrolling, which does the same, so no key of its own. */}
       <div
         onClick={(e) => {
@@ -274,6 +275,7 @@ function SongPlayer({
           nextSongId={steps?.nextSongId ?? undefined}
           onPrev={prev}
           onNext={next}
+          hidden={toolbar.hidden}
         />
       )}
       {showPill && <PlaylistPill />}
