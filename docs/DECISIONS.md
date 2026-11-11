@@ -380,6 +380,13 @@ From the first UX walk of the song view and a playlist session (2026-11-10): _In
   link shows small, so a new one visibly replaces the old. The account page puts log out beside
   the name; admins get tabs, "Moje písničky" and "Uživatelé" (the old users page; its address
   redirects there). (2026-11-11)
+- **D114. The sharing dialog, plainer** (refines D111, D113). Titled with the playlist
+  ("Sdílení playlistu „…“"). Each link is a read-only field named by what it gives (an eye:
+  "Odkaz na prohlížení"; a pencil: "Odkaz pro souputníky"), with a copy button inside it; no
+  share sheet. "Souputníci" is a heading with a sentence under it, then the people, then what
+  the invite does and its field, where a second icon makes a new link. That asks first, in a
+  small popover on the button, rather than offering an undo: the old link is dead for everyone
+  it was sent to, and taking it back would need the server to keep it. (2026-11-11)
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed

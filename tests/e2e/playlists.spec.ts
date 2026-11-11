@@ -12,8 +12,8 @@ test('an owner takes a listmate out by mistake, takes it back, and replaces the 
   await owner.goto(`/playlist/${playlist.id}`);
   await owner.getByRole('button', { name: 'Sharing' }).click();
   // The invite link, asked for as the dialog opens: the same one the bandmate joined by.
-  const link = owner.getByText(new RegExp(`/join/${token}$`));
-  await expect(link).toBeVisible();
+  const link = owner.getByRole('textbox', { name: 'Link for listmates' });
+  await expect(link).toHaveValue(new RegExp(`/join/${token}$`));
   await owner.getByRole('button', { name: 'Remove Erik Editor' }).click();
   // The toast names the person, in the reader's language (it once crashed outside them).
   await expect(
@@ -25,13 +25,13 @@ test('an owner takes a listmate out by mistake, takes it back, and replaces the 
   // A new link asks first (the old one stops working for everyone), then says so.
   await owner.getByRole('button', { name: 'Make a new link' }).click();
   await owner.getByRole('button', { name: 'Cancel' }).click();
-  await expect(link).toBeVisible();
+  await expect(link).toHaveValue(new RegExp(`/join/${token}$`));
   await owner.getByRole('button', { name: 'Make a new link' }).click();
   await owner.getByRole('button', { name: 'Make a new one' }).click();
   await expect(owner.getByText('The new link is ready.', { exact: false })).toBeVisible();
-  // The new link replaces the old one where it shows.
-  await expect(link).toBeHidden();
-  await expect(owner.getByText(/\/join\/\S+$/)).toBeVisible();
+  // The new link replaces the old one in its field.
+  await expect(link).not.toHaveValue(new RegExp(`/join/${token}$`));
+  await expect(link).toHaveValue(/\/join\/\S+$/);
 });
 
 test('a listmate taken out while editing leaves the editor', async ({ browser }) => {
@@ -64,7 +64,7 @@ test('a listmate without a confirmed email sees who is in, and can leave', async
   // Why they can't edit yet, and the way to fix it right there.
   await expect(fresh.getByRole('button', { name: 'Send the email again' })).toBeVisible();
   await fresh.getByRole('button', { name: 'Sharing' }).click();
-  await expect(fresh.getByText('Uršula Uživatelová')).toBeVisible();
+  await expect(fresh.getByRole('dialog').getByText('Uršula Uživatelová')).toBeVisible();
   await fresh.getByRole('button', { name: 'Leave playlist' }).click();
   await fresh.getByRole('button', { name: 'Leave playlist' }).last().click();
   await expect(fresh).toHaveURL(/\/playlists$/);
@@ -137,7 +137,9 @@ test('an owner shares a public playlist to look at, and the invite offers just l
   await expect(
     owner.getByText('Anyone with the link can look', { exact: false }),
   ).toBeVisible();
-  await expect(owner.getByText('Link to look')).toBeVisible();
+  await expect(owner.getByRole('textbox', { name: 'Link to view' })).toHaveValue(
+    new RegExp(`/playlist/${playlist.id}-`),
+  );
 
   // Someone signed out with the invite: they can join, or only look.
   const stranger = await browser.newPage();
