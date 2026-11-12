@@ -29,7 +29,6 @@ import { PlaylistPill } from '../components/PlaylistPill.tsx';
 import { ListSection } from '../components/ListSection.tsx';
 import { PlaylistRow } from '../components/PlaylistRow.tsx';
 import { SearchResults, useSearchResults } from '../components/SearchResults.tsx';
-import { RefreshButton } from '../components/RefreshButton.tsx';
 import { SettingsButton } from '../components/SettingsButton.tsx';
 import { SongRow } from '../components/SongRow.tsx';
 import { inSearch } from '#shared/songs.ts';
@@ -132,7 +131,6 @@ export function HomePage() {
                   </IconButton>
                 </Indicator>
               )}
-              <RefreshButton />
               <SettingsButton />
               {me ? (
                 <IconButton to={url.account()} label={t('nav.account')}>

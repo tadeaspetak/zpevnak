@@ -17,7 +17,9 @@ import type { Locale } from '#shared/validators/index.ts';
 import { FONT_SCALES, usePrefs } from '../data/prefs.ts';
 import { useWide } from '../hooks/useBreakpoints.ts';
 import { useFullscreen } from '../hooks/useFullscreen.ts';
+import { usePlayer } from '../data/session.ts';
 import { useI18n } from '../i18n/index.tsx';
+import { RefreshAction } from './RefreshButton.tsx';
 
 type Props = {
   size?: 'lg' | 'xl';
@@ -26,15 +28,16 @@ type Props = {
 };
 
 /**
- * Every setting, on this device, from every page (D113): how songs are shown, full screen
- * (a switch, so it says whether it's on), and the app's language and look. Next to search, at
- * the top right everywhere.
+ * Every setting, on this device, from every page (D113): how songs are shown, and the app's
+ * language, look and full screen (a switch, so it says whether it's on). At the bottom, getting
+ * what's new, with the playlist being played (D116). Next to search, at the top right everywhere.
  */
 export function SettingsButton({ size = 'lg', song }: Props) {
   const { t, locale, setLocale } = useI18n();
   const { colorScheme, setColorScheme } = useMantineColorScheme();
   const prefs = usePrefs();
   const fullscreen = useFullscreen();
+  const { session } = usePlayer();
   const wide = useWide();
   const semitones = song?.semitones ?? 0;
   const label = prefs.showChords
@@ -152,6 +155,7 @@ export function SettingsButton({ size = 'lg', song }: Props) {
               )
             )}
           </Part>
+          <RefreshAction playlistId={session?.playlistId} />
         </Stack>
       </Popover.Dropdown>
     </Popover>
