@@ -94,8 +94,7 @@ Agreed to leave, for now:
   full screen on an iPhone, a 30-song playlist. Check those on a phone against production
   before the gig.
 - **Home-screen app and updates:** no reload in an installed app; "Načíst novinky" fetches data
-  and checks for a new app version (D74, D75), from the settings on every page and as an icon on
-  a playlist (D116). If that proves not enough, consider pull-to-refresh.
+  and checks for a new app version (D74, D75), from the settings on every page (D116, D117). If that proves not enough, consider pull-to-refresh.
 - **Importing the old songbook:** deliberately not done (D11). Songs get added one by one, which is
   also how they get checked; `~/dev/projects/songbook` has ~430 ChordPro files to draw from.
 - **Plans:** song history, credits and suggestions in `.planning/ongoing/` (slice 1 done, D86).

@@ -15,6 +15,16 @@ describe('users', () => {
     );
   });
 
+  it('lists the viewer first, then by rank, the same every time', async () => {
+    const user = await createUser();
+    const admin = await createUser({ role: 'admin' });
+    const editor = await createUser({ role: 'editor' });
+    const otherAdmin = await createUser({ role: 'admin' });
+    const ids = async () => (await callerFor(admin).users.list()).map((u) => u.id);
+    expect(await ids()).toEqual([admin.id, otherAdmin.id, editor.id, user.id]);
+    expect(await ids()).toEqual(await ids());
+  });
+
   it('is for admins only, not editors', async () => {
     const editor = await createUser({ role: 'editor' });
     const user = await createUser();

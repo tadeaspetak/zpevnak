@@ -401,6 +401,12 @@ From the first UX walk of the song view and a playlist session (2026-11-10): _In
   the bottom of the popover, which also gets the playlist being played; the song view in an
   installed app has no reload otherwise. The icon stays only on a playlist's page, where a
   bandmate's change matters most and one tap beats two; home loses it. (2026-11-12)
+- **D117. "Načíst novinky" only in the settings; users listed by rank** (refines D116, D113). The
+  icon on a playlist's page goes too: one place for it, and the toolbar stays for the playlist's
+  own actions. The settings fetch the playlist on the page as well as the one being played. The
+  admin's list of users: the viewer first, then admins, editors, users, each by name (the id
+  breaks ties, so the order never shuffles). Changing a role moves the row, on purpose: the list
+  shows who holds which rank. (2026-11-12)
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed

@@ -16,7 +16,6 @@ import type { PlaylistOp } from '#shared/playlistOps.ts';
 import { showUndoToast } from '../components/UndoToast.tsx';
 import { Page } from '../components/Page.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
-import { RefreshButton } from '../components/RefreshButton.tsx';
 import { ShareModal } from '../components/ShareModal.tsx';
 import { SongPicker } from '../components/SongPicker.tsx';
 import { PublicMark } from '../components/PlaylistRow.tsx';
@@ -123,7 +122,6 @@ export function PlaylistPage() {
         backLabel={backLabel}
         actions={
           <>
-            <RefreshButton playlistId={playlist.id} />
             {canEdit && (
               <IconButton
                 label={isEditing ? t('playlists.done') : t('playlists.edit')}

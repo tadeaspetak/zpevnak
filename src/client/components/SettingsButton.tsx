@@ -13,13 +13,15 @@ import {
 } from '@mantine/core';
 import { IconAdjustmentsHorizontal, IconMinus, IconPlus } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
+import { useMatch } from 'react-router';
+import { idFromRef, routes } from '#shared/urls.ts';
 import type { Locale } from '#shared/validators/index.ts';
 import { FONT_SCALES, usePrefs } from '../data/prefs.ts';
 import { useWide } from '../hooks/useBreakpoints.ts';
 import { useFullscreen } from '../hooks/useFullscreen.ts';
 import { usePlayer } from '../data/session.ts';
 import { useI18n } from '../i18n/index.tsx';
-import { RefreshAction } from './RefreshButton.tsx';
+import { RefreshAction } from './RefreshAction.tsx';
 
 type Props = {
   size?: 'lg' | 'xl';
@@ -30,7 +32,8 @@ type Props = {
 /**
  * Every setting, on this device, from every page (D113): how songs are shown, and the app's
  * language, look and full screen (a switch, so it says whether it's on). At the bottom, getting
- * what's new, with the playlist being played (D116). Next to search, at the top right everywhere.
+ * what's new, with the playlist on the page and the one being played (D116, D117). Next to
+ * search, at the top right everywhere.
  */
 export function SettingsButton({ size = 'lg', song }: Props) {
   const { t, locale, setLocale } = useI18n();
@@ -38,6 +41,7 @@ export function SettingsButton({ size = 'lg', song }: Props) {
   const prefs = usePrefs();
   const fullscreen = useFullscreen();
   const { session } = usePlayer();
+  const playlistIds = useRefreshedPlaylists(session?.playlistId);
   const wide = useWide();
   const semitones = song?.semitones ?? 0;
   const label = prefs.showChords
@@ -155,11 +159,21 @@ export function SettingsButton({ size = 'lg', song }: Props) {
               )
             )}
           </Part>
-          <RefreshAction playlistId={session?.playlistId} />
+          <RefreshAction playlistIds={playlistIds} />
         </Stack>
       </Popover.Dropdown>
     </Popover>
   );
+}
+
+/** The playlist this page shows (itself or one of its songs), and the one being played. */
+function useRefreshedPlaylists(playing: number | undefined): number[] {
+  const onPage = idFromRef(
+    useMatch({ path: routes.playlist, end: false })?.params.playlistRef,
+  );
+  return [
+    ...new Set([onPage, playing].filter((id): id is number => typeof id === 'number')),
+  ];
 }
 
 function Part({ title, children }: { title: string; children: ReactNode }) {

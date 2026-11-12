@@ -50,6 +50,8 @@ test('a listmate taken out while editing leaves the editor', async ({ browser })
   await owner.request.post('/trpc/playlists.removeCollaborator', {
     data: { id: playlist.id, userId: me.result.data.id },
   });
+  // From the settings, which also fetch the playlist on the page, not only the one being played.
+  await listmate.getByRole('button', { name: 'Settings' }).click();
   await listmate.getByRole('button', { name: 'Get what’s new' }).click();
   await expect(listmate.getByLabel('Name')).toBeHidden();
   await expect(listmate.getByRole('button', { name: 'Done' })).toBeHidden();
