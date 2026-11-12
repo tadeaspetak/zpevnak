@@ -66,7 +66,20 @@ test('a listmate without a confirmed email sees who is in, and can leave', async
   // Why they can't edit yet, and the way to fix it right there.
   await expect(fresh.getByRole('button', { name: 'Send the email again' })).toBeVisible();
   await fresh.getByRole('button', { name: 'Sharing' }).click();
-  await expect(fresh.getByRole('dialog').getByText('Uršula Uživatelová')).toBeVisible();
+  const dialog = fresh.getByRole('dialog');
+  // Everyone in it sees who is; only the owner is marked.
+  await expect(dialog.getByText('Uršula Uživatelová')).toBeVisible();
+  await expect(dialog.getByText('Owner', { exact: true })).toBeVisible();
+  // A listmate sees who sees it, and can't change it: a tap asks nothing of the server.
+  const asked: string[] = [];
+  fresh.on(
+    'request',
+    (r) => r.url().includes('playlists.setPublic') && asked.push(r.url()),
+  );
+  await dialog.getByText('Public', { exact: true }).click();
+  await expect(dialog.getByRole('radio', { name: /^Private/ })).toBeChecked();
+  await fresh.waitForTimeout(300);
+  expect(asked).toEqual([]);
   await fresh.getByRole('button', { name: 'Leave playlist' }).click();
   await fresh.getByRole('button', { name: 'Leave playlist' }).last().click();
   await expect(fresh).toHaveURL(/\/playlists$/);
@@ -137,12 +150,13 @@ test('an owner shares a public playlist to look at, and the invite offers just l
   await expect(
     owner.getByRole('radio', { name: /^Private\s*Only listmates see it/ }),
   ).toBeChecked();
+  // The link is there while private too: it still takes listmates straight in.
+  const viewLink = owner.getByRole('textbox', { name: 'Link to the playlist' });
+  await expect(viewLink).toHaveValue(new RegExp(`/playlist/${playlist.id}-`));
   await owner.getByText('Public', { exact: true }).click();
-  // Once the server has it: who sees it, and the link just to look.
+  // Once the server has it, the same link is for anyone.
   await expect(owner.getByRole('radio', { name: /^Public/ })).toBeChecked();
-  await expect(owner.getByRole('textbox', { name: 'Link to the playlist' })).toHaveValue(
-    new RegExp(`/playlist/${playlist.id}-`),
-  );
+  await expect(viewLink).toHaveValue(new RegExp(`/playlist/${playlist.id}-`));
 
   // Someone signed out with the invite: they can join, or only look.
   const stranger = await browser.newPage();

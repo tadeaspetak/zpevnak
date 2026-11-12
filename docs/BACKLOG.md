@@ -59,6 +59,13 @@ took the agent's pick on all seven; shipped as D111 (the dialog renamed "Sdílen
 - [x] **"od Uršula Uživatelová" doesn't decline** (re-opens D79/D70). A: "Vlastník: {name}".
       B: the name alone with a person icon.
 
+## The sharing dialog and settings, piece by piece (2026-11-12)
+
+The owner's feedback on the live dev server, one screenshot at a time. Shipped as D114–D116
+(`cccbb09`, `ddfd4ba`, `809e3b8`): the dialog's order and wording, "parťáci" for listmates in
+Czech, "kdokoliv" in Czech copy, full screen and "Načíst novinky" in the settings, pasting a new
+song, the role picker, three recent songs and playlists on home.
+
 ## Code review (2026-11-10)
 
 A senior review of the whole codebase (server, client data, pages, and every bug fixed so far
@@ -78,20 +85,17 @@ Agreed to leave, for now:
 - Song history, credits and suggested changes: `.planning/ongoing/song-history-credits-suggestions.md`.
   Slice 1 (versions, recorded quietly) shipped as D86; credits and suggestions after the gig.
 
-## State and loose ends (updated 2026-11-10)
+## State and loose ends (updated 2026-11-12)
 
-- **`/ux` walks done:** the song view and playlist session (D88–D92), and adding a song (D94–D103).
-  Both shipped whole. Next candidates: playlists and sharing as an owner; the account and sign-in
-  pages.
-- **From the first walk,** not walked: a cold offline start (needs a production build), the screen staying
-  awake, full screen on an iPhone, a 30-song playlist. Check those on a phone against
-  production before the gig. Not walked: a cold offline start (needs a production build), the screen staying
-  awake, full screen on an iPhone, a 30-song playlist. Check those on a phone against
-  production before the gig.
-- **Home-screen app and updates:** no reload in an installed app; the ↻ button fetches data and
-  checks for a new app version (D74, D75). If that proves not enough, consider pull-to-refresh.
-- **Playlist header on a phone:** an owner's four icons squeeze the title ("Vršek 2…"). If it
-  bothers in real use, put the title on its own line under the icons on narrow screens.
+- **`/ux` walks done:** the song view and playlist session (D88–D92), adding a song (D94–D103),
+  and playlists and sharing (D110–D111). All shipped whole. Next candidate: the account and
+  sign-in pages.
+- **Not walked yet:** a cold offline start (needs a production build), the screen staying awake,
+  full screen on an iPhone, a 30-song playlist. Check those on a phone against production
+  before the gig.
+- **Home-screen app and updates:** no reload in an installed app; "Načíst novinky" fetches data
+  and checks for a new app version (D74, D75), from the settings on every page and as an icon on
+  a playlist (D116). If that proves not enough, consider pull-to-refresh.
 - **Importing the old songbook:** deliberately not done (D11). Songs get added one by one, which is
   also how they get checked; `~/dev/projects/songbook` has ~430 ChordPro files to draw from.
 - **Plans:** song history, credits and suggestions in `.planning/ongoing/` (slice 1 done, D86).

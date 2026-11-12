@@ -124,9 +124,10 @@ Every change to behaviour ships with its tests in the same commit.
 - **Mobile first** for playing: phones and tablets on a stand are the main screen; check 390 px
   first. Adding, editing and reviewing songs happens mostly on wider screens: check 1280 px too.
 - **Theme first, then one shared component (D105).** A default that holds everywhere goes in
-  `src/client/theme.ts` (`ActionIcon` subtle grey, `Badge` neutral, `Alert` grey); what a theme
-  can't do gets one component, not a copy per page: `IconButton` (an icon with its tooltip and
-  name), `ConfirmModal`, `SongLabel`, `PageLoader`. Breakpoints are the theme's: `useWide`,
+  `src/client/theme.ts` (`ActionIcon` subtle grey, `Badge` neutral, `Alert` grey, a `Modal`
+  header tinted and ruled); what a theme can't do gets one component, not a copy per page:
+  `IconButton` (an icon with its tooltip and name), `ConfirmModal`, `SongLabel`, `PageLoader`,
+  `SettingsButton` (every setting, and "Načíst novinky", on every page). Breakpoints are the theme's: `useWide`,
   `usePhone` in code, `$mantine-breakpoint-*` in CSS.
 - **The back arrow goes one level up** to a fixed parent, and says where ("Back to Vršek
   2026"); history is the browser's back (D60). **Search is
