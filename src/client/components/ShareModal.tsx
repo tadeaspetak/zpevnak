@@ -6,6 +6,7 @@ import {
   Group,
   Loader,
   Modal,
+  Paper,
   Popover,
   SegmentedControl,
   Stack,
@@ -117,54 +118,104 @@ export function ShareModal({ playlist, opened, onClose }: Props) {
     >
       <Stack gap="xl">
         <Section title={t('playlists.whoSees')}>
-          {isOwner && (
-            <SegmentedControl
-              fullWidth
-              aria-label={t('playlists.whoSees')}
-              value={playlist.isPublic ? 'public' : 'private'}
-              onChange={(v) => edits.setPublic(v === 'public')}
-              data={[
-                { value: 'private', label: t('playlists.visibilityPrivate') },
-                { value: 'public', label: t('playlists.visibilityPublic') },
-              ]}
-            />
-          )}
-          <Text size="sm" c="dimmed">
-            {playlist.isPublic ? t('playlists.viewLinkHint') : t('playlists.privateHint')}
-          </Text>
-          {playlist.isPublic && (
-            <LinkField
-              icon={<IconEye size={16} />}
-              label={t('playlists.viewLinkTitle')}
-              link={viewLink}
-            />
-          )}
+          {/* Who sees it, each choice saying what it means. A listmate sees the same, unable to
+              change it. */}
+          <SegmentedControl
+            fullWidth
+            readOnly={!isOwner}
+            aria-label={t('playlists.whoSees')}
+            value={playlist.isPublic ? 'public' : 'private'}
+            onChange={(v) => edits.setPublic(v === 'public')}
+            // Two lines that may wrap differently: both segments as tall as the taller one.
+            styles={{
+              root: { alignItems: 'stretch' },
+              control: { display: 'flex' },
+              label: {
+                whiteSpace: 'normal',
+                paddingBlock: 6,
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              },
+            }}
+            data={[
+              {
+                value: 'private',
+                label: (
+                  <Choice
+                    name={t('playlists.visibilityPrivate')}
+                    what={t('playlists.privateWhat')}
+                  />
+                ),
+              },
+              {
+                value: 'public',
+                label: (
+                  <Choice
+                    name={t('playlists.visibilityPublic')}
+                    what={t('playlists.publicWhat')}
+                  />
+                ),
+              },
+            ]}
+          />
+          {/* Always there, so the switch doesn't move things around: private, it still takes
+              listmates straight in. */}
+          <LinkField
+            icon={<IconEye size={16} />}
+            label={t('playlists.viewLinkTitle')}
+            link={viewLink}
+          />
         </Section>
 
-        <Section title={t('playlists.people')} ref={people}>
-          <Text size="sm" c="dimmed">
-            {isOwner ? t('playlists.peopleIntroOwner') : t('playlists.peopleIntro')}
-          </Text>
+        <Section
+          title={t('playlists.people')}
+          intro={isOwner ? t('playlists.peopleIntroOwner') : t('playlists.peopleIntro')}
+          ref={people}
+        >
           {members.isLoading && <Loader size="sm" />}
-          {shown?.map((person) => (
-            <Group key={person.id} justify="space-between" wrap="nowrap">
-              <div>
-                <Text fw={500}>{person.displayName}</Text>
-                <Text size="xs" c="dimmed">
-                  {t(`playlists.role.${person.role}`)}
-                </Text>
-              </div>
-              {isOwner && person.role === 'collaborator' && (
-                <IconButton
-                  label={t('playlists.removePerson', { name: person.displayName })}
-                  loading={remove.isPending && remove.variables?.userId === person.id}
-                  onClick={() => removePerson(person)}
+          {/* The people as one box, so they read as one list under the sentence. */}
+          {shown && (
+            <Paper withBorder radius="md">
+              {shown.map((person, i) => (
+                <Group
+                  key={person.id}
+                  justify="space-between"
+                  wrap="nowrap"
+                  px="sm"
+                  py={6}
+                  mih={50}
+                  style={
+                    i > 0
+                      ? { borderTop: '1px solid var(--mantine-color-default-border)' }
+                      : undefined
+                  }
                 >
-                  <IconX size={18} />
-                </IconButton>
-              )}
-            </Group>
-          ))}
+                  {/* One line each: the heading already says they're listmates, so only the
+                      owner is marked, where the others have their ×. */}
+                  <Text fw={500}>{person.displayName}</Text>
+                  {person.role === 'owner' ? (
+                    <Text size="sm" c="dimmed">
+                      {t('playlists.role.owner')}
+                    </Text>
+                  ) : (
+                    isOwner && (
+                      <IconButton
+                        label={t('playlists.removePerson', { name: person.displayName })}
+                        loading={
+                          remove.isPending && remove.variables?.userId === person.id
+                        }
+                        onClick={() => removePerson(person)}
+                      >
+                        <IconX size={18} />
+                      </IconButton>
+                    )
+                  )}
+                </Group>
+              ))}
+            </Paper>
+          )}
           {removed.map((person) => (
             <UndoMessage
               key={person.id}
@@ -178,11 +229,11 @@ export function ShareModal({ playlist, opened, onClose }: Props) {
           <ErrorText error={members.error ?? remove.error} />
 
           {isOwner && (
-            <Stack gap="xs" mt="sm">
-              <Text size="sm">{t('playlists.inviteIntro')}</Text>
+            <Stack gap="xs" mt="lg">
               <LinkField
                 icon={<IconPencil size={16} />}
                 label={t('playlists.inviteTitle')}
+                description={t('playlists.inviteIntro')}
                 link={inviteLink}
                 loading={invite.isPending}
                 extra={
@@ -264,12 +315,15 @@ export function ShareModal({ playlist, opened, onClose }: Props) {
 function LinkField({
   icon,
   label,
+  description,
   link,
   loading = false,
   extra,
 }: {
   icon: ReactNode;
   label: string;
+  /** What the link does, between its name and the field. */
+  description?: string;
   link: string;
   loading?: boolean;
   extra?: ReactNode;
@@ -284,6 +338,15 @@ function LinkField({
           {label}
         </Group>
       }
+      description={description}
+      // A proper explanation, read before tapping: the size and colour of body text.
+      descriptionProps={{
+        fz: 'sm',
+        lh: 1.45,
+        c: 'var(--mantine-color-text)',
+        mt: 2,
+        mb: 8,
+      }}
       value={link}
       onFocus={(e) => e.currentTarget.select()}
       rightSectionWidth={extra ? 76 : 40}
@@ -315,20 +378,39 @@ function LinkField({
   );
 }
 
+function Choice({ name, what }: { name: string; what: string }) {
+  return (
+    <Stack gap={0}>
+      <Text size="sm" fw={600}>
+        {name}
+      </Text>
+      <Text size="xs" c="dimmed" lh={1.3}>
+        {what}
+      </Text>
+    </Stack>
+  );
+}
+
 function Section({
   title,
+  intro,
   children,
   ref,
 }: {
   title: string;
+  /** What the section is about, set close under its heading. */
+  intro?: string;
   children: ReactNode;
   ref?: Ref<HTMLDivElement>;
 }) {
   return (
-    <Stack gap="xs" ref={ref}>
-      <Title order={3} fz="md" fw={700}>
-        {title}
-      </Title>
+    <Stack gap={8} ref={ref}>
+      <Stack gap={2}>
+        <Title order={3} fz="md" fw={700}>
+          {title}
+        </Title>
+        {intro && <Text size="sm">{intro}</Text>}
+      </Stack>
       {children}
     </Stack>
   );

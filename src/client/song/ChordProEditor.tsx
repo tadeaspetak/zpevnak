@@ -13,6 +13,7 @@ import { useDisclosure } from '@mantine/hooks';
 import {
   IconAlertTriangle,
   IconChevronDown,
+  IconClipboardText,
   IconHistory,
   IconWand,
 } from '@tabler/icons-react';
@@ -47,6 +48,8 @@ type Props = {
   actions: ReactNode;
   /** Set when the text is a draft left from an earlier visit: offers to throw it away. */
   onDiscardDraft?: () => void;
+  /** A new song's example: while it's untouched, the editor says a song can just be pasted. */
+  template?: string;
   ref?: Ref<ChordProEditorHandle>;
 };
 
@@ -57,7 +60,14 @@ const TITLE_LINE = /^\s*\{(?:title|t)\s*:/;
  * ChordPro source beside its live preview: side by side on a wide screen, one at a time on
  * a phone. Parser warnings are listed with their line numbers, and lead to the line.
  */
-export function ChordProEditor({ value, onChange, actions, onDiscardDraft, ref }: Props) {
+export function ChordProEditor({
+  value,
+  onChange,
+  actions,
+  onDiscardDraft,
+  template,
+  ref,
+}: Props) {
   const { t } = useI18n();
   const wide = useWide();
   const [view, setView] = useState<'source' | 'preview'>('source');
@@ -73,9 +83,12 @@ export function ChordProEditor({ value, onChange, actions, onDiscardDraft, ref }
     [keepAsIs, deferred],
   );
   // Not on the untouched template: nobody has had a chance to fill it in yet.
+  // Nor on an emptied one: it was cleared to paste a song in.
+  const untouched = template !== undefined && value === template;
   const missingTitle =
     !song.meta.title?.trim() &&
-    (titleAsked || deferred !== t('editor.template', { songTitle: '' }));
+    (titleAsked ||
+      (deferred.trim() !== '' && deferred !== t('editor.template', { songTitle: '' })));
 
   const goToLine = (line: number) => {
     setView('source');
@@ -152,19 +165,25 @@ export function ChordProEditor({ value, onChange, actions, onDiscardDraft, ref }
     },
   }));
 
-  const convert = () => {
-    const converted = fromChordsOverLyrics(value);
+  /** Typed in as if pasted, so the browser's undo brings the original back. */
+  const replaceAll = (text: string) => {
     const el = textarea.current;
-    // Typed in as if pasted, so the browser's undo brings the original back.
+    setView('source');
     if (el && typeof document.execCommand === 'function') {
       el.focus();
       el.select();
-      if (document.execCommand('insertText', false, converted)) {
+      if (
+        text === ''
+          ? document.execCommand('delete')
+          : document.execCommand('insertText', false, text)
+      ) {
         return;
       }
     }
-    onChange(converted);
+    onChange(text);
+    el?.focus();
   };
+  const convert = () => replaceAll(fromChordsOverLyrics(value));
 
   const source = (
     <Textarea
@@ -231,34 +250,30 @@ export function ChordProEditor({ value, onChange, actions, onDiscardDraft, ref }
           </Text>
         </Collapse>
       </div>
+      {/* Most songs come from somewhere: a paste does, and gets converted (offered below). */}
+      {untouched && (
+        <Notice icon={<IconClipboardText size={18} />} text={t('editor.pasteHint')}>
+          <Button size="sm" variant="default" onClick={() => replaceAll('')}>
+            {t('editor.clearTemplate')}
+          </Button>
+        </Notice>
+      )}
       {onDiscardDraft && (
-        <Alert
-          variant="default"
-          icon={<IconHistory size={18} />}
-          className={classes.notice}
-        >
-          <Group justify="space-between" gap="xs">
-            <Text size="sm">{t('editor.draftRestored')}</Text>
-            <Button size="sm" variant="default" onClick={onDiscardDraft}>
-              {t('editor.discardDraft')}
-            </Button>
-          </Group>
-        </Alert>
+        <Notice icon={<IconHistory size={18} />} text={t('editor.draftRestored')}>
+          <Button size="sm" variant="default" onClick={onDiscardDraft}>
+            {t('editor.discardDraft')}
+          </Button>
+        </Notice>
       )}
       {offerConversion && (
-        <Alert variant="default" icon={<IconWand size={18} />} className={classes.notice}>
-          <Group justify="space-between" gap="xs">
-            <Text size="sm">{t('editor.convertOffer')}</Text>
-            <Group gap="xs">
-              <Button size="sm" variant="default" onClick={() => setKeepAsIs(true)}>
-                {t('editor.keepAsIs')}
-              </Button>
-              <Button size="sm" onClick={convert}>
-                {t('editor.convert')}
-              </Button>
-            </Group>
-          </Group>
-        </Alert>
+        <Notice icon={<IconWand size={18} />} text={t('editor.convertOffer')}>
+          <Button size="sm" variant="default" onClick={() => setKeepAsIs(true)}>
+            {t('editor.keepAsIs')}
+          </Button>
+          <Button size="sm" onClick={convert}>
+            {t('editor.convert')}
+          </Button>
+        </Notice>
       )}
       {(missingTitle || song.warnings.length > 0) && (
         <Alert
@@ -315,5 +330,35 @@ export function ChordProEditor({ value, onChange, actions, onDiscardDraft, ref }
         {actions}
       </Group>
     </Stack>
+  );
+}
+
+/**
+ * A line of advice with its buttons beside it, or under it when it wraps. The icon and the
+ * first line of text sit level with the buttons' middle, either way.
+ */
+function Notice({
+  icon,
+  text,
+  children,
+}: {
+  icon: ReactNode;
+  text: string;
+  children: ReactNode;
+}) {
+  return (
+    <Alert
+      variant="default"
+      icon={icon}
+      className={classes.notice}
+      classNames={{ icon: classes.noticeIcon }}
+    >
+      <Group justify="space-between" align="flex-start" gap="xs">
+        <Text size="sm" className={classes.noticeText}>
+          {text}
+        </Text>
+        <Group gap="xs">{children}</Group>
+      </Group>
+    </Alert>
   );
 }

@@ -44,8 +44,8 @@ import { url } from '#shared/urls.ts';
 import classes from './HomePage.module.css';
 import { IconButton } from '../components/IconButton.tsx';
 
-const RECENT_PLAYLISTS = 4;
-const RECENT_SONGS = 6;
+const RECENT_PLAYLISTS = 3;
+const RECENT_SONGS = 3;
 
 // Typing right away is the point of this page, but on a phone focusing would throw the
 // keyboard over the playlists the player may have come for (D35). Fine pointers only.

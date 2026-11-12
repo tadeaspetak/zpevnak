@@ -387,6 +387,16 @@ From the first UX walk of the song view and a playlist session (2026-11-10): _In
   the invite does and its field, where a second icon makes a new link. That asks first, in a
   small popover on the button, rather than offering an undo: the old link is dead for everyone
   it was sent to, and taking it back would need the server to keep it. (2026-11-11)
+- **D115. The sharing dialog, settled; listmates are "parťáci" in Czech** (refines D114, D80).
+  "Viditelnost" first: Soukromý | Veřejný, each saying what it means inside the switch ("Vidí
+  ho jen parťáci" / "Vidí ho kdokoliv i bez přihlášení"); a listmate sees it too, read-only.
+  Under it, always, "Odkaz na playlist" (private, it still takes parťáci straight in). Then
+  "Parťáci" with its sentence, the people in one box on one line each (only the owner marked),
+  and "Odkaz pro parťáky" with what it does between its name and the field. "Souputník" read
+  stiff; English keeps "listmate". Every dialog's header is tinted and ruled, in the theme.
+  Elsewhere: full screen is an app setting, not a song one; a new song's untouched example
+  says a song can just be pasted (and clears it); roles use the device's own picker; home shows
+  3 recent songs and 3 recent playlists. Czech copy says "kdokoliv". (2026-11-12)
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed

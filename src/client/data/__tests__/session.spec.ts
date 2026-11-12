@@ -9,7 +9,7 @@ import {
 } from '../session.ts';
 
 describe('the player session', () => {
-  it('remembers recent songs, newest first, each once, twelve at most', () => {
+  it('remembers recent songs, newest first, each once, six at most', () => {
     const { result } = renderHook(() => usePlayer());
     act(() => {
       for (let id = 1; id <= 14; id++) {
@@ -17,7 +17,7 @@ describe('the player session', () => {
       }
       songPlayed(5);
     });
-    expect(result.current.recentSongs).toEqual([5, 14, 13, 12, 11, 10, 9, 8, 7, 6, 4, 3]);
+    expect(result.current.recentSongs).toEqual([5, 14, 13, 12, 11, 10]);
   });
 
   it('counts a playlist made or joined here as recent, without playing it (D33)', () => {

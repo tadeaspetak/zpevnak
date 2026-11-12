@@ -28,7 +28,9 @@ test('an owner takes a listmate out by mistake, takes it back, and replaces the 
   await expect(link).toHaveValue(new RegExp(`/join/${token}$`));
   await owner.getByRole('button', { name: 'Make a new link' }).click();
   await owner.getByRole('button', { name: 'Make a new one' }).click();
-  await expect(owner.getByText('The new link is ready.', { exact: false })).toBeVisible();
+  await expect(
+    owner.getByText('Done, the old link no longer works.', { exact: false }),
+  ).toBeVisible();
   // The new link replaces the old one in its field.
   await expect(link).not.toHaveValue(new RegExp(`/join/${token}$`));
   await expect(link).toHaveValue(/\/join\/\S+$/);
@@ -131,13 +133,14 @@ test('an owner shares a public playlist to look at, and the invite offers just l
   const { playlist, token } = await playlistWithInvite(owner, `Náves ${Date.now()}`);
   await owner.goto(`/playlist/${playlist.id}`);
   await owner.getByRole('button', { name: 'Sharing' }).click();
-  await expect(owner.getByText('Only listmates see it.')).toBeVisible();
+  // What each choice means sits inside it.
+  await expect(
+    owner.getByRole('radio', { name: /^Private\s*Only listmates see it/ }),
+  ).toBeChecked();
   await owner.getByText('Public', { exact: true }).click();
   // Once the server has it: who sees it, and the link just to look.
-  await expect(
-    owner.getByText('Anyone with the link can look', { exact: false }),
-  ).toBeVisible();
-  await expect(owner.getByRole('textbox', { name: 'Link to view' })).toHaveValue(
+  await expect(owner.getByRole('radio', { name: /^Public/ })).toBeChecked();
+  await expect(owner.getByRole('textbox', { name: 'Link to the playlist' })).toHaveValue(
     new RegExp(`/playlist/${playlist.id}-`),
   );
 

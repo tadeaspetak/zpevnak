@@ -15,7 +15,7 @@ type State = {
   recentSongs: number[];
 };
 
-const RECENT_SONGS = 12;
+const RECENT_SONGS = 6;
 
 let state: State = {
   session: readLocalJson<PlaylistSession | null>('session', null),

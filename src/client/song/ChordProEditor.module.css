@@ -88,6 +88,15 @@
   border-color: var(--mantine-color-default-border);
 }
 
+/* A small button is 36 px tall (Mantine's sm); the first text line and the icon centre on it. */
+.noticeText {
+  padding-block: calc((36px - 1lh) / 2);
+}
+
+.noticeIcon {
+  margin-top: calc((36px - 20px) / 2);
+}
+
 .warningIcon {
   color: var(--mantine-color-yellow-filled);
 }

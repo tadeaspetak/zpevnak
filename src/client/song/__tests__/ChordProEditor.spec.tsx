@@ -5,15 +5,23 @@ import { describe, expect, it } from 'vitest';
 import { cs } from '../../i18n/cs.ts';
 import { ChordProEditor, type ChordProEditorHandle } from '../ChordProEditor.tsx';
 
-function Editor({ initial }: { initial: string }) {
+function Editor({ initial, template }: { initial: string; template?: string }) {
   const [value, setValue] = useState(initial);
-  return <ChordProEditor value={value} onChange={setValue} ref={handle} actions={null} />;
+  return (
+    <ChordProEditor
+      value={value}
+      onChange={setValue}
+      template={template}
+      ref={handle}
+      actions={null}
+    />
+  );
 }
 const handle = createRef<ChordProEditorHandle>();
 
-function open(initial: string) {
+function open(initial: string, template?: string) {
   localStorage.setItem('zpevnak.locale', 'cs');
-  renderApp(<Editor initial={initial} />);
+  renderApp(<Editor initial={initial} template={template} />);
   return screen.getByRole<HTMLTextAreaElement>('textbox', { name: 'ChordPro' });
 }
 
@@ -61,5 +69,22 @@ describe('ChordProEditor', () => {
       target: { value: '{title: Píseň}\nla la\n' },
     });
     expect(handle.current?.checkTitle()).toBe(true);
+  });
+
+  it('says a song can just be pasted, and clears the example for it', () => {
+    const template = cs['editor.template'].replace('{songTitle}', '');
+    const source = open(template, template);
+    expect(screen.getByText(/Smaž vzor a vlož ji sem/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Smazat vzor' }));
+    expect(source.value).toBe('');
+    // Emptied to paste into: no warning about a missing title yet.
+    expect(screen.queryByText(/Doplň název/)).toBeNull();
+    expect(screen.queryByText(/Smaž vzor a vlož ji sem/)).toBeNull();
+  });
+
+  it('says nothing about pasting once the example has been written into', () => {
+    const template = cs['editor.template'].replace('{songTitle}', '');
+    open(`${template}la`, template);
+    expect(screen.queryByText(/Smaž vzor a vlož ji sem/)).toBeNull();
   });
 });

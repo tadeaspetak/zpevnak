@@ -103,6 +103,7 @@ export function NewSongPage() {
               value={source}
               onChange={draft.setSource}
               onDiscardDraft={draft.restored ? draft.clear : undefined}
+              template={template}
               actions={
                 <Button
                   type="submit"

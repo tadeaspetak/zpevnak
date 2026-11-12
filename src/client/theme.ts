@@ -68,7 +68,15 @@ export const theme = createTheme({
     Alert: Alert.extend({ defaultProps: { color: 'gray' } }),
     // A dialog's subject is its title: a heading, not body text.
     Modal: Modal.extend({
-      styles: { title: { fontWeight: 700, fontSize: 'var(--mantine-font-size-lg)' } },
+      styles: {
+        // A tinted header, set off by a rule, so the title doesn't blend into the content.
+        header: {
+          background: 'var(--modal-header-bg)',
+          borderBottom: '1px solid var(--mantine-color-default-border)',
+          marginBottom: 'var(--mantine-spacing-md)',
+        },
+        title: { fontWeight: 700, fontSize: 'var(--mantine-font-size-lg)' },
+      },
     }),
   },
 });
@@ -83,6 +91,7 @@ export const cssVariablesResolver: CSSVariablesResolver = (t) => ({
   light: {
     '--brand-text': t.colors.orange[7],
     '--mantine-color-dimmed': t.colors.gray[7],
+    '--modal-header-bg': t.colors.gray[0],
   },
-  dark: { '--brand-text': t.colors.orange[4] },
+  dark: { '--brand-text': t.colors.orange[4], '--modal-header-bg': t.colors.dark[6] },
 });

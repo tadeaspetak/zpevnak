@@ -112,21 +112,6 @@ export function SettingsButton({ size = 'lg', song }: Props) {
                 onChange={(e) => prefs.setShowDiagrams(e.currentTarget.checked)}
               />
             )}
-            {fullscreen.supported ? (
-              <Switch
-                label={t('song.fullscreen')}
-                checked={fullscreen.active}
-                onChange={fullscreen.toggle}
-              />
-            ) : (
-              // An iPhone has no full screen for pages: added to the home screen, it opens
-              // without the browser's bars instead.
-              !fullscreen.standalone && (
-                <Text size="sm" c="dimmed">
-                  {t('song.fullscreenHint')}
-                </Text>
-              )
-            )}
           </Part>
           <Part title={t('settings.app')}>
             <SegmentedControl
@@ -150,6 +135,22 @@ export function SettingsButton({ size = 'lg', song }: Props) {
                 { value: 'dark', label: t('account.themeDark') },
               ]}
             />
+            {/* The whole app goes full screen, not just the song. */}
+            {fullscreen.supported ? (
+              <Switch
+                label={t('song.fullscreen')}
+                checked={fullscreen.active}
+                onChange={fullscreen.toggle}
+              />
+            ) : (
+              // An iPhone has no full screen for pages: added to the home screen, it opens
+              // without the browser's bars instead.
+              !fullscreen.standalone && (
+                <Text size="sm" c="dimmed">
+                  {t('song.fullscreenHint')}
+                </Text>
+              )
+            )}
           </Part>
         </Stack>
       </Popover.Dropdown>
