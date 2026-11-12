@@ -14,6 +14,7 @@ import { DeleteSongModal } from '../components/DeleteSongModal.tsx';
 import { RejectModal } from '../components/RejectModal.tsx';
 import { ErrorText } from '../components/ErrorText.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
+import { PageLoader } from '../components/PageLoader.tsx';
 import { StatusBadge } from '../components/StatusBadge.tsx';
 import { putSong, syncCatalog, useCatalog } from '../data/catalog.ts';
 import { nextInQueue } from '../data/nextInQueue.ts';
@@ -120,7 +121,7 @@ function ReviewSong({ id }: { id: number }) {
           backLabel={t('nav.backTo', { name: t('queue.title') })}
         />
         <Container py="md">
-          <ErrorText error={song.error} />
+          {song.isLoading ? <PageLoader /> : <ErrorText error={song.error} />}
         </Container>
       </>
     );

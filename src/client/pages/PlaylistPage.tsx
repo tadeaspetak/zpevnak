@@ -16,6 +16,7 @@ import type { PlaylistOp } from '#shared/playlistOps.ts';
 import { showUndoToast } from '../components/UndoToast.tsx';
 import { Page } from '../components/Page.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
+import { PageLoader } from '../components/PageLoader.tsx';
 import { ShareModal } from '../components/ShareModal.tsx';
 import { SongPicker } from '../components/SongPicker.tsx';
 import { PublicMark } from '../components/PlaylistRow.tsx';
@@ -44,7 +45,7 @@ export function PlaylistPage() {
   const { me } = useMe();
   const playlist = playlists.get(id);
   useCanonicalPath(playlist ? url.playlist(playlist) : null);
-  useFreshPlaylist(id);
+  const fresh = useFreshPlaylist(id);
   const edits = usePlaylistEdits(id);
   const [editing, setEditing] = useState(false);
   const [adding, { open: openAdd, close: closeAdd }] = useDisclosure(false);
@@ -61,8 +62,9 @@ export function PlaylistPage() {
     },
   });
 
-  if (!loaded) {
-    return null;
+  // Not on the device yet (a link opened on a new phone): the fresh load may still bring it.
+  if (!loaded || (!playlist && fresh.pending)) {
+    return <PageLoader full />;
   }
   const backLabel = t('nav.backTo', { name: t('playlists.title') });
   if (!playlist) {

@@ -9,6 +9,7 @@ export const en: Record<keyof typeof cs, string> = {
   'common.saved': 'Saved',
   'common.delete': 'Delete',
   'common.close': 'Close',
+  'common.loading': 'Loading…',
   'common.offline': 'Offline',
   'common.offlineHint':
     "You're offline. Your songs are on this device; changes save once you're back online.",

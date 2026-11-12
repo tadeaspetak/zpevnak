@@ -5,6 +5,7 @@ import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc } from '../trpc.ts';
 import { ErrorText } from './ErrorText.tsx';
+import { PageLoader } from './PageLoader.tsx';
 
 /** Everyone with an account, and their role: the admin's tab on the account page (D113). */
 export function UsersList() {
@@ -18,6 +19,7 @@ export function UsersList() {
   return (
     <>
       <ErrorText error={users.error ?? setRole.error} />
+      {users.isLoading && <PageLoader />}
       <Stack gap="xs">
         {users.data?.map((user) => (
           <Group key={user.id} justify="space-between" wrap="nowrap" py={4}>

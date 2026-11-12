@@ -15,8 +15,10 @@ import { Link, useNavigate } from 'react-router';
 import { ErrorText } from '../components/ErrorText.tsx';
 import { Page } from '../components/Page.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
+import { PageLoader } from '../components/PageLoader.tsx';
 import { PlaylistRow } from '../components/PlaylistRow.tsx';
 import { putPlaylist, useCatalog } from '../data/catalog.ts';
+import { useOnline } from '../hooks/useOnline.ts';
 import { groupPlaylists } from '../data/playlistFacts.ts';
 import { ListSection } from '../components/ListSection.tsx';
 import { touchPlaylist, usePlayer } from '../data/session.ts';
@@ -32,7 +34,8 @@ import { url } from '#shared/urls.ts';
 export function PlaylistsPage() {
   const { t } = useI18n();
   const { me } = useMe();
-  const { playlists } = useCatalog();
+  const { playlists, loaded, synced } = useCatalog();
+  const online = useOnline();
   const { recentPlaylists } = usePlayer();
   const [creating, { open, close }] = useDisclosure(false);
 
@@ -77,7 +80,10 @@ export function PlaylistsPage() {
               </Group>
             </Alert>
           )}
-          {sections.length === 0 ? (
+          {/* A new device: nothing to show until the first sync, which isn't "no playlists". */}
+          {!loaded || (!synced && playlists.size === 0 && online) ? (
+            <PageLoader />
+          ) : sections.length === 0 ? (
             <Text c="dimmed">{t('playlists.none')}</Text>
           ) : (
             sections.map((section) => (

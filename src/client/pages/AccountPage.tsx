@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router';
 import { Page } from '../components/Page.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
+import { PageLoader } from '../components/PageLoader.tsx';
 import { SongRow } from '../components/SongRow.tsx';
 import { UsersList } from '../components/UsersList.tsx';
 import { VerifyEmailAlert } from '../components/VerifyEmailAlert.tsx';
@@ -49,7 +50,7 @@ export function AccountPage() {
     return <Navigate to={url.logIn(url.account())} replace />;
   }
   if (!me) {
-    return null;
+    return <PageLoader full />;
   }
   const songList =
     mySongs.length === 0 ? (

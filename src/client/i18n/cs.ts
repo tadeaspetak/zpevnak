@@ -12,6 +12,7 @@ export const cs = {
   'common.saved': 'Uloženo',
   'common.delete': 'Smazat',
   'common.close': 'Zavřít',
+  'common.loading': 'Načítám…',
   'common.offline': 'Offline',
   'common.offlineHint':
     'Jsi offline. Písničky máš v zařízení, změny se uloží, až budeš online.',

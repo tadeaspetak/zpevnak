@@ -8,6 +8,7 @@ import { putPlaylist } from './catalog.ts';
  * device last synced. No timer and no refetch on returning to the app: polling cost requests
  * for nothing most of the time and was too slow for editing together (D72). A playlist the
  * viewer may no longer see (deleted, made private, or they were taken out) leaves the device.
+ * `pending` while that load is on its way.
  */
 export function useFreshPlaylist(id: number | null) {
   const online = useOnline();
@@ -32,4 +33,5 @@ export function useFreshPlaylist(id: number | null) {
       putPlaylist(id, null);
     }
   }, [id, query.error]);
+  return { pending: query.isLoading };
 }
