@@ -18,6 +18,7 @@ import {
   IconPlaylist,
   IconPlus,
   IconSearch,
+  IconTag,
   IconUserCircle,
   IconWifiOff,
   IconX,
@@ -35,6 +36,7 @@ import { inSearch } from '#shared/songs.ts';
 import { useCatalog } from '../data/catalog.ts';
 import { sortByTitle } from '../data/search.ts';
 import { usePlayer } from '../data/session.ts';
+import { useTags } from '../data/tags.ts';
 import { useKeys } from '../hooks/useKeys.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useOnline } from '../hooks/useOnline.ts';
@@ -56,6 +58,7 @@ export function HomePage() {
   const online = useOnline();
   const { songs, playlists, loaded, synced } = useCatalog();
   const { recentPlaylists, recentSongs, session } = usePlayer();
+  const tags = useTags();
   const inputRef = useRef<HTMLInputElement>(null);
 
   // The query lives in the address, so coming back from a song finds the same results.
@@ -216,6 +219,27 @@ export function HomePage() {
                 {recentSongList.map((song) => (
                   <SongRow key={song.id} song={song} to={url.song(song)} />
                 ))}
+              </ListSection>
+            )}
+
+            {tags.length > 0 && (
+              <ListSection title={t('home.tags')}>
+                {/* Chips, not rows: the rows' column is kept, the chips wrap inside it. */}
+                <Group gap="xs" px="md" pt={4}>
+                  {tags.map((tag) => (
+                    <Button
+                      key={tag.key}
+                      component={Link}
+                      to={url.tag(tag.name)}
+                      variant="default"
+                      size="xs"
+                      radius="xl"
+                      leftSection={<IconTag size={14} />}
+                    >
+                      {tag.name}
+                    </Button>
+                  ))}
+                </Group>
               </ListSection>
             )}
 

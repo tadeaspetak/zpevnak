@@ -88,3 +88,27 @@ describe('ChordProEditor', () => {
     expect(screen.queryByText(/Smaž vzor a vlož ji sem/)).toBeNull();
   });
 });
+
+describe('ChordProEditor: tags (D118)', () => {
+  it('writes a tag typed into the tags field into the text, after the header', () => {
+    const source = open('{title: Píseň}\n{key: D}\n\nla la [D]la');
+    const tags = screen.getByRole('combobox', { name: 'Štítky' });
+    // Focused first, as by a person: Mantine ignores a change to an input without focus.
+    act(() => tags.focus());
+    fireEvent.change(tags, { target: { value: 'Vánoční' } });
+    fireEvent.keyDown(tags, { key: 'Enter' });
+    expect(source.value).toBe('{title: Píseň}\n{key: D}\n{tag: Vánoční}\n\nla la [D]la');
+  });
+
+  it('shows the text’s tags in the field, and takes a removed one out of the text', () => {
+    const source = open('{title: Píseň}\n{tag: Vánoční}\n{tag: Lidová}\nla la');
+    expect(screen.getByText('Vánoční')).toBeTruthy();
+    // The pill's × is hidden from the keyboard (Backspace removes a tag there); a tap uses it.
+    const remove = screen
+      .getByText('Lidová')
+      .closest('.mantine-Pill-root')
+      ?.querySelector('button');
+    fireEvent.click(remove as HTMLButtonElement);
+    expect(source.value).toBe('{title: Píseň}\n{tag: Vánoční}\nla la');
+  });
+});

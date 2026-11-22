@@ -22,6 +22,7 @@ import { QueuePage } from './pages/QueuePage.tsx';
 import { ReviewPage } from './pages/ReviewPage.tsx';
 import { EditSongPage, NewSongPage } from './pages/SongEditPage.tsx';
 import { PlaylistSongPage, SongPage } from './pages/SongPage.tsx';
+import { TagPage } from './pages/TagPage.tsx';
 import { routes, url } from '#shared/urls.ts';
 
 /**
@@ -54,6 +55,7 @@ export function App() {
         <Route path={routes.editSong} element={<EditSongPage />} />
         <Route path={routes.song} element={<SongPage />} />
         <Route path={routes.newSong} element={<NewSongPage />} />
+        <Route path={routes.tag} element={<TagPage />} />
         <Route path={routes.playlists} element={<PlaylistsPage />} />
         <Route path={routes.playlist} element={<PlaylistPage />} />
         <Route path={routes.playlistSong} element={<PlaylistSongPage />} />

@@ -1,3 +1,4 @@
+import { tagKey } from './chordpro/tags.ts';
 import { slugify } from './text.ts';
 
 /**
@@ -33,6 +34,8 @@ export const url = {
     const query = params.toString();
     return query ? `/new?${query}` : '/new';
   },
+  /** Every song with the tag, however each spells it. */
+  tag: (tag: string) => `/tag/${encodeURIComponent(tagKey(tag))}`,
   playlists: () => '/playlists',
   playlist: (playlist: PlaylistLink) => `/playlist/${ref(playlist.id, playlist.name)}`,
   /** `position` counts from 1, as people do. */
@@ -60,6 +63,7 @@ export const routes = {
   song: '/song/:songRef',
   editSong: '/song/:id/edit',
   newSong: '/new',
+  tag: '/tag/:tagKey',
   playlists: '/playlists',
   playlist: '/playlist/:playlistRef',
   playlistSong: '/playlist/:playlistRef/:position',

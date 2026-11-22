@@ -17,6 +17,7 @@ import {
   IconMinus,
   IconPlaylistAdd,
   IconPlus,
+  IconTag,
   IconTrash,
 } from '@tabler/icons-react';
 import { Link } from 'react-router';
@@ -26,6 +27,7 @@ import { mailtoAuthor } from '../contact.ts';
 import { SearchButton } from '../components/SearchButton.tsx';
 import { SettingsButton } from '../components/SettingsButton.tsx';
 import { usePrefs } from '../data/prefs.ts';
+import { songText } from '../data/songText.ts';
 import type { SongRecord } from '../data/store.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { url } from '#shared/urls.ts';
@@ -68,6 +70,7 @@ export function SongToolbar(props: Props) {
   const prefs = usePrefs();
   const [adding, { open: openAdd, close: closeAdd }] = useDisclosure(false);
   const [deleting, { open: openDelete, close: closeDelete }] = useDisclosure(false);
+  const tags = songText(song).tags;
 
   // A song without a {key} shows how far it's transposed instead. A real minus sign: a
   // hyphen reads as a dash.
@@ -143,6 +146,23 @@ export function SongToolbar(props: Props) {
               </ActionIcon>
             </Menu.Target>
             <Menu.Dropdown>
+              {/* What the song is, before what can be done with it; each leads to its songs. */}
+              {tags.length > 0 && (
+                <>
+                  <Menu.Label>{t('song.tags')}</Menu.Label>
+                  {tags.map((tag) => (
+                    <Menu.Item
+                      key={tag}
+                      component={Link}
+                      to={url.tag(tag)}
+                      leftSection={<IconTag size={16} />}
+                    >
+                      {tag}
+                    </Menu.Item>
+                  ))}
+                  <Menu.Divider />
+                </>
+              )}
               {canAddToPlaylist && (
                 <Menu.Item leftSection={<IconPlaylistAdd size={16} />} onClick={openAdd}>
                   {t('song.addToPlaylist')}

@@ -39,6 +39,7 @@ export const cs = {
   'home.searchPlaceholder': 'Hledej písničky, texty a playlisty…',
   'search.playlists': 'Playlisty',
   'search.songs': 'Písničky',
+  'search.tags': 'Štítky',
   'settings.open': 'Nastavení',
   'settings.songs': 'Písničky',
   'settings.app': 'Aplikace',
@@ -51,6 +52,8 @@ export const cs = {
   'home.allPlaylists': 'Všechny playlisty',
   'home.recentSongs': 'Naposledy hrané',
   'home.allSongs': 'Všechny písničky',
+  'home.tags': 'Štítky',
+  'tag.songs': 'Písničky se štítkem',
   'home.emptyCatalog': 'Zatím tu nejsou žádné písničky.',
   'home.loadingCatalog': 'Stahuju písničky…',
 
@@ -74,6 +77,7 @@ export const cs = {
   'song.smaller': 'Menší písmo',
   'song.larger': 'Větší písmo',
   'song.more': 'Další možnosti',
+  'song.tags': 'Štítky',
   'song.fullscreen': 'Celá obrazovka',
   'song.fullscreenHint':
     'Na iPhonu přidej Zpěvňák na plochu (Sdílet → Přidat na plochu). Pak se otevře bez lišt prohlížeče.',
@@ -217,6 +221,9 @@ export const cs = {
     'Akordy nad textem, třeba z jiného webu, stačí vložit: nabídne se převod.',
   'editor.addMissing': 'Přidat „{title}“ jako novou písničku',
   'editor.cheatSheet': 'Jak na ChordPro',
+  'editor.tags': 'Štítky',
+  'editor.tagsHint': 'V textu písničky jako {tag: Vánoční}. Potvrď Enterem nebo čárkou.',
+  'editor.tagsPlaceholder': 'Třeba Vánoční',
   'editor.template':
     '{title: {songTitle}}\n{artist: }\n{key: }\n\n{start_of_verse}\n[C]Tady je [G]sloka\n{end_of_verse}\n\n{start_of_chorus}\n[F]Tady je [C]refrén\n{end_of_chorus}\n',
 

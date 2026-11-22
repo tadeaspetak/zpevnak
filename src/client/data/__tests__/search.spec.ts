@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { searchPlaylists, songSearch, sortByTitle } from '../search.ts';
+import { searchPlaylists, searchTags, songSearch, sortByTitle } from '../search.ts';
+import type { Tag } from '../tags.ts';
 import type { PlaylistRecord, SongRecord } from '../store.ts';
 
 let nextId = 1;
@@ -27,6 +28,7 @@ const catalog = [
   song('Šumí les', 'Kapela Mech', ['[C]Šumí šumí [G]listí', 'lalala na kopci']),
   song('Hvězdy nad stájí', 'Koledníci', ['tichá noc nad [D]stájí', 'pastýři spí']),
   song('Kopretina', null, ['bílá kopretina', 'na louce stojí']),
+  song('Zvonky', null, ['{tag: Vánoční}', '{tag: Lidová}', 'cinky linky [G]la']),
   song('Cizí zamítnutá', null, ['tajný text'], { status: 'rejected', createdBy: 99 }),
 ];
 const songs = new Map(catalog.map((s) => [s.id, s]));
@@ -60,6 +62,20 @@ describe('songSearch', () => {
     expect(songSearch(songs, null)('koledníci')[0]?.lyricsLine).toBeNull();
   });
 
+  it('finds a song by its tag, and says which tag found it instead of a lyrics line', () => {
+    const [hit] = songSearch(songs, null)('vanocni');
+    expect(hit?.song.title).toBe('Zvonky');
+    expect(hit?.tags).toEqual(['Vánoční']);
+    expect(hit?.lyricsLine).toBeNull();
+  });
+
+  it('names no tag when the tags did not find the song', () => {
+    const [hit] = songSearch(songs, null)('cinky');
+    expect(hit?.song.title).toBe('Zvonky');
+    expect(hit?.tags).toEqual([]);
+    expect(hit?.lyricsLine).toBe('cinky linky la');
+  });
+
   it("finds someone else's rejected song for nobody but its author (D77)", () => {
     expect(titles('tajný')).toEqual([]);
     expect(titles('tajný', 99)).toEqual(['Cizí zamítnutá']);
@@ -90,5 +106,17 @@ describe('searchPlaylists', () => {
     expect(searchPlaylists(lists, 'vanoce novaku').map((p) => p.id)).toEqual([1]);
     expect(searchPlaylists(lists, '2026 vánoce')).toEqual([]);
     expect(searchPlaylists(lists, ' ')).toEqual([]);
+  });
+});
+
+describe('searchTags', () => {
+  it('finds tags holding every word of the query, diacritics aside', () => {
+    const tags = [
+      { key: 'vanocni', name: 'Vánoční', songIds: [1] },
+      { key: 'lidove-pisne', name: 'Lidové písně', songIds: [2] },
+    ] as Tag[];
+    expect(searchTags(tags, 'VANOC').map((t) => t.key)).toEqual(['vanocni']);
+    expect(searchTags(tags, 'pisne lid').map((t) => t.key)).toEqual(['lidove-pisne']);
+    expect(searchTags(tags, ' ')).toEqual([]);
   });
 });

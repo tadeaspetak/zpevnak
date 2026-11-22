@@ -19,6 +19,7 @@ entry that says which it replaces and what changed.
   a live preview. No WYSIWYG editor for now. (2026-11-09)
 - **D5. No version history.** A save overwrites the song. (2026-11-09) _Replaced by D86._
 - **D6. Tags stay in the songs and do nothing** for now: no filters, no tag UI. (2026-11-09)
+  _Replaced by D118._
 - **D7. Playlists are public or private**, no other sharing. Anyone, signed in or not, can open
   a public playlist. Only the owner changes it, editors included. (2026-11-09)
 - **D8. Roles:** user < editor (+ verify, reject, edit any song) < admin (+ assign roles). An
@@ -407,6 +408,16 @@ From the first UX walk of the song view and a playlist session (2026-11-10): _In
   admin's list of users: the viewer first, then admins, editors, users, each by name (the id
   breaks ties, so the order never shuffles). Changing a role moves the row, on purpose: the list
   shows who holds which rank. (2026-11-12)
+- **D118. Tags find songs** (replaces D6; for the Christmas carols). A tag is a `{tag: …}` line
+  in the song's text, the only truth (D4), so whoever may edit a song tags it (D3) and the
+  device reads tags from the source it already has: no column, no API, offline. One tag is every
+  spelling with the same slug ("Vánoční", "vanocni"), shown as most songs spell it; the editor's
+  tags field suggests the catalog's tags and writes a known one its way, so the list doesn't
+  split. Tags are free, not a list someone manages, and never translated (like lyrics, D10).
+  Search matches them (a row per matching tag, and the tag a song was found by); a tag's page
+  (`/tag/vanocni`) lists its songs A–Z, and a song opened there goes back to it, as one opened
+  from search results does (D60). Tags show as chips on home and in the song's ⋯ menu, never on
+  the sheet (D20). (2026-11-22)
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed

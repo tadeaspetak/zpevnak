@@ -6,10 +6,11 @@ import { StatusBadge } from './StatusBadge.tsx';
 import classes from './SongRow.module.css';
 
 /**
- * Carried by a link into a song from the overview's search results, so the song's back arrow
- * (which goes up to the overview, D60) lands on those same results rather than an empty search.
+ * Carried by a link into a song from a list that isn't the song's fixed parent, so the song's
+ * back arrow (one level up, D60) lands on that list: the overview's search results (no
+ * `backName`), or a tag's songs (the tag's name).
  */
-export type SongLinkState = { backTo: string };
+export type SongLinkState = { backTo: string; backName?: string };
 
 /** The link state for a song opened from here: only search results on the overview carry one. */
 export function songLinkState(location: {
@@ -28,15 +29,17 @@ type Props = {
   detail?: ReactNode;
   leading?: ReactNode;
   active?: boolean;
+  /** Where the song's back arrow leads instead of its parent; search results by default. */
+  linkState?: SongLinkState;
 };
 
-export function SongRow({ song, to, detail, leading, active }: Props) {
+export function SongRow({ song, to, detail, leading, active, linkState }: Props) {
   const location = useLocation();
   return (
     <UnstyledButton
       component={Link}
       to={to}
-      state={songLinkState(location)}
+      state={linkState ?? songLinkState(location)}
       className={classes.row}
       data-active={active || undefined}
       aria-current={active || undefined}

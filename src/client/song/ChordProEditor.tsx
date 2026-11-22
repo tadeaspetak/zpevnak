@@ -5,6 +5,7 @@ import {
   Group,
   SegmentedControl,
   Stack,
+  TagsInput,
   Text,
   Textarea,
   UnstyledButton,
@@ -31,6 +32,8 @@ import {
   looksLikeChordsOverLyrics,
 } from '#shared/chordpro/fromChordsOverLyrics.ts';
 import { parseSong } from '#shared/chordpro/parse.ts';
+import { setTags, spellAsKnown, tagKey, tagsIn } from '#shared/chordpro/tags.ts';
+import { useTags } from '../data/tags.ts';
 import { useWide } from '../hooks/useBreakpoints.ts';
 import { useI18n } from '../i18n/index.tsx';
 import classes from './ChordProEditor.module.css';
@@ -76,6 +79,10 @@ export function ChordProEditor({
   const [titleAsked, setTitleAsked] = useState(false);
   const textarea = useRef<HTMLTextAreaElement>(null);
   const previewPane = useRef<HTMLDivElement>(null);
+  const knownTags = useTags();
+  // From the text as typed, not the deferred copy: the input must show a tag the moment it's
+  // added.
+  const tags = useMemo(() => tagsIn(value), [value]);
   const deferred = useDeferredValue(value);
   const song = useMemo(() => parseSong(deferred), [deferred]);
   const offerConversion = useMemo(
@@ -184,6 +191,9 @@ export function ChordProEditor({
     el?.focus();
   };
   const convert = () => replaceAll(fromChordsOverLyrics(value));
+
+  const changeTags = (next: string[]) =>
+    onChange(setTags(value, spellAsKnown(next, knownTags)));
 
   const source = (
     <Textarea
@@ -306,6 +316,17 @@ export function ChordProEditor({
           </ul>
         </Alert>
       )}
+      <TagsInput
+        label={t('editor.tags')}
+        description={t('editor.tagsHint')}
+        placeholder={tags.length === 0 ? t('editor.tagsPlaceholder') : undefined}
+        value={tags}
+        onChange={changeTags}
+        data={knownTags
+          .map((tag) => tag.name)
+          .filter((name) => !tags.some((x) => tagKey(x) === tagKey(name)))}
+        clearable={false}
+      />
       {wide ? (
         <div className={classes.split}>
           {source}

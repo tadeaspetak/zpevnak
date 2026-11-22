@@ -2,7 +2,6 @@
 {subtitle:Zuzana Navarová}
 {artist:Zuzana Navarová}
 {key:A}
-{tag:Zuzana Navarová}
 {columns: 2}
 {+diagrams.show: user}
 {+pdf.diagrams.vcells: 5}

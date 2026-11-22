@@ -1,20 +1,25 @@
-import { Anchor, Stack, Text, Title } from '@mantine/core';
+import { Anchor, Group, Stack, Text, Title } from '@mantine/core';
+import { IconTag } from '@tabler/icons-react';
 import { useMemo, useState, type KeyboardEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useCatalog } from '../data/catalog.ts';
-import { searchPlaylists, useSongSearch } from '../data/search.ts';
+import { searchPlaylists, searchTags, useSongSearch } from '../data/search.ts';
 import type { PlaylistRecord } from '../data/store.ts';
 import type { SearchHit } from '../data/search.ts';
+import { useTags, type Tag } from '../data/tags.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { url } from '#shared/urls.ts';
 import { PlaylistRow } from './PlaylistRow.tsx';
 import { SongRow, songLinkState } from './SongRow.tsx';
+import { TagRow } from './TagRow.tsx';
 
 const MAX_PLAYLISTS = 5;
+const MAX_TAGS = 5;
 
 type Item =
   | { kind: 'playlist'; playlist: PlaylistRecord; to: string }
+  | { kind: 'tag'; tag: Tag; to: string }
   | { kind: 'song'; hit: SearchHit; to: string };
 
 /**
@@ -24,6 +29,7 @@ type Item =
 export function useSearchResults(query: string) {
   const { songs, playlists } = useCatalog();
   const searchSongs = useSongSearch(songs);
+  const tags = useTags();
   const navigate = useNavigate();
   const items = useMemo<Item[]>(
     () => [
@@ -34,13 +40,16 @@ export function useSearchResults(query: string) {
           playlist,
           to: url.playlist(playlist),
         })),
+      ...searchTags(tags, query)
+        .slice(0, MAX_TAGS)
+        .map((tag) => ({ kind: 'tag' as const, tag, to: url.tag(tag.name) })),
       ...searchSongs(query).map((hit) => ({
         kind: 'song' as const,
         hit,
         to: url.song(hit.song),
       })),
     ],
-    [playlists, searchSongs, query],
+    [playlists, tags, searchSongs, query],
   );
   const [selected, setSelected] = useState(0);
   const [lastQuery, setLastQuery] = useState(query);
@@ -78,7 +87,10 @@ export function SearchResults({ query, items, selected }: Props) {
     return <NothingFound query={query} />;
   }
   const playlistItems = items.filter((i) => i.kind === 'playlist');
+  const tagItems = items.filter((i) => i.kind === 'tag');
   const songItems = items.filter((i) => i.kind === 'song');
+  // The songs' heading only tells them apart from something listed above them.
+  const songsHeading = playlistItems.length > 0 || tagItems.length > 0;
   const isSelected = (item: Item) => selected !== null && items[selected] === item;
   return (
     <Stack gap="lg" aria-live="polite">
@@ -96,11 +108,19 @@ export function SearchResults({ query, items, selected }: Props) {
           </Stack>
         </section>
       )}
+      {tagItems.length > 0 && (
+        <section>
+          <ResultsHeading>{t('search.tags')}</ResultsHeading>
+          <Stack gap={0} mx="-md">
+            {tagItems.map((item) => (
+              <TagRow key={`t${item.tag.key}`} tag={item.tag} active={isSelected(item)} />
+            ))}
+          </Stack>
+        </section>
+      )}
       {songItems.length > 0 && (
         <section>
-          {playlistItems.length > 0 && (
-            <ResultsHeading>{t('search.songs')}</ResultsHeading>
-          )}
+          {songsHeading && <ResultsHeading>{t('search.songs')}</ResultsHeading>}
           <Stack gap={0} mx="-md">
             {songItems.map((item) => (
               <SongRow
@@ -108,13 +128,7 @@ export function SearchResults({ query, items, selected }: Props) {
                 song={item.hit.song}
                 to={item.to}
                 active={isSelected(item)}
-                detail={
-                  item.hit.lyricsLine && (
-                    <Text size="sm" fs="italic" truncate>
-                      „{item.hit.lyricsLine}“
-                    </Text>
-                  )
-                }
+                detail={<HitDetail hit={item.hit} />}
               />
             ))}
           </Stack>
@@ -122,6 +136,28 @@ export function SearchResults({ query, items, selected }: Props) {
       )}
     </Stack>
   );
+}
+
+/** Why a song was found, when its title and artist don't say: the tag, or the lyrics line. */
+function HitDetail({ hit }: { hit: SearchHit }) {
+  if (hit.lyricsLine) {
+    return (
+      <Text size="sm" fs="italic" truncate>
+        „{hit.lyricsLine}“
+      </Text>
+    );
+  }
+  if (hit.tags.length > 0) {
+    return (
+      <Group gap={4} wrap="nowrap" c="dimmed">
+        <IconTag size={14} aria-hidden />
+        <Text size="sm" truncate>
+          {hit.tags.join(', ')}
+        </Text>
+      </Group>
+    );
+  }
+  return null;
 }
 
 /**

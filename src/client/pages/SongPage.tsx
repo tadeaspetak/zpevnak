@@ -285,7 +285,8 @@ function SongPlayer({
 
 /**
  * Where the song's back arrow leads: one level up (D60). Inside a playlist being played, the
- * playlist; otherwise the overview, keeping the search the song was found by. "Where I came
+ * playlist; otherwise the overview, keeping the search the song was found by, or the tag's
+ * songs it was picked from (D118). "Where I came
  * from" is the browser's own back, not this arrow's.
  */
 function useBack(playlist: PlaylistContext | null) {
@@ -297,10 +298,16 @@ function useBack(playlist: PlaylistContext | null) {
       label: t('nav.backTo', { name: playlist.name }),
     };
   }
-  const results = (location.state as SongLinkState | null)?.backTo;
-  return results
-    ? { to: results, label: t('nav.backToResults') }
-    : { to: url.home(), label: t('nav.backHome') };
+  const state = location.state as SongLinkState | null;
+  if (state?.backTo) {
+    return {
+      to: state.backTo,
+      label: state.backName
+        ? t('nav.backTo', { name: state.backName })
+        : t('nav.backToResults'),
+    };
+  }
+  return { to: url.home(), label: t('nav.backHome') };
 }
 
 function Missing({ text }: { text: string }) {

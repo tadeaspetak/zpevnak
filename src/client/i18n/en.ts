@@ -35,6 +35,7 @@ export const en: Record<keyof typeof cs, string> = {
   'home.searchPlaceholder': 'Search songs, lyrics and playlists…',
   'search.playlists': 'Playlists',
   'search.songs': 'Songs',
+  'search.tags': 'Tags',
   'settings.open': 'Settings',
   'settings.songs': 'Songs',
   'settings.app': 'App',
@@ -47,6 +48,8 @@ export const en: Record<keyof typeof cs, string> = {
   'home.allPlaylists': 'All playlists',
   'home.recentSongs': 'Recently played',
   'home.allSongs': 'All songs',
+  'home.tags': 'Tags',
+  'tag.songs': 'Songs with this tag',
   'home.emptyCatalog': 'No songs here yet.',
   'home.loadingCatalog': 'Downloading songs…',
 
@@ -70,6 +73,7 @@ export const en: Record<keyof typeof cs, string> = {
   'song.smaller': 'Smaller text',
   'song.larger': 'Larger text',
   'song.more': 'More options',
+  'song.tags': 'Tags',
   'song.fullscreen': 'Full screen',
   'song.fullscreenHint':
     'On iPhone, add Zpěvňák to your home screen (Share → Add to Home Screen). It then opens without the browser bars.',
@@ -214,6 +218,10 @@ export const en: Record<keyof typeof cs, string> = {
     'Chords above the lyrics, say from another site? Just paste them: you’ll be offered a conversion.',
   'editor.addMissing': 'Add “{title}” as a new song',
   'editor.cheatSheet': 'ChordPro in a nutshell',
+  'editor.tags': 'Tags',
+  'editor.tagsHint':
+    'In the song’s text as {tag: Christmas}. Confirm with Enter or a comma.',
+  'editor.tagsPlaceholder': 'Christmas, say',
   'editor.template':
     '{title: {songTitle}}\n{artist: }\n{key: }\n\n{start_of_verse}\n[C]Here is a [G]verse\n{end_of_verse}\n\n{start_of_chorus}\n[F]Here is the [C]chorus\n{end_of_chorus}\n',
 

@@ -17,6 +17,12 @@ describe('url', () => {
     );
   });
 
+  it('names a tag by its key, so every spelling of it opens the same page', () => {
+    expect(url.tag('Vánoční')).toBe('/tag/vanocni');
+    expect(url.tag('vánoční')).toBe(url.tag('VÁNOČNÍ'));
+    expect(url.tag('Ёлка')).toBe('/tag/%D0%B5%D0%BB%D0%BA%D0%B0');
+  });
+
   it('starts a new song from a search, for a playlist', () => {
     expect(url.newSong()).toBe('/new');
     expect(url.newSong({ title: '  ' })).toBe('/new');

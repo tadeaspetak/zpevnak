@@ -15,7 +15,8 @@
   }
 }
 
-.playlistIcon {
+.playlistIcon,
+.tagIcon {
   flex-shrink: 0;
   margin-top: 2px;
   color: var(--brand-text);

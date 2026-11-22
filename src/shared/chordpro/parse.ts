@@ -97,6 +97,43 @@ function readDirective(line: string): Directive | null {
   return { name, value: match[2] ?? '' };
 }
 
+/**
+ * The tag a source line states, `{tag: Vánoční}` or `{meta: tag Vánoční}`, or null for any
+ * other line. The parser reads tags this way, and so does whatever edits them in the text.
+ */
+export function readTagLine(line: string): string | null {
+  const trimmed = line.trim();
+  const directive = trimmed.startsWith('{') ? readDirective(trimmed) : null;
+  if (directive?.name === 'tag') {
+    return directive.value || null;
+  }
+  if (directive?.name === 'meta') {
+    const [metaName, ...rest] = directive.value.split(/\s+/);
+    return metaName === 'tag' ? rest.join(' ') || null : null;
+  }
+  return null;
+}
+
+const HEADER_DIRECTIVES = new Set([
+  'title',
+  'subtitle',
+  'artist',
+  'key',
+  'capo',
+  'tempo',
+  'time',
+  'tag',
+  'meta',
+  ...QUIET_METADATA,
+]);
+
+/** A line of the song's header: `{title: …}`, `{key: …}`, `{tag: …}` and the like. */
+export function isHeaderLine(line: string): boolean {
+  const trimmed = line.trim();
+  const directive = trimmed.startsWith('{') ? readDirective(trimmed) : null;
+  return directive !== null && HEADER_DIRECTIVES.has(directive.name);
+}
+
 /** `label="Verse 1"` or a bare `Verse 1`. */
 function readLabel(value: string): string | null {
   const attr = /label\s*=\s*"([^"]*)"/.exec(value);
