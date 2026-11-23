@@ -20,8 +20,9 @@ test('an owner takes a listmate out by mistake, takes it back, and replaces the 
   await expect(
     owner.getByText('Erik Editor is no longer in the playlist.'),
   ).toBeVisible();
-  // The keyboard lands on the way back, not on the next person's ×.
-  const undo = owner.getByRole('button', { name: 'Undo' });
+  // They stay in their place, greyed, the way back where their role was (D111); the keyboard
+  // lands on it, not on the next person's ×.
+  const undo = owner.getByRole('button', { name: 'Undo: Erik Editor' });
   await expect(undo).toBeFocused();
   await undo.click();
   await expect(owner.getByRole('button', { name: 'Remove Erik Editor' })).toBeVisible();

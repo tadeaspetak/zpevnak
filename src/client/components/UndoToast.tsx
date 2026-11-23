@@ -34,8 +34,8 @@ export function showUndoToast({
   });
 }
 
-/** The message and its undo button, inside a toast or in a list (a just-removed row). */
-export function UndoMessage({
+/** The message and its undo button, inside the toast. */
+function UndoMessage({
   message,
   onUndo,
 }: {

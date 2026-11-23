@@ -60,6 +60,12 @@ export function ShareModal({ playlist, opened, onClose }: Props) {
           <LinkField
             icon={<IconEye size={16} />}
             label={t('playlists.viewLinkTitle')}
+            // Beside the invite to read, what this one does and doesn't.
+            description={t(
+              playlist.isPublic
+                ? 'playlists.viewLinkPublic'
+                : 'playlists.viewLinkPrivate',
+            )}
             link={viewLink}
           />
         </ShareSection>

@@ -490,7 +490,13 @@ From the first UX walk of the song view and a playlist session (2026-11-10): _In
   (`READABLE_PRIVATE_SONG_IDS`), from the viewer's side: their own, those shared with them,
   those in their playlists. The sync reads changed public songs by `updated_at` and the
   viewer's private songs from that set, two indexed reads rather than one pass over every
-  song. Phase 3 of `.planning/done/private-songs-and-roles.md`. (2026-11-23)
+  song. Phase 3 of `.planning/done/private-songs-and-roles.md`. (2026-11-23) _Narrowed the same day, after review: a playlist shares a private song only while the
+  song's owner is in it, so someone who merely reads it can't pass it on through a playlist of
+  their own; an owner who leaves takes their songs with them. Before a private song goes in,
+  its owner is told who else will read it ("Uvidí ji i 2 parťáci"); on a public playlist its
+  people see "Návštěvníci ji nevidí" under it. Each link in Sdílení says what it does: the
+  link to read finds the playlist among one's own with its private songs, the plain link
+  doesn't (D126)._
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed

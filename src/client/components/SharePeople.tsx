@@ -13,6 +13,7 @@ import {
   TextInput,
   Title,
   Tooltip,
+  VisuallyHidden,
 } from '@mantine/core';
 import {
   IconBook,
@@ -39,7 +40,7 @@ import { useI18n } from '../i18n/index.tsx';
 import { trpc, trpcClient } from '../trpc.ts';
 import { ErrorText } from './ErrorText.tsx';
 import { IconButton } from './IconButton.tsx';
-import { showUndoToast, UndoMessage } from './UndoToast.tsx';
+import { showUndoToast } from './UndoToast.tsx';
 
 type Person = { id: number; displayName: string; role: MemberRole };
 
@@ -89,9 +90,11 @@ export function SharePeople({
   const setRole = trpc.sharing.setRole.useMutation({
     onSuccess: () => utils.sharing.members.invalidate(thing),
   });
-  // Taken out while the dialog is open: they stay in the list, greyed, with the way back
-  // where the keyboard can reach it. Closing the dialog hands that over to a toast (D87).
-  const [removed, setRemoved] = useState<Person[]>([]);
+  // Taken out while the dialog is open: they stay in their place in the list, greyed, with the
+  // way back where their role was (D111). Closing the dialog hands that over to a toast (D87).
+  const [removed, setRemoved] = useState<{ person: Person; at: number }[]>([]);
+  const [undoing, setUndoing] = useState<number | null>(null);
+  const [undoError, setUndoError] = useState<unknown>(null);
   const people = useRef<HTMLDivElement>(null);
   // Where the keyboard goes once a row has changed under it: never to the next person's ×,
   // where a second Enter would take them out too.
@@ -117,15 +120,29 @@ export function SharePeople({
       {
         onSuccess: async (record) => {
           putShared(record);
-          setRemoved((list) => [...list, person]);
+          const at = members.data?.findIndex((p) => p.id === person.id) ?? 0;
+          setRemoved((list) => [...list, { person, at }]);
           await utils.sharing.members.invalidate(thing);
           focusOn(`[data-undo-for="${person.id}"] button`);
         },
       },
     );
+  const undo = async (person: Person) => {
+    setUndoing(person.id);
+    setUndoError(null);
+    try {
+      await restore(person);
+      setRemoved((list) => list.filter((r) => r.person.id !== person.id));
+      focusOn(`[data-role-of="${person.id}"]`);
+    } catch (error) {
+      setUndoError(error);
+    } finally {
+      setUndoing(null);
+    }
+  };
   // The dialog closing unmounts this: whoever is still out gets their undo in a toast.
-  const stillOut = useRef(removed);
-  stillOut.current = removed;
+  const stillOut = useRef(removed.map((r) => r.person));
+  stillOut.current = removed.map((r) => r.person);
   const restoreLater = useRef(restore);
   restoreLater.current = restore;
   useEffect(
@@ -141,7 +158,14 @@ export function SharePeople({
     [kind, id, t],
   );
 
-  const shown = members.data?.filter((p) => !removed.some((r) => r.id === p.id));
+  // The people, with those just taken out back where they were.
+  const shown = members.data && [
+    ...members.data.filter((p) => !removed.some((r) => r.person.id === p.id)),
+  ];
+  for (const { person, at } of [...removed].sort((a, b) => a.at - b.at)) {
+    shown?.splice(Math.min(at, shown.length), 0, person);
+  }
+  const isOut = (person: Person) => removed.some((r) => r.person.id === person.id);
   const myRole = members.data?.find((p) => p.id === me?.id)?.role;
   return (
     <ShareSection
@@ -176,7 +200,12 @@ export function SharePeople({
               {/* One line each: the name (wrapped rather than cut off beside the owner's
                   picker), then what they may do. The owner changes it on the spot, and has
                   the × to take them out. */}
-              <Text fw={500} miw={0} style={{ overflowWrap: 'break-word' }}>
+              <Text
+                fw={500}
+                miw={0}
+                c={isOut(person) ? 'dimmed' : undefined}
+                style={{ overflowWrap: 'break-word' }}
+              >
                 {person.displayName}
                 {/* Among the others, themselves. */}
                 {person.id === me?.id && (
@@ -186,7 +215,23 @@ export function SharePeople({
                   </Text>
                 )}
               </Text>
-              {person.role !== 'owner' && isOwner ? (
+              {isOut(person) ? (
+                <div data-undo-for={person.id}>
+                  {/* Said to a screen reader, which doesn't see the grey. */}
+                  <VisuallyHidden role="status">
+                    {t(text.removed, { name: person.displayName })}
+                  </VisuallyHidden>
+                  <Button
+                    size="sm"
+                    variant="default"
+                    loading={undoing === person.id}
+                    aria-label={t('sharing.undoRemove', { name: person.displayName })}
+                    onClick={() => undo(person)}
+                  >
+                    {t('common.undo')}
+                  </Button>
+                </div>
+              ) : person.role !== 'owner' && isOwner ? (
                 <Group gap={4} wrap="nowrap">
                   {/* The device's own picker, as for roles in the account. */}
                   <NativeSelect
@@ -227,19 +272,7 @@ export function SharePeople({
           ))}
         </Paper>
       )}
-      {removed.map((person) => (
-        <div key={person.id} data-undo-for={person.id}>
-          <UndoMessage
-            message={t(text.removed, { name: person.displayName })}
-            onUndo={async () => {
-              await restore(person);
-              setRemoved((list) => list.filter((r) => r.id !== person.id));
-              focusOn(`[data-role-of="${person.id}"]`);
-            }}
-          />
-        </div>
-      ))}
-      <ErrorText error={members.error ?? remove.error ?? setRole.error} />
+      <ErrorText error={members.error ?? remove.error ?? setRole.error ?? undoError} />
 
       {isOwner && (
         <Stack gap="lg" mt="lg">

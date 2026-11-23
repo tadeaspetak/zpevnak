@@ -18,6 +18,7 @@ import { touchPlaylist } from '../data/session.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc } from '../trpc.ts';
 import { ErrorText } from './ErrorText.tsx';
+import { PrivateSongReach } from './PrivateSongReach.tsx';
 import classes from './AddToPlaylistModal.module.css';
 
 type Props = { songId: number | null; onClose: () => void };
@@ -28,7 +29,8 @@ type Props = { songId: number | null; onClose: () => void };
  */
 export function AddToPlaylistModal({ songId, onClose }: Props) {
   const { t } = useI18n();
-  const { playlists } = useCatalog();
+  const { playlists, songs } = useCatalog();
+  const song = songId === null ? undefined : songs.get(songId);
   // Every playlist the viewer may change: their own and those they collaborate on.
   const mine = [...playlists.values()].filter((p) => editsAsMember(p.role));
   const [name, setName] = useState('');
@@ -73,7 +75,12 @@ export function AddToPlaylistModal({ songId, onClose }: Props) {
                   >
                     <Group wrap="nowrap" gap="sm">
                       <Checkbox.Indicator />
-                      <Text fw={600}>{p.name}</Text>
+                      <div>
+                        <Text fw={600}>{p.name}</Text>
+                        {song && (
+                          <PrivateSongReach song={song} listmates={p.listmateCount} />
+                        )}
+                      </div>
                     </Group>
                   </Checkbox.Card>
                   {/* Under the playlist it is about: "there" needs no name. */}

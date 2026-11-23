@@ -433,6 +433,62 @@ describe('a playlist shares its private songs with its people (D128)', () => {
     }
   });
 
+  it('reaches nobody new through a playlist its owner isn’t in', async () => {
+    // A reader puts it into a playlist of their own (allowed: they alone are in it), then
+    // invites someone: that person doesn't get the song.
+    const { owner, song } = await setup();
+    const { playlist: band, reader } = await bandPlaylist(owner);
+    await callerFor(owner).playlists.edit({
+      id: band.id,
+      op: { type: 'add', songId: song.id },
+    });
+    const own = await callerFor(reader).playlists.create({
+      name: 'Moje',
+      isPublic: false,
+      songIds: [song.id],
+    });
+    const { token } = await callerFor(reader).sharing.invite({
+      kind: 'playlist',
+      id: own.id,
+      role: 'viewer',
+    });
+    const outsider = await createUser();
+    await callerFor(outsider).sharing.join({ token });
+    await expect(callerFor(outsider).songs.byId({ id: song.id })).rejects.toThrow(
+      'NOT_FOUND',
+    );
+    expect((await callerFor(outsider).playlists.byId({ id: own.id })).songIds).toEqual(
+      [],
+    );
+    // The reader still reads it, through the band.
+    expect((await callerFor(reader).playlists.byId({ id: own.id })).songIds).toEqual([
+      song.id,
+    ]);
+  });
+
+  it('leaves with its owner: out of the band, their songs stay theirs', async () => {
+    const bandleader = await createUser();
+    const { playlist, reader } = await bandPlaylist(bandleader);
+    const { token } = await callerFor(bandleader).sharing.invite({
+      kind: 'playlist',
+      id: playlist.id,
+      role: 'collaborator',
+    });
+    const songwriter = await createUser();
+    await callerFor(songwriter).sharing.join({ token });
+    const song = await callerFor(songwriter).songs.create({
+      source: SONG('Moje'),
+      isPrivate: true,
+    });
+    await callerFor(songwriter).playlists.edit({
+      id: playlist.id,
+      op: { type: 'add', songId: song.id },
+    });
+    expect(await syncedIds(reader)).toContain(song.id);
+    await callerFor(songwriter).sharing.leave({ kind: 'playlist', id: playlist.id });
+    expect(await syncedIds(reader)).not.toContain(song.id);
+  });
+
   it('only its owner passes it on: someone it is shared with may not', async () => {
     const { owner, song } = await setup();
     const friend = await sharedWith(owner, song.id, 'collaborator');

@@ -121,6 +121,7 @@ export function SongShareModal({ song, opened, onClose }: Props) {
           <LinkField
             icon={<IconEye size={16} />}
             label={t('songs.linkTitle')}
+            description={t(isPrivate ? 'songs.linkPrivate' : 'songs.linkPublic')}
             link={`${window.location.origin}${url.song(song)}`}
           />
         </ShareSection>

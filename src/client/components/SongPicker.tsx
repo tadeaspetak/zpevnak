@@ -5,6 +5,7 @@ import { useCatalog } from '../data/catalog.ts';
 import { useSongSearch } from '../data/search.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { NothingFound } from './SearchResults.tsx';
+import { PrivateSongReach } from './PrivateSongReach.tsx';
 import { SongLabel } from './SongRow.tsx';
 import classes from './SongPicker.module.css';
 
@@ -15,6 +16,8 @@ type Props = {
   onClose: () => void;
   /** The playlist the songs are for: a song it doesn't find can be added for it. */
   playlistId: number;
+  /** The playlist's people besides the viewer: who a private song would reach. */
+  listmates: number | null;
   /** The playlist's songs, in order. */
   songIds: number[];
   /** Adds or removes the song (see `toggleSong`). */
@@ -28,7 +31,14 @@ type Props = {
  * results. Space stays a space in the box (searches have several words); on the list itself,
  * reached by Tab, Space toggles too.
  */
-export function SongPicker({ opened, onClose, playlistId, songIds, onToggle }: Props) {
+export function SongPicker({
+  opened,
+  onClose,
+  playlistId,
+  songIds,
+  listmates,
+  onToggle,
+}: Props) {
   const { t } = useI18n();
   const { songs } = useCatalog();
   const search = useSongSearch(songs);
@@ -119,7 +129,9 @@ export function SongPicker({ opened, onClose, playlistId, songIds, onToggle }: P
                 onClick={() => toggle(song.id)}
               >
                 <Group justify="space-between" wrap="nowrap">
-                  <SongLabel song={song} />
+                  <SongLabel song={song}>
+                    {!selected && <PrivateSongReach song={song} listmates={listmates} />}
+                  </SongLabel>
                   <span className={classes.mark} data-selected={selected || undefined}>
                     {selected ? <IconCheck size={18} /> : <IconPlus size={18} />}
                   </span>

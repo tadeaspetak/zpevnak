@@ -20,8 +20,8 @@ export const SONG_COLUMNS = /* sql */ `
  * The private songs the viewer may read, worked out from the viewer's side (what they own, what
  * is shared with them, the playlists they are in), so it costs what they can see, not the whole
  * catalog: their own (D127), those shared with them (D127), and every one in a playlist they are
- * in, in any role (D128). Nobody else, the songbook's editors included. Binds `:viewerId`; for
- * nobody signed in it is empty.
+ * in, in any role, while the song's owner is in it too (D128). Nobody else, the songbook's
+ * editors included. Binds `:viewerId`; for nobody signed in it is empty.
  */
 export const READABLE_PRIVATE_SONG_IDS = readablePrivateSongIds(':viewerId');
 
@@ -36,11 +36,19 @@ export function readablePrivateSongIds(who: ':viewerId' | `${string}.user_id`): 
     SELECT m.song_id FROM song_members m WHERE m.user_id = ${who}
     UNION
     SELECT ps.song_id FROM playlist_songs ps
+    JOIN songs shared ON shared.id = ps.song_id
+    JOIN playlists sp ON sp.id = ps.playlist_id
     WHERE ps.playlist_id IN (
       SELECT p.id FROM playlists p WHERE p.owner_id = ${who}
       UNION
       SELECT c.playlist_id FROM playlist_collaborators c WHERE c.user_id = ${who}
     )
+    -- Only while the song's owner is in that playlist too: someone who merely reads it can't
+    -- pass it on through a playlist of their own (D128).
+    AND (sp.owner_id = shared.created_by OR EXISTS (
+      SELECT 1 FROM playlist_collaborators oc
+      WHERE oc.playlist_id = sp.id AND oc.user_id = shared.created_by
+    ))
   `;
 }
 

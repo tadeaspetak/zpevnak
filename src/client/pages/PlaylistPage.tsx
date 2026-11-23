@@ -211,6 +211,14 @@ export function PlaylistPage() {
                     song={song}
                     to={url.playlistSong(playlist, position)}
                     active={currentPosition === position}
+                    detail={
+                      // Its people read it; a public playlist's visitors don't (D128).
+                      playlist.isPublic && song.status === 'private' ? (
+                        <Text size="xs" c="dimmed">
+                          {t('songs.notForVisitors')}
+                        </Text>
+                      ) : undefined
+                    }
                     leading={
                       <Position n={position} active={currentPosition === position} />
                     }
@@ -240,6 +248,7 @@ export function PlaylistPage() {
         onClose={closeAdd}
         playlistId={playlist.id}
         songIds={playlist.songIds}
+        listmates={playlist.listmateCount}
         onToggle={toggle}
       />
       <ShareModal playlist={playlist} opened={sharing} onClose={closeShare} />

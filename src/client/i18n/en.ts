@@ -174,11 +174,14 @@ export const en: Record<keyof typeof cs, string> = {
   'sharing.inviteTitle': 'Link to edit',
   'sharing.viewInviteTitle': 'Link to read',
   'playlists.viewInviteIntro':
-    'Whoever joins through it can read the playlist, not change it.',
+    'Whoever joins through it finds the playlist among their own and can read it, the private songs in it too, but not change it.',
   'playlists.visibilityPrivate': 'Private',
   'playlists.visibilityPublic': 'Public',
   'playlists.privateWhat': 'Only listmates see it',
   'playlists.viewLinkTitle': 'Link to the playlist',
+  'playlists.viewLinkPrivate': 'Opens it only for listmates.',
+  'playlists.viewLinkPublic':
+    'Anyone can look through it, no account needed. It doesn’t add the playlist to theirs.',
   'sharing.copied': 'Copied',
   'sharing.resetLink': 'Replace: {link}',
   'sharing.resetConfirm': 'Make a new one',
@@ -190,6 +193,7 @@ export const en: Record<keyof typeof cs, string> = {
   'sharing.resetHint': 'The old link stops working. Whoever already joined stays.',
   'playlists.people': 'Listmates',
   'sharing.removePerson': 'Remove {name}',
+  'sharing.undoRemove': 'Undo: {name}',
   'playlists.removed': '{name} is no longer in the playlist.',
   'playlists.leave': 'Leave playlist',
   'playlists.leaveConfirm': "Leave “{name}”? You can come back through the owner's link.",
@@ -198,8 +202,9 @@ export const en: Record<keyof typeof cs, string> = {
   'join.intro': '{owner} invites you to join the playlist “{name}”.',
   'join.signIn': 'Sign up or log in, and you will join.',
   'join.joining': 'Joining…',
-  'join.asCollaborator': 'You will be able to edit it too.',
-  'join.asViewer': 'You will be able to read it, not change it.',
+  'join.asCollaborator': 'You will find it among your own and be able to edit it too.',
+  'join.asViewer':
+    'You will find it among your own and be able to read it, not change it.',
   'song.removedFromPlaylist': 'This song is no longer in the playlist.',
 
   'editor.newTitle': 'New song',
@@ -380,11 +385,15 @@ export const en: Record<keyof typeof cs, string> = {
   'songs.published': 'Published, waiting for approval.',
   'songs.madePrivate': 'The song is private again.',
   'songs.linkTitle': 'Link to the song',
+  'songs.linkPrivate': 'Opens it only for listmates.',
+  'songs.linkPublic': 'Anyone can look through it, no account needed.',
   'songs.cantGoPrivateEdited':
     'It can’t be private any more: someone else has worked on it.',
   'songs.cantGoPrivateUsed':
     'It can’t be private any more: it is in someone else’s playlist.',
   'songs.privateMark': 'Private',
+  'songs.seenByListmates': '{listmates} will see it too',
+  'songs.notForVisitors': 'Visitors don’t see it',
   'songs.leave': 'Leave the song',
   'songs.leaveConfirm': 'Leave “{name}”? You can come back through the owner’s link.',
   'songs.left': '“{name}” is no longer shared with you.',
