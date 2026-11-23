@@ -444,6 +444,12 @@ From the first UX walk of the song view and a playlist session (2026-11-10): _In
   switches it in (at the end) or out (its last appearance, as the playlist's own picker does,
   `toggleOp`), and the dialog stays open. A new playlist with the song still closes it, with a
   toast. Before, tapping a playlist that had the song added it a second time. (2026-11-23)
+- **D125. A shared invite link names its playlist.** Link previews (WhatsApp, Messenger) don't
+  run the app, so the server writes the invite into the shell's `og:title` and `og:description`
+  (`pages.ts`): "Pozvánka do playlistu „Vánoce“", who invites. Czech, the shell's language: a
+  previewer brings no reader to choose another. The link is the permission, so it shows only
+  what the join page shows. The tab title stays the app's. Development serves the pages the same
+  way (Vite in `custom` mode). (2026-11-23)
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed

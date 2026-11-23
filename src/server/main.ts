@@ -1,9 +1,11 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import express from 'express';
 import { createApp } from './app.ts';
 import { db } from './db/knex.ts';
 import { env, isProduction } from './env.ts';
+import { pages } from './pages.ts';
 
 const root = new URL('../..', import.meta.url).pathname;
 const app = createApp(db);
@@ -30,10 +32,8 @@ if (isProduction) {
       setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache'),
     }),
   );
-  app.get('/{*path}', (_req, res) => {
-    res.setHeader('Cache-Control', 'no-cache');
-    res.sendFile(join(dist, 'index.html'));
-  });
+  const shell = readFileSync(join(dist, 'index.html'), 'utf8');
+  app.use(pages(db, async () => shell));
 } else {
   const { createServer } = await import('vite');
   // Its own HMR port, so it runs beside other projects' Vite servers; none under e2e tests.
@@ -42,9 +42,15 @@ if (isProduction) {
       middlewareMode: true,
       hmr: process.env.VITE_HMR === 'off' ? false : { port: 24690 },
     },
-    appType: 'spa',
+    // The pages are ours (pages.ts), the same as in production; Vite serves the modules.
+    appType: 'custom',
   });
   app.use(vite.middlewares);
+  app.use(
+    pages(db, async (url) =>
+      vite.transformIndexHtml(url, await readFile(join(root, 'index.html'), 'utf8')),
+    ),
+  );
 }
 
 app.listen(env.PORT, () => {
