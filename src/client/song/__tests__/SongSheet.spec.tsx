@@ -55,3 +55,30 @@ describe('SongSheet: a chord on a pause', () => {
     expect(pause?.textContent).toBe('F​');
   });
 });
+
+describe('SongSheet: choruses', () => {
+  it('marks every chorus, the first as much as a repeat, unless it has its own label', () => {
+    localStorage.setItem('zpevnak.locale', 'cs');
+    renderApp(
+      <SongSheet
+        song={parseSong(
+          [
+            '{title: T}',
+            '{soc}',
+            'la [C]la',
+            '{eoc}',
+            '{chorus}',
+            '{soc: Refrén 2}',
+            'lo [G]lo',
+            '{eoc}',
+          ].join('\n'),
+        )}
+        fontScale={1}
+        showDiagrams={false}
+        showChords
+      />,
+    );
+    expect(screen.getAllByText('Refrén')).toHaveLength(2);
+    expect(screen.getByText('Refrén 2')).toBeTruthy();
+  });
+});

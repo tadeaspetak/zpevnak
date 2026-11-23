@@ -433,6 +433,9 @@ From the first UX walk of the song view and a playlist session (2026-11-10): _In
 - **D121. From an unchecked song straight to its review.** An editor sees "Zkontrolovat" in the
   quiet "nobody has approved this song yet" line (D82) and lands on the song's review screen, not
   the queue to find it in. Everyone else sees the line alone. (2026-11-23)
+- **D122. Every chorus is labelled "Refrén"**, the first as much as a repeat (`{chorus}`), unless
+  the song names it itself. Only repeats used to say so, and the first chorus had the bar alone,
+  which doesn't explain itself. (2026-11-23)
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed

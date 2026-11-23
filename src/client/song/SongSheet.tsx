@@ -80,11 +80,9 @@ function LineView({ line, showChords }: { line: Line; showChords: boolean }) {
 
 function SectionView({
   block,
-  recalled,
   showChords,
 }: {
   block: Block & { type: 'section' };
-  recalled?: boolean;
   showChords: boolean;
 }) {
   const { t } = useI18n();
@@ -95,7 +93,8 @@ function SectionView({
   if (!showChords && !sings) {
     return null;
   }
-  const label = block.label ?? (recalled ? t('song.chorus') : null);
+  // Every chorus says so, the first as much as a repeat: the bar alone doesn't explain itself.
+  const label = block.label ?? (block.kind === 'chorus' ? t('song.chorus') : null);
   return (
     <section
       className={classes[`section_${block.kind}`]}
@@ -210,7 +209,6 @@ export function SongSheet({
             label: block.label ?? block.chorus.label,
             line: block.line,
           }}
-          recalled
           showChords={showChords}
         />
       ) : null;
