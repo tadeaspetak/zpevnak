@@ -22,9 +22,9 @@ export function JoinPage() {
   const navigate = useNavigate();
   const token = useParams().token ?? '';
   const { me, known } = useMe();
-  const preview = trpc.playlists.invitePreview.useQuery({ token }, { retry: false });
-  const join = trpc.playlists.join.useMutation({
-    onSuccess: (playlist) => {
+  const preview = trpc.sharing.invitePreview.useQuery({ token }, { retry: false });
+  const join = trpc.sharing.join.useMutation({
+    onSuccess: ({ playlist }) => {
       putPlaylist(playlist.id, playlist);
       touchPlaylist(playlist.id);
       notifications.show({ message: t('playlists.joined', { name: playlist.name }) });

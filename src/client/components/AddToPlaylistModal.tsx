@@ -12,7 +12,7 @@ import { notifications } from '@mantine/notifications';
 import { IconCheck, IconPlus } from '@tabler/icons-react';
 import { useState } from 'react';
 import { toggleOp } from '#shared/playlistOps.ts';
-import { canEditPlaylist } from '#shared/roles.ts';
+import { editsAsMember } from '#shared/roles.ts';
 import { putPlaylist, useCatalog } from '../data/catalog.ts';
 import { touchPlaylist } from '../data/session.ts';
 import { useI18n } from '../i18n/index.tsx';
@@ -30,7 +30,7 @@ export function AddToPlaylistModal({ songId, onClose }: Props) {
   const { t } = useI18n();
   const { playlists } = useCatalog();
   // Every playlist the viewer may change: their own and those they collaborate on.
-  const mine = [...playlists.values()].filter((p) => canEditPlaylist(p.role));
+  const mine = [...playlists.values()].filter((p) => editsAsMember(p.role));
   const [name, setName] = useState('');
   // A failure shows in the dialog through `.error`; the next opening starts clean.
   const edit = trpc.playlists.edit.useMutation({

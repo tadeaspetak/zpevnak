@@ -9,6 +9,7 @@ import {
   storePlaylists,
   storeSongs,
   type PlaylistRecord,
+  type SharedRecord,
   type SongRecord,
 } from './store.ts';
 
@@ -198,6 +199,15 @@ export function putPlaylist(id: number, playlist: PlaylistRecord | null) {
   }
   update({ playlists });
   void storePlaylists([...playlists.values()]);
+}
+
+/** Applies a playlist or a song the sharing procedures returned, whichever it is. */
+export function putShared(shared: SharedRecord) {
+  switch (shared.kind) {
+    case 'playlist':
+      putPlaylist(shared.playlist.id, shared.playlist);
+      return;
+  }
 }
 
 function subscribe(listener: () => void) {

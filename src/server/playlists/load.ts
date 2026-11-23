@@ -1,5 +1,5 @@
 import type { Knex } from 'knex';
-import { canEditPlaylist, type JoinRole, type PlaylistRole } from '#shared/roles.ts';
+import { editsAsMember, type JoinRole, type MemberRole } from '#shared/roles.ts';
 import type { SessionUser } from '../auth/sessions.ts';
 import { fail } from '../trpc/trpc.ts';
 
@@ -33,7 +33,7 @@ const PLAYLIST_SELECT = /* sql */ `
   LEFT JOIN playlist_songs ps ON ps.playlist_id = p.id
 `;
 
-function roleOf(row: PlaylistRow, viewer: SessionUser | null): PlaylistRole | null {
+function roleOf(row: PlaylistRow, viewer: SessionUser | null): MemberRole | null {
   if (row.owner_id === viewer?.id) {
     return 'owner';
   }
@@ -43,7 +43,7 @@ function roleOf(row: PlaylistRow, viewer: SessionUser | null): PlaylistRole | nu
 /**
  * The playlist as the client gets it. An allow-list: never spread a row here. The invite token
  * is deliberately absent: it would sync to every collaborator's device; the owner fetches it
- * on its own (`playlists.invite`).
+ * on its own (`sharing.invite`).
  */
 function toPlaylistRecord(row: PlaylistRow, viewer: SessionUser | null) {
   const role = roleOf(row, viewer);
@@ -97,19 +97,10 @@ export async function loadVisiblePlaylist(
   return record;
 }
 
-/** Anyone in the playlist, a reader too: sees who else is, and may leave. */
-export async function assertMember(db: Knex, id: number, viewer: SessionUser) {
-  const playlist = await loadVisiblePlaylist(db, id, viewer);
-  if (!playlist.role) {
-    fail('FORBIDDEN', 'FORBIDDEN');
-  }
-  return playlist;
-}
-
 /** Owner or collaborator: may change the songs and the name. */
 export async function assertCanEdit(db: Knex, id: number, viewer: SessionUser) {
-  const playlist = await assertMember(db, id, viewer);
-  if (!canEditPlaylist(playlist.role)) {
+  const playlist = await loadVisiblePlaylist(db, id, viewer);
+  if (!editsAsMember(playlist.role)) {
     fail('FORBIDDEN', 'FORBIDDEN');
   }
   return playlist;

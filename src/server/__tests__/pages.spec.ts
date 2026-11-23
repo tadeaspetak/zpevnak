@@ -32,7 +32,11 @@ async function invite(name: string) {
     songIds: [],
   });
   return (
-    await callerFor(owner).playlists.invite({ id: playlist.id, role: 'collaborator' })
+    await callerFor(owner).sharing.invite({
+      kind: 'playlist',
+      id: playlist.id,
+      role: 'collaborator',
+    })
   ).token;
 }
 

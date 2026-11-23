@@ -9,8 +9,10 @@ const app = createApp(db);
 
 describe('the HTTP app', () => {
   it('never makes or hands out an invite link on a GET (it may write one)', async () => {
-    const input = encodeURIComponent(JSON.stringify({ id: 1 }));
-    const response = await request(app).get(`/trpc/playlists.invite?input=${input}`);
+    const input = encodeURIComponent(
+      JSON.stringify({ kind: 'playlist', id: 1, role: 'collaborator' }),
+    );
+    const response = await request(app).get(`/trpc/sharing.invite?input=${input}`);
     expect(response.status).toBe(405);
   });
 

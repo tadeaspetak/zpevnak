@@ -4,9 +4,10 @@
  */
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import type { PlaylistRecord } from '#server/playlists/load.ts';
+import type { SharedRecord } from '#server/sharing/access.ts';
 import type { SongRecord } from '#server/songs/record.ts';
 
-export type { PlaylistRecord, SongRecord };
+export type { PlaylistRecord, SharedRecord, SongRecord };
 
 type SyncState = {
   /** The server's cursor from the last song sync. */

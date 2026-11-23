@@ -29,11 +29,12 @@ async function shared() {
     isPublic: false,
     songIds: [s.a.id, s.b.id],
   });
-  const { token } = await callerFor(s.owner).playlists.invite({
+  const { token } = await callerFor(s.owner).sharing.invite({
+    kind: 'playlist',
     id: playlist.id,
     role: 'collaborator',
   });
-  await callerFor(collaborator).playlists.join({ token });
+  await callerFor(collaborator).sharing.join({ token });
   return { ...s, collaborator, playlist, token };
 }
 
@@ -283,20 +284,21 @@ describe('sharing', () => {
   it('lets an unconfirmed account that joined see who is in, and leave again', async () => {
     const { token, playlist } = await shared();
     const fresh = await createUser({ verified: false });
-    await callerFor(fresh).playlists.join({ token });
+    await callerFor(fresh).sharing.join({ token });
     await expect(
-      callerFor(fresh).playlists.members({ id: playlist.id }),
+      callerFor(fresh).sharing.members({ kind: 'playlist', id: playlist.id }),
     ).resolves.toContainEqual(expect.objectContaining({ id: fresh.id }));
     await expect(
-      callerFor(fresh).playlists.leave({ id: playlist.id }),
+      callerFor(fresh).sharing.leave({ kind: 'playlist', id: playlist.id }),
     ).resolves.toBeTruthy();
   });
 
   it('lets an unconfirmed account join (it may edit once its email is confirmed)', async () => {
     const { token, playlist, a } = await shared();
     const fresh = await createUser({ verified: false });
-    await expect(callerFor(fresh).playlists.join({ token })).resolves.toMatchObject({
-      role: 'collaborator',
+    await expect(callerFor(fresh).sharing.join({ token })).resolves.toMatchObject({
+      kind: 'playlist',
+      playlist: { role: 'collaborator' },
     });
     await expect(
       callerFor(fresh).playlists.edit({
@@ -309,24 +311,31 @@ describe('sharing', () => {
   it('keeps one invite link until the owner replaces it; the old one then fails', async () => {
     const { owner, playlist, token } = await shared();
     expect(
-      (await callerFor(owner).playlists.invite({ id: playlist.id, role: 'collaborator' }))
-        .token,
+      (
+        await callerFor(owner).sharing.invite({
+          kind: 'playlist',
+          id: playlist.id,
+          role: 'collaborator',
+        })
+      ).token,
     ).toBe(token);
-    const { token: fresh } = await callerFor(owner).playlists.resetInvite({
+    const { token: fresh } = await callerFor(owner).sharing.resetInvite({
+      kind: 'playlist',
       id: playlist.id,
       role: 'collaborator',
     });
     expect(fresh).not.toBe(token);
     const late = await createUser();
-    await expect(callerFor(late).playlists.join({ token })).rejects.toThrow(
+    await expect(callerFor(late).sharing.join({ token })).rejects.toThrow(
       'INVALID_TOKEN',
     );
-    await expect(callerFor(late).playlists.join({ token: fresh })).resolves.toBeTruthy();
+    await expect(callerFor(late).sharing.join({ token: fresh })).resolves.toBeTruthy();
   });
 
   it("previews an invite's playlist to anyone holding the link, signed in or not", async () => {
     const { owner, token, playlist } = await shared();
-    await expect(callerFor(null).playlists.invitePreview({ token })).resolves.toEqual({
+    await expect(callerFor(null).sharing.invitePreview({ token })).resolves.toEqual({
+      kind: 'playlist',
       name: 'Vánoce',
       ownerName: owner.displayName,
       // Private: nothing to look at without joining, and no id to look for.
@@ -334,28 +343,32 @@ describe('sharing', () => {
       role: 'collaborator',
     });
     await callerFor(owner).playlists.setPublic({ id: playlist.id, isPublic: true });
+    await expect(callerFor(null).sharing.invitePreview({ token })).resolves.toMatchObject(
+      {
+        publicId: playlist.id,
+      },
+    );
     await expect(
-      callerFor(null).playlists.invitePreview({ token }),
-    ).resolves.toMatchObject({
-      publicId: playlist.id,
-    });
-    await expect(
-      callerFor(null).playlists.invitePreview({ token: 'x'.repeat(22) }),
+      callerFor(null).sharing.invitePreview({ token: 'x'.repeat(22) }),
     ).rejects.toThrow('INVALID_TOKEN');
   });
 
   it('keeps the invite link to the owner', async () => {
     const { collaborator, playlist } = await shared();
     await expect(
-      callerFor(collaborator).playlists.invite({ id: playlist.id, role: 'collaborator' }),
+      callerFor(collaborator).sharing.invite({
+        kind: 'playlist',
+        id: playlist.id,
+        role: 'collaborator',
+      }),
     ).rejects.toThrow('FORBIDDEN');
   });
 
   it('joining twice, or the owner opening their own link, changes nothing', async () => {
     const { owner, collaborator, token, playlist } = await shared();
-    await callerFor(collaborator).playlists.join({ token });
-    await expect(callerFor(owner).playlists.join({ token })).resolves.toMatchObject({
-      role: 'owner',
+    await callerFor(collaborator).sharing.join({ token });
+    await expect(callerFor(owner).sharing.join({ token })).resolves.toMatchObject({
+      playlist: { role: 'owner' },
     });
     expect(
       (await callerFor(owner).playlists.byId({ id: playlist.id })).listmateCount,
@@ -364,7 +377,12 @@ describe('sharing', () => {
 
   it('lists the members, owner first, to members only', async () => {
     const { owner, collaborator, stranger, playlist } = await shared();
-    expect(await callerFor(collaborator).playlists.members({ id: playlist.id })).toEqual([
+    expect(
+      await callerFor(collaborator).sharing.members({
+        kind: 'playlist',
+        id: playlist.id,
+      }),
+    ).toEqual([
       { id: owner.id, displayName: owner.displayName, role: 'owner' },
       {
         id: collaborator.id,
@@ -373,18 +391,19 @@ describe('sharing', () => {
       },
     ]);
     await expect(
-      callerFor(stranger).playlists.members({ id: playlist.id }),
+      callerFor(stranger).sharing.members({ kind: 'playlist', id: playlist.id }),
     ).rejects.toThrow('NOT_FOUND');
   });
 
   it('lets a collaborator leave, and the owner remove one', async () => {
     const { owner, collaborator, playlist, token } = await shared();
-    await callerFor(collaborator).playlists.leave({ id: playlist.id });
+    await callerFor(collaborator).sharing.leave({ kind: 'playlist', id: playlist.id });
     await expect(
       callerFor(collaborator).playlists.byId({ id: playlist.id }),
     ).rejects.toThrow('NOT_FOUND');
-    await callerFor(collaborator).playlists.join({ token });
-    await callerFor(owner).playlists.removeCollaborator({
+    await callerFor(collaborator).sharing.join({ token });
+    await callerFor(owner).sharing.removeMember({
+      kind: 'playlist',
       id: playlist.id,
       userId: collaborator.id,
     });
@@ -395,11 +414,12 @@ describe('sharing', () => {
 
   it("doesn't let the owner leave, or a collaborator remove anyone", async () => {
     const { owner, collaborator, playlist } = await shared();
-    await expect(callerFor(owner).playlists.leave({ id: playlist.id })).rejects.toThrow(
-      'FORBIDDEN',
-    );
     await expect(
-      callerFor(collaborator).playlists.removeCollaborator({
+      callerFor(owner).sharing.leave({ kind: 'playlist', id: playlist.id }),
+    ).rejects.toThrow('FORBIDDEN');
+    await expect(
+      callerFor(collaborator).sharing.removeMember({
+        kind: 'playlist',
         id: playlist.id,
         userId: owner.id,
       }),
@@ -420,11 +440,12 @@ describe('readers', () => {
   async function withReader() {
     const s = await shared();
     const reader = await createUser();
-    const { token: viewToken } = await callerFor(s.owner).playlists.invite({
+    const { token: viewToken } = await callerFor(s.owner).sharing.invite({
+      kind: 'playlist',
       id: s.playlist.id,
       role: 'viewer',
     });
-    await callerFor(reader).playlists.join({ token: viewToken });
+    await callerFor(reader).sharing.join({ token: viewToken });
     return { ...s, reader, viewToken };
   }
 
@@ -444,12 +465,13 @@ describe('readers', () => {
   it("can't change the songs or the name, and nothing else the owner keeps", async () => {
     const { reader, playlist, c } = await withReader();
     const api = callerFor(reader).playlists;
+    const share = callerFor(reader).sharing;
     // Each started only as it is awaited: none rejects with nobody listening.
     const refused = [
       () => api.edit({ id: playlist.id, op: { type: 'add', songId: c.id } }),
       () => api.rename({ id: playlist.id, name: 'Moje' }),
       () => api.setPublic({ id: playlist.id, isPublic: true }),
-      () => api.invite({ id: playlist.id, role: 'viewer' }),
+      () => share.invite({ kind: 'playlist', id: playlist.id, role: 'viewer' }),
       () => api.delete({ id: playlist.id }),
     ];
     for (const call of refused) {
@@ -470,7 +492,9 @@ describe('readers', () => {
 
   it('lists each person with their role, to a reader too, and lets a reader leave', async () => {
     const { owner, collaborator, reader, playlist } = await withReader();
-    expect(await callerFor(reader).playlists.members({ id: playlist.id })).toEqual([
+    expect(
+      await callerFor(reader).sharing.members({ kind: 'playlist', id: playlist.id }),
+    ).toEqual([
       { id: owner.id, displayName: owner.displayName, role: 'owner' },
       {
         id: collaborator.id,
@@ -479,7 +503,7 @@ describe('readers', () => {
       },
       { id: reader.id, displayName: reader.displayName, role: 'viewer' },
     ]);
-    await callerFor(reader).playlists.leave({ id: playlist.id });
+    await callerFor(reader).sharing.leave({ kind: 'playlist', id: playlist.id });
     await expect(callerFor(reader).playlists.byId({ id: playlist.id })).rejects.toThrow(
       'NOT_FOUND',
     );
@@ -488,48 +512,62 @@ describe('readers', () => {
   it('a link to edit makes a reader a collaborator; a link to read takes nothing away', async () => {
     const { owner, collaborator, reader, playlist, token, viewToken } =
       await withReader();
-    await callerFor(collaborator).playlists.join({ token: viewToken });
-    await callerFor(owner).playlists.join({ token: viewToken });
-    await callerFor(reader).playlists.join({ token });
-    const roles = (await callerFor(owner).playlists.members({ id: playlist.id })).map(
-      (m) => m.role,
-    );
+    await callerFor(collaborator).sharing.join({ token: viewToken });
+    await callerFor(owner).sharing.join({ token: viewToken });
+    await callerFor(reader).sharing.join({ token });
+    const roles = (
+      await callerFor(owner).sharing.members({ kind: 'playlist', id: playlist.id })
+    ).map((m) => m.role);
     expect(roles).toEqual(['owner', 'collaborator', 'collaborator']);
   });
 
   it('keeps one link per role, each replaced on its own', async () => {
     const { owner, playlist, token, viewToken } = await withReader();
-    const api = callerFor(owner).playlists;
+    const share = callerFor(owner).sharing;
     expect(viewToken).not.toBe(token);
-    expect((await api.invite({ id: playlist.id, role: 'viewer' })).token).toBe(viewToken);
-    const { token: freshView } = await api.resetInvite({
+    expect(
+      (await share.invite({ kind: 'playlist', id: playlist.id, role: 'viewer' })).token,
+    ).toBe(viewToken);
+    const { token: freshView } = await share.resetInvite({
+      kind: 'playlist',
       id: playlist.id,
       role: 'viewer',
     });
-    expect((await api.invite({ id: playlist.id, role: 'collaborator' })).token).toBe(
-      token,
-    );
+    expect(
+      (await share.invite({ kind: 'playlist', id: playlist.id, role: 'collaborator' }))
+        .token,
+    ).toBe(token);
     const late = await createUser();
-    await expect(callerFor(late).playlists.join({ token: viewToken })).rejects.toThrow(
+    await expect(callerFor(late).sharing.join({ token: viewToken })).rejects.toThrow(
       'INVALID_TOKEN',
     );
     await expect(
-      callerFor(late).playlists.join({ token: freshView }),
-    ).resolves.toMatchObject({ role: 'viewer' });
+      callerFor(late).sharing.join({ token: freshView }),
+    ).resolves.toMatchObject({ playlist: { role: 'viewer' } });
   });
 
   it("previews the reading link, saying it's for reading", async () => {
     const { viewToken } = await withReader();
     await expect(
-      callerFor(null).playlists.invitePreview({ token: viewToken }),
+      callerFor(null).sharing.invitePreview({ token: viewToken }),
     ).resolves.toMatchObject({ name: 'Vánoce', role: 'viewer' });
   });
 
   it('the owner changes who edits and who reads; nobody else can', async () => {
     const { owner, collaborator, reader, playlist, c } = await withReader();
-    const api = callerFor(owner).playlists;
-    await api.setRole({ id: playlist.id, userId: reader.id, role: 'collaborator' });
-    await api.setRole({ id: playlist.id, userId: collaborator.id, role: 'viewer' });
+    const share = callerFor(owner).sharing;
+    await share.setRole({
+      kind: 'playlist',
+      id: playlist.id,
+      userId: reader.id,
+      role: 'collaborator',
+    });
+    await share.setRole({
+      kind: 'playlist',
+      id: playlist.id,
+      userId: collaborator.id,
+      role: 'viewer',
+    });
     await expect(
       callerFor(reader).playlists.edit({
         id: playlist.id,
@@ -543,7 +581,8 @@ describe('readers', () => {
       }),
     ).rejects.toThrow('FORBIDDEN');
     await expect(
-      callerFor(reader).playlists.setRole({
+      callerFor(reader).sharing.setRole({
+        kind: 'playlist',
         id: playlist.id,
         userId: collaborator.id,
         role: 'collaborator',
@@ -555,7 +594,8 @@ describe('readers', () => {
     const { owner, playlist } = await withReader();
     const stranger = await createUser();
     await expect(
-      callerFor(owner).playlists.setRole({
+      callerFor(owner).sharing.setRole({
+        kind: 'playlist',
         id: playlist.id,
         userId: stranger.id,
         role: 'viewer',
@@ -568,9 +608,9 @@ describe('readers', () => {
 
   it('an undone removal puts a reader back as a reader', async () => {
     const { owner, reader, playlist } = await withReader();
-    const api = callerFor(owner).playlists;
-    await api.removeCollaborator({ id: playlist.id, userId: reader.id });
-    await api.restoreCollaborator({ id: playlist.id, userId: reader.id });
+    const share = callerFor(owner).sharing;
+    await share.removeMember({ kind: 'playlist', id: playlist.id, userId: reader.id });
+    await share.restoreMember({ kind: 'playlist', id: playlist.id, userId: reader.id });
     expect((await callerFor(reader).playlists.byId({ id: playlist.id })).role).toBe(
       'viewer',
     );
@@ -584,28 +624,30 @@ describe('undoing a removal (D87)', () => {
       /* sql */ `SELECT joined_at FROM playlist_collaborators WHERE user_id = :id`,
       { id: s.collaborator.id },
     );
-    const record = await callerFor(s.owner).playlists.removeCollaborator({
+    const record = await callerFor(s.owner).sharing.removeMember({
+      kind: 'playlist',
       id: s.playlist.id,
       userId: s.collaborator.id,
     });
     return { ...s, joinedAt: rows[0].joined_at as Date, record };
   }
   const memberIds = async (owner: Parameters<typeof callerFor>[0], id: number) =>
-    (await callerFor(owner).playlists.members({ id })).map((m) => m.id);
+    (await callerFor(owner).sharing.members({ kind: 'playlist', id })).map((m) => m.id);
 
   it('removes at once and answers with the playlist, one fewer', async () => {
     const { record, owner, playlist, collaborator } = await removed();
-    expect(record.listmateCount).toBe(0);
+    expect(record.playlist.listmateCount).toBe(0);
     expect(await memberIds(owner, playlist.id)).not.toContain(collaborator.id);
   });
 
   it('puts the person back as they were, original join date included', async () => {
     const { owner, playlist, collaborator, joinedAt } = await removed();
-    const record = await callerFor(owner).playlists.restoreCollaborator({
+    const record = await callerFor(owner).sharing.restoreMember({
+      kind: 'playlist',
       id: playlist.id,
       userId: collaborator.id,
     });
-    expect(record.listmateCount).toBe(1);
+    expect(record.playlist.listmateCount).toBe(1);
     const { rows } = await db.raw(
       /* sql */ `SELECT joined_at FROM playlist_collaborators WHERE user_id = :id`,
       { id: collaborator.id },
@@ -618,21 +660,26 @@ describe('undoing a removal (D87)', () => {
 
   it('undoes once: a second undo has nothing left to undo', async () => {
     const { owner, playlist, collaborator } = await removed();
-    const api = callerFor(owner).playlists;
-    await api.restoreCollaborator({ id: playlist.id, userId: collaborator.id });
+    const share = callerFor(owner).sharing;
+    await share.restoreMember({
+      kind: 'playlist',
+      id: playlist.id,
+      userId: collaborator.id,
+    });
     await expect(
-      api.restoreCollaborator({ id: playlist.id, userId: collaborator.id }),
+      share.restoreMember({ kind: 'playlist', id: playlist.id, userId: collaborator.id }),
     ).rejects.toThrow('UNDO_EXPIRED');
   });
 
   it("works when they've come back through the link meanwhile", async () => {
     const { owner, playlist, collaborator, token } = await removed();
-    await callerFor(collaborator).playlists.join({ token });
-    const record = await callerFor(owner).playlists.restoreCollaborator({
+    await callerFor(collaborator).sharing.join({ token });
+    const record = await callerFor(owner).sharing.restoreMember({
+      kind: 'playlist',
       id: playlist.id,
       userId: collaborator.id,
     });
-    expect(record.listmateCount).toBe(1);
+    expect(record.playlist.listmateCount).toBe(1);
   });
 
   it('refuses once the window has passed', async () => {
@@ -641,7 +688,8 @@ describe('undoing a removal (D87)', () => {
         UPDATE playlist_collaborator_removals SET removed_at = now() - interval '11 minutes'
       `);
     await expect(
-      callerFor(owner).playlists.restoreCollaborator({
+      callerFor(owner).sharing.restoreMember({
+        kind: 'playlist',
         id: playlist.id,
         userId: collaborator.id,
       }),
@@ -651,7 +699,8 @@ describe('undoing a removal (D87)', () => {
   it("can't add someone who was never taken out of the playlist", async () => {
     const { owner, stranger, playlist } = await removed();
     await expect(
-      callerFor(owner).playlists.restoreCollaborator({
+      callerFor(owner).sharing.restoreMember({
+        kind: 'playlist',
         id: playlist.id,
         userId: stranger.id,
       }),
@@ -661,9 +710,10 @@ describe('undoing a removal (D87)', () => {
 
   it("is the owner's alone", async () => {
     const { owner, stranger, playlist, collaborator, token } = await removed();
-    await callerFor(stranger).playlists.join({ token });
+    await callerFor(stranger).sharing.join({ token });
     await expect(
-      callerFor(stranger).playlists.restoreCollaborator({
+      callerFor(stranger).sharing.restoreMember({
+        kind: 'playlist',
         id: playlist.id,
         userId: collaborator.id,
       }),

@@ -13,7 +13,7 @@ import { Link, useNavigate, useParams } from 'react-router';
 import { ConfirmModal } from '../components/ConfirmModal.tsx';
 import { VerifyEmailAlert } from '../components/VerifyEmailAlert.tsx';
 import { toggleOp, type PlaylistOp } from '#shared/playlistOps.ts';
-import { canEditPlaylist } from '#shared/roles.ts';
+import { editsAsMember } from '#shared/roles.ts';
 import { showUndoToast } from '../components/UndoToast.tsx';
 import { Page } from '../components/Page.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
@@ -86,7 +86,7 @@ export function PlaylistPage() {
   // Owner and collaborators change the songs and the name, once their email is confirmed.
   // A reader is in it too: sees who else is, and may leave.
   const isMember = playlist.role !== null;
-  const mayEdit = canEditPlaylist(playlist.role);
+  const mayEdit = editsAsMember(playlist.role);
   const canEdit = mayEdit && Boolean(me?.emailVerified);
   // Only while they may: someone taken out of the playlist meanwhile leaves the editor.
   const isEditing = editing && canEdit;

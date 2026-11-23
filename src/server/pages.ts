@@ -3,7 +3,7 @@ import express, { type Request, type Response } from 'express';
 import type { Knex } from 'knex';
 import { idFromRef, routes } from '#shared/urls.ts';
 import { inviteTokenSchema } from '#shared/validators/index.ts';
-import { loadInvitePreview } from './playlists/invite.ts';
+import { loadInvitePreview } from './sharing/invite.ts';
 import { loadVisiblePlaylist, type PlaylistRecord } from './playlists/load.ts';
 import { loadSong } from './songs/load.ts';
 

@@ -8,7 +8,7 @@ test('an owner takes a listmate out by mistake, takes it back, and replaces the 
   const owner = await signedIn(browser, 'user@zpevnak.test');
   const { playlist, token } = await playlistWithInvite(owner, `Advent ${Date.now()}`);
   const listmate = await signedIn(browser, 'editor@zpevnak.test');
-  await listmate.request.post('/trpc/playlists.join', { data: { token } });
+  await listmate.request.post('/trpc/sharing.join', { data: { token } });
 
   await owner.goto(`/playlist/${playlist.id}`);
   await owner.getByRole('button', { name: 'Sharing' }).click();
@@ -35,6 +35,13 @@ test('an owner takes a listmate out by mistake, takes it back, and replaces the 
   // The new link replaces the old one in its field.
   await expect(link).not.toHaveValue(new RegExp(`/join/${token}$`));
   await expect(link).toHaveValue(/\/join\/\S+$/);
+
+  // Taken out, then the dialog closed: the way back moves to a toast.
+  await owner.getByRole('button', { name: 'Remove Erik Editor' }).click();
+  await owner.keyboard.press('Escape');
+  await owner.getByRole('alert').getByRole('button', { name: 'Undo' }).click();
+  await owner.getByRole('button', { name: 'Sharing' }).click();
+  await expect(owner.getByRole('button', { name: 'Remove Erik Editor' })).toBeVisible();
 });
 
 test('a reader joins by the reading link, only reads, and can edit once the owner lets them', async ({
@@ -77,14 +84,14 @@ test('a listmate taken out while editing leaves the editor', async ({ browser })
   // Public: after being taken out, they can still see it, just not edit it.
   const { playlist, token } = await playlistWithInvite(owner, `Trh ${Date.now()}`, true);
   const listmate = await signedIn(browser, 'editor@zpevnak.test');
-  await listmate.request.post('/trpc/playlists.join', { data: { token } });
+  await listmate.request.post('/trpc/sharing.join', { data: { token } });
   await listmate.goto(`/playlist/${playlist.id}`);
   await listmate.getByRole('button', { name: 'Edit playlist' }).click();
   await expect(listmate.getByLabel('Name')).toBeVisible();
 
   const me = await (await listmate.request.get('/trpc/auth.me')).json();
-  await owner.request.post('/trpc/playlists.removeCollaborator', {
-    data: { id: playlist.id, userId: me.result.data.id },
+  await owner.request.post('/trpc/sharing.removeMember', {
+    data: { kind: 'playlist', id: playlist.id, userId: me.result.data.id },
   });
   // From the settings, which also fetch the playlist on the page, not only the one being played.
   await listmate.getByRole('button', { name: 'Settings' }).click();
@@ -99,7 +106,7 @@ test('a listmate without a confirmed email sees who is in, and can leave', async
   const owner = await signedIn(browser, 'user@zpevnak.test');
   const { playlist, token } = await playlistWithInvite(owner, `Jarmark ${Date.now()}`);
   const fresh = await signedIn(browser, 'new@zpevnak.test');
-  await fresh.request.post('/trpc/playlists.join', { data: { token } });
+  await fresh.request.post('/trpc/sharing.join', { data: { token } });
   await fresh.goto(`/playlist/${playlist.id}`);
   // Why they can't edit yet, and the way to fix it right there.
   await expect(fresh.getByRole('button', { name: 'Send the email again' })).toBeVisible();
