@@ -50,8 +50,10 @@ printed to the server log.
 - **Rules both sides need live in `src/shared/` and nowhere else:** who may change a song
   (`songs.ts`: `canChangeSong`, `isEditor`), every path (`urls.ts`, emails included), the
   rejection reasons' wording (`rejectionReasons.ts`), validators and limits
-  (`validators/index.ts`), the ChordPro parser. Never re-derive one of these in a page or a
-  procedure.
+  (`validators/index.ts`), the ChordPro parser, tags (`chordpro/tags.ts`: one tag is every
+  spelling with one `tagKey`; `setTags` edits the `{tag}` lines), transposing a song's text
+  (`transposeSource`, the same mapping as the view), playlist edits (`playlistOps.ts`:
+  `applyOp`, `toggleOp`). Never re-derive one of these in a page or a procedure.
 - **Offline first.** The whole catalog (songs and playlists the viewer can see) lives in
   IndexedDB (`src/client/data/`) and is searched on the device with MiniSearch. `songs.sync`
   sends what changed since a cursor; `playlists.all` sends everything (it is small). Reads go
@@ -117,7 +119,26 @@ Every change to behaviour ships with its tests in the same commit.
 - **Braces on every `if`/`else`/loop**, on their own lines (ESLint `curly`).
 - **Comments say why, not what.**
 - **Musical notation:** keep H/B as the song writes it. Czech songs use german notation (H = B
-  natural, B = B♭); transposition keeps the song's system (`src/shared/chordpro/chord.ts`).
+  natural, B = B♭); transposition keeps the song's system (`src/shared/chordpro/chord.ts`). A
+  song is read as german only if it uses H somewhere; one with B♭ written `B` and no H needs
+  `{+notes.system: german}`, or its B is taken for B natural. Flats are `Ab`, `Eb`: the parser
+  doesn't know the Czech names `As`, `Es`.
+
+## Writing songs
+
+How a song's ChordPro is laid out, so songs read alike (the first pass: 2026-11-23).
+
+- Header: `{title}`, `{artist}` (a real artist only, or none), `{key}` (always: the tonic, `Am`
+  for a minor song), then `{tag}` lines. A category ("Koledy", "Pohádky") is a tag, never an
+  artist (D120).
+- Every verse and chorus is a section (`{start_of_verse}`, `{start_of_chorus}`, `bridge`),
+  without English labels or numbers ("Verse 1", "1.", "Ref:"). A chorus sung again unchanged is
+  `{chorus}`: the sheet shows it whole, marked Refrén (D122). Instrumental parts are labelled in
+  Czech: `{start_of_intro: Předehra}`, `{start_of_interlude: Mezihra}`, `{start_of_outro: Dohra}`.
+- No indents, single spaces, a space after a comma, a chord on the syllable it's sung on
+  (`jistě [Am]rozezná`, not `jistě[Am] rozezná`). Repeat marks as the song has them (`/: … :/`).
+- Fix the shape, never the words. A change to the words (a typo, two spellings of one word made
+  one) is named to the owner, who approves the song.
 
 ## UI conventions
 
@@ -161,6 +182,11 @@ Live at **https://zpevnak.tadeaspetak.com** (testing it at a Christmas carol gig
   the app never loads it, so local work can't touch production. Migrations run on boot in the
   container. To act on production by hand, pass the unpooled URL explicitly, e.g.
   `DATABASE_URL="$(…UNPOOLED…)" node src/server/cli/set-role.ts <email> admin`. Never print it.
+- **Changing songs in production by hand** (a fix the owner asked for): through the app's own
+  procedures, never raw SQL. A one-off script sets `DATABASE_URL` from the unpooled URL in
+  `.env.local` itself, then calls `appRouter.createCaller` as the owner: `songs.update` with
+  `seenAt` from when the song was read, `songs.delete`. The change is then checked like any edit
+  and recorded as a version (D86). Read first, dry-run, then apply.
 - **Email:** Resend, sending from `noreply@zpevnak.tadeaspetak.com`.
 - **Users:** the owner (`tadeaspetak@gmail.com`) is admin in production.
 - **Free tier:** Cloud Build ~3 min a build (2,500 free min/month), images within 0.5 GB.

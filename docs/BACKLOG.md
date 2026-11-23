@@ -102,3 +102,6 @@ Agreed to leave, for now:
 ## Found along the way (2026-11-23)
 
 - [ ] Review screen: the red "Zamítnout" fails AA contrast (axe via `yarn ux:probe`).
+- [ ] The chord parser doesn't know Czech flat names: `As` is read as A with the suffix `s`,
+      so it shows but transposes as A. Songs write `Ab` for now (CLAUDE.md); reading `As`,
+      `Es`, `Ges`, `Des` would let them stay as written.
