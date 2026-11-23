@@ -20,10 +20,12 @@ import {
   IconPlus,
   IconTag,
   IconTrash,
+  IconUsers,
 } from '@tabler/icons-react';
 import { Link } from 'react-router';
 import { AddToPlaylistModal } from '../components/AddToPlaylistModal.tsx';
 import { DeleteSongModal } from '../components/DeleteSongModal.tsx';
+import { SongShareModal } from '../components/SongShareModal.tsx';
 import { mailtoAuthor } from '../contact.ts';
 import { SearchButton } from '../components/SearchButton.tsx';
 import { SettingsButton } from '../components/SettingsButton.tsx';
@@ -46,8 +48,10 @@ type Props = {
   /** The pitch the song starts from (`songPitch`), which a transposition is kept against. */
   pitch: number | null;
   hasDiagrams: boolean;
-  /** May edit the song, and so delete it: the same people (canChangeSong, D78). */
+  /** May edit the song (canChangeSong, D78). */
   canEdit: boolean;
+  /** May delete it: the same people for a public song, its owner alone for a private one. */
+  canDelete: boolean;
   canAddToPlaylist: boolean;
   /** Out of the way: scrolled away, or the reader tapped the song (`useHideOnScroll`). */
   hidden: boolean;
@@ -68,6 +72,7 @@ export function SongToolbar(props: Props) {
     pitch,
     hasDiagrams,
     canEdit,
+    canDelete,
     canAddToPlaylist,
     hidden,
   } = props;
@@ -76,6 +81,10 @@ export function SongToolbar(props: Props) {
   const [adding, { open: openAdd, close: closeAdd }] = useDisclosure(false);
   const [deleting, { open: openDelete, close: closeDelete }] = useDisclosure(false);
   const [savingKey, { open: openSaveKey, close: closeSaveKey }] = useDisclosure(false);
+  const [sharing, { open: openShare, close: closeShare }] = useDisclosure(false);
+  const isPrivate = song.status === 'private';
+  // A private song's people, and the owner of a public one (who may still take it back).
+  const canOpenSharing = song.role !== null && (isPrivate || song.role === 'owner');
   const tags = songText(song).tags;
 
   // A song without a {key} shows how far it's transposed instead. A real minus sign: a
@@ -174,8 +183,14 @@ export function SongToolbar(props: Props) {
                   {t('song.addToPlaylist')}
                 </Menu.Item>
               )}
-              {/* Who can edit the song fixes it; everyone else tells the author. */}
-              {!canEdit && (
+              {canOpenSharing && (
+                <Menu.Item leftSection={<IconUsers size={16} />} onClick={openShare}>
+                  {t('songs.share')}
+                </Menu.Item>
+              )}
+              {/* Who can edit the song fixes it; everyone else tells the author. Not about a
+                  private song: the author doesn't see those. */}
+              {!canEdit && !isPrivate && (
                 <Menu.Item
                   component="a"
                   href={mailtoAuthor(
@@ -211,7 +226,7 @@ export function SongToolbar(props: Props) {
                   {t('song.edit')}
                 </Menu.Item>
               )}
-              {canEdit && (
+              {canDelete && (
                 <Menu.Item
                   color="red"
                   leftSection={<IconTrash size={16} />}
@@ -230,7 +245,12 @@ export function SongToolbar(props: Props) {
         </Group>
       </header>
       <AddToPlaylistModal songId={adding ? song.id : null} onClose={closeAdd} />
-      {canEdit && <DeleteSongModal song={song} opened={deleting} onClose={closeDelete} />}
+      {canDelete && (
+        <DeleteSongModal song={song} opened={deleting} onClose={closeDelete} />
+      )}
+      {canOpenSharing && (
+        <SongShareModal song={song} opened={sharing} onClose={closeShare} />
+      )}
       {canEdit && semitones !== 0 && (
         <SaveKeyModal
           song={song}

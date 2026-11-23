@@ -464,6 +464,20 @@ From the first UX walk of the song view and a playlist session (2026-11-10): _In
   undone removal puts the person back in their role. In code `collaborator`/`viewer`, not
   "editor", which is a role in the whole songbook. First phase of
   `.planning/ongoing/private-songs-and-roles.md`. (2026-11-23)
+- **D127. A song can be private.** Public stays the default; on a new song, "Soukromá, jen pro
+  mě" keeps it the author's own. A private song is outside the songbook: never reviewed (its
+  status is `private`, so it can't also be approved), and it doesn't exist (NOT_FOUND) for
+  anyone it isn't shared with, the songbook's editors and admins included. It is shared as a
+  playlist is (D126): two invite links, Může upravovat / Jen čte, the same dialog (`sharing`
+  router, `SharePeople`); its owner alone deletes it and manages its people. Making it public
+  is publishing, asked first: it goes to the editors as pending. Back to private only while
+  nobody else has a stake in it: every version its owner's (no one else edited, approved or
+  rejected it) and in no one else's playlist; otherwise the dialog says why. Devices get every
+  readable private song on every sync and drop one no longer sent; a song gone private leaves
+  other devices (`song_withdrawals`); a private song's id never goes out in `song_deletions`.
+  Until a playlist shares its songs (phase 3), a private song goes only into a private playlist
+  whose people can all read it already. Lists mark it with a lock. Phase 2 of
+  `.planning/ongoing/private-songs-and-roles.md`. (2026-11-23)
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed

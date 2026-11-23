@@ -74,6 +74,23 @@ function loadFromDevice() {
   return loading;
 }
 
+/**
+ * Private songs this device has that the sync didn't send: no longer shared with the viewer, or
+ * deleted (D127). The sync sends every private song the viewer may read, so one missing is gone,
+ * unless it is newer than the answer: put here after the sync started (one just made).
+ */
+export function privateSongsNotSent(
+  songs: Map<number, SongRecord>,
+  delta: { songs: SongRecord[]; cursor: string },
+): number[] {
+  const sent = new Set(delta.songs.map((s) => s.id));
+  return [...songs.values()]
+    .filter(
+      (s) => s.status === 'private' && !sent.has(s.id) && s.updatedAt <= delta.cursor,
+    )
+    .map((s) => s.id);
+}
+
 /** The songs after a sync: the delta applied, or, for a new viewer, the delta alone. */
 export function mergeSongs(
   songs: Map<number, SongRecord>,
@@ -125,13 +142,20 @@ async function runSync(viewer: number | null) {
       trpcClient.playlists.all.query(),
     ]);
     cursor = songDelta.cursor;
+    const changes = {
+      songs: songDelta.songs,
+      removedIds: [
+        ...songDelta.removedIds,
+        ...privateSongsNotSent(state.songs, songDelta),
+      ],
+    };
     update({
-      songs: mergeSongs(state.songs, songDelta, replaceAll),
+      songs: mergeSongs(state.songs, changes, replaceAll),
       playlists: mergePlaylists(state.playlists, playlists),
       synced: true,
     });
     await Promise.all([
-      storeSongs({ ...songDelta, replaceAll }, { cursor, viewerId }),
+      storeSongs({ ...changes, replaceAll }, { cursor, viewerId }),
       storePlaylists([...state.playlists.values()]),
     ]);
   } catch {
@@ -206,6 +230,9 @@ export function putShared(shared: SharedRecord) {
   switch (shared.kind) {
     case 'playlist':
       putPlaylist(shared.playlist.id, shared.playlist);
+      return;
+    case 'song':
+      putSong(shared.song);
       return;
   }
 }

@@ -13,6 +13,13 @@ export const SHARED_TABLES = {
     removals: 'playlist_collaborator_removals',
     key: 'playlist_id',
   },
+  song: {
+    things: 'songs',
+    owner: 'created_by',
+    members: 'song_members',
+    removals: 'song_member_removals',
+    key: 'song_id',
+  },
 } as const satisfies Record<
   SharedKind,
   { things: string; owner: string; members: string; removals: string; key: string }

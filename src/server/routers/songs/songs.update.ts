@@ -7,7 +7,8 @@ import { recordVersion } from '../../songs/versions.ts';
 import { fail, verifiedProcedure } from '../../trpc/trpc.ts';
 
 /**
- * Editors edit any song; an author their own song while it is pending or rejected (D78). An
+ * Editors edit any public song; an author their own song while it is pending or rejected (D78);
+ * a private song its owner and those it is shared with to edit (D127). An
  * edit keeps a verified or pending song's status, but a rejected song, once its text changes,
  * goes back for review as pending, whoever changed it: the rejection was of the old text (D81).
  * Saved unchanged, it stays rejected.
@@ -21,8 +22,12 @@ export const update = verifiedProcedure
     const { title, artist } = readHeader(input.source);
     await ctx.db.transaction(async (trx) => {
       // Locked: an editor approving it meanwhile is seen here, not overwritten.
-      const row = await loadSongRow(trx, input.id, { forUpdate: true });
-      const song = { status: row.status, createdBy: row.created_by };
+      const row = await loadSongRow(trx, input.id, ctx.user, { forUpdate: true });
+      const song = {
+        status: row.status,
+        createdBy: row.created_by,
+        role: row.viewer_role,
+      };
       if (!canChangeSong(ctx.user, song)) {
         fail(
           'FORBIDDEN',

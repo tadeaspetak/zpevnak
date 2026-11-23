@@ -5,7 +5,7 @@ import { Link, useNavigate, useParams } from 'react-router';
 import { ErrorText } from '../components/ErrorText.tsx';
 import { Page } from '../components/Page.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
-import { putPlaylist } from '../data/catalog.ts';
+import { putShared } from '../data/catalog.ts';
 import { touchPlaylist } from '../data/session.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
@@ -14,8 +14,9 @@ import { url } from '#shared/urls.ts';
 import { PageLoader } from '../components/PageLoader.tsx';
 
 /**
- * /join/:token, an invite link. Says whose playlist it is; signed in, joins at once and opens
- * it; signed out, offers logging in or signing up, both of which come back here.
+ * /join/:token, an invite link to a playlist or a private song. Says whose it is and what joining
+ * lets the reader do; signed in, joins at once and opens it; signed out, offers logging in or
+ * signing up, both of which come back here.
  */
 export function JoinPage() {
   const { t } = useI18n();
@@ -24,11 +25,18 @@ export function JoinPage() {
   const { me, known } = useMe();
   const preview = trpc.sharing.invitePreview.useQuery({ token }, { retry: false });
   const join = trpc.sharing.join.useMutation({
-    onSuccess: ({ playlist }) => {
-      putPlaylist(playlist.id, playlist);
-      touchPlaylist(playlist.id);
-      notifications.show({ message: t('playlists.joined', { name: playlist.name }) });
-      navigate(url.playlist(playlist), { replace: true });
+    onSuccess: (shared) => {
+      putShared(shared);
+      if (shared.kind === 'playlist') {
+        touchPlaylist(shared.playlist.id);
+        notifications.show({
+          message: t('playlists.joined', { name: shared.playlist.name }),
+        });
+        navigate(url.playlist(shared.playlist), { replace: true });
+      } else {
+        notifications.show({ message: t('songs.joined', { name: shared.song.title }) });
+        navigate(url.song(shared.song), { replace: true });
+      }
     },
   });
   // Once per visit: a token is used up on nothing, but a join should not fire twice. Only once
@@ -42,10 +50,20 @@ export function JoinPage() {
   }, [me, known, preview.isSuccess, join, token]);
 
   const here = url.join(token);
+  const isSong = preview.data?.kind === 'song';
+  // A public one can be looked at without joining.
+  const publicId = preview.data?.publicId ?? null;
+  const name = preview.data?.name ?? '';
+  const lookTo =
+    publicId === null
+      ? null
+      : isSong
+        ? url.song({ id: publicId, title: name, artist: null })
+        : url.playlist({ id: publicId, name });
   return (
     <>
       <PageHeader
-        title={t('join.title')}
+        title={isSong ? t('join.titleSong') : t('join.title')}
         backTo={url.home()}
         backLabel={t('nav.backHome')}
       />
@@ -58,7 +76,7 @@ export function JoinPage() {
           ) : (
             <>
               <Text size="lg">
-                {t('join.intro', {
+                {t(isSong ? 'join.introSong' : 'join.intro', {
                   owner: preview.data.ownerName,
                   name: preview.data.name,
                 })}
@@ -66,8 +84,8 @@ export function JoinPage() {
               {/* Which link it is: the same invite reads alike, and does different things. */}
               <Text>
                 {preview.data.role === 'collaborator'
-                  ? t('join.asCollaborator')
-                  : t('join.asViewer')}
+                  ? t(isSong ? 'join.asCollaboratorSong' : 'join.asCollaborator')
+                  : t(isSong ? 'join.asViewerSong' : 'join.asViewer')}
               </Text>
               {me ? (
                 join.error ? (
@@ -90,16 +108,8 @@ export function JoinPage() {
                       {t('auth.logIn')}
                     </Button>
                   </Group>
-                  {/* A public playlist can be looked at without joining. */}
-                  {preview.data.publicId !== null && (
-                    <Anchor
-                      component={Link}
-                      to={url.playlist({
-                        id: preview.data.publicId,
-                        name: preview.data.name,
-                      })}
-                      size="sm"
-                    >
+                  {lookTo && (
+                    <Anchor component={Link} to={lookTo} size="sm">
                       {t('playlists.justLook')}
                     </Anchor>
                   )}

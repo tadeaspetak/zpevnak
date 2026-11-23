@@ -25,7 +25,7 @@ import { followSong, playlistSteps } from '../song/followSong.ts';
 import { useCanonicalPath } from '../hooks/useCanonicalPath.ts';
 import classes from './SongPage.module.css';
 import { PageLoader } from '../components/PageLoader.tsx';
-import { canChangeSong, isEditor } from '#shared/songs.ts';
+import { canChangeSong, canDeleteSong, isEditor } from '#shared/songs.ts';
 
 /** /song/:songRef: one song on its own. */
 export function SongPage() {
@@ -242,6 +242,7 @@ function SongPlayer({
         pitch={pitch}
         hasDiagrams={(parsed?.definitions.length ?? 0) > 0}
         canEdit={canEdit}
+        canDelete={canDeleteSong(me, song)}
         canAddToPlaylist={Boolean(me?.emailVerified)}
         hidden={toolbar.hidden}
       />

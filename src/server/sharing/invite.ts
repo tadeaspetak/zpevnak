@@ -53,12 +53,20 @@ export async function loadInvitePreview(
   if (!invite) {
     return null;
   }
+  // The name it goes by: a playlist's name, a song's title.
   const { rows } = await db.raw(
-    /* sql */ `
-      SELECT p.id, p.name, p.is_public, u.display_name AS owner_name
-      FROM playlists p JOIN users u ON u.id = p.owner_id
-      WHERE p.id = :id
-    `,
+    invite.kind === 'playlist'
+      ? /* sql */ `
+          SELECT p.name, p.is_public AS is_public, u.display_name AS owner_name
+          FROM playlists p JOIN users u ON u.id = p.owner_id
+          WHERE p.id = :id
+        `
+      : /* sql */ `
+          SELECT s.title AS name, s.status <> 'private' AS is_public,
+                 u.display_name AS owner_name
+          FROM songs s JOIN users u ON u.id = s.created_by
+          WHERE s.id = :id
+        `,
     { id: invite.id },
   );
   const row = rows[0];
@@ -66,7 +74,7 @@ export async function loadInvitePreview(
     kind: invite.kind,
     name: row.name as string,
     ownerName: row.owner_name as string,
-    publicId: row.is_public ? Number(row.id) : null,
+    publicId: row.is_public ? invite.id : null,
     role: invite.role,
   };
 }

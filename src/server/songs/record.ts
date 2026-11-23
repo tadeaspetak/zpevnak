@@ -1,11 +1,29 @@
+import type { MemberRole } from '#shared/roles.ts';
 import type { RejectionReason, SongStatus } from '#shared/validators/index.ts';
 import { isEditor } from '#shared/songs.ts';
 import type { SessionUser } from '../auth/sessions.ts';
 
-/** Columns every song read selects, for `toSongRecord`. */
+/**
+ * Columns every song read selects, for `toSongRecord`, with the viewer's role in the song: its
+ * owner (the author), or as it was shared with them. Binds `:viewerId` (null: signed out).
+ */
 export const SONG_COLUMNS = /* sql */ `
   s.id, s.title, s.artist, s.source, s.status, s.rejection_reason, s.rejection_note,
-  s.created_by, s.created_at, s.updated_at
+  s.created_by, s.created_at, s.updated_at,
+  CASE WHEN s.created_by = :viewerId THEN 'owner'
+       ELSE (SELECT m.role FROM song_members m WHERE m.song_id = s.id AND m.user_id = :viewerId)
+  END AS viewer_role
+`;
+
+/**
+ * Whether the viewer may read song `s` at all: a public song anyone, a private one its owner and
+ * the people it is shared with (D127). Nobody else, the songbook's editors included: for them it
+ * doesn't exist. Binds `:viewerId`.
+ */
+export const SONG_READABLE = /* sql */ `
+  (s.status <> 'private' OR s.created_by = :viewerId OR EXISTS (
+    SELECT 1 FROM song_members m WHERE m.song_id = s.id AND m.user_id = :viewerId
+  ))
 `;
 
 export type SongRow = {
@@ -19,6 +37,7 @@ export type SongRow = {
   created_by: number | null;
   created_at: Date;
   updated_at: Date;
+  viewer_role: MemberRole | null;
 };
 
 /** The song as the client gets it. An allow-list: never spread a row here. */
@@ -35,6 +54,8 @@ export function toSongRecord(row: SongRow, viewer: SessionUser | null) {
         ? { reason: row.rejection_reason, note: row.rejection_note }
         : null,
     createdBy: row.created_by,
+    /** The viewer's role in the song: owner (its author) or as shared with them; null if neither. */
+    role: row.viewer_role,
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
   };

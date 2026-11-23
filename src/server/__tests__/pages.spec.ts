@@ -133,6 +133,30 @@ describe('the pages', () => {
     }
   });
 
+  it('gives away nothing of a private song, and names it in its own invite', async () => {
+    const owner = await createUser();
+    await db.raw(/* sql */ `UPDATE users SET display_name = 'Bára' WHERE id = :id`, {
+      id: owner.id,
+    });
+    const song = await callerFor(owner).songs.create({
+      source: SONG('Naše', 'Kapela'),
+      isPrivate: true,
+    });
+    const page = await request(app).get(url.song(song)).expect(200);
+    expect(page.text).toBe(shell);
+
+    const { token } = await callerFor(owner).sharing.invite({
+      kind: 'song',
+      id: song.id,
+      role: 'viewer',
+    });
+    const res = await request(app).get(url.join(token)).expect(200);
+    expect(ogTag(res.text, 'og:title')).toBe('Pozvánka k písničce „Naše“');
+    expect(ogTag(res.text, 'og:description')).toBe(
+      'Bára s tebou sdílí písničku „Naše“ na Zpěvňáku.',
+    );
+  });
+
   it("keeps the app's own preview for a link that leads nowhere, and for other pages", async () => {
     for (const path of [
       url.join('x'.repeat(22)),

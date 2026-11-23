@@ -31,7 +31,10 @@ export const reject = editorProcedure
     }
     const row = await ctx.db.transaction(async (trx) => {
       // Locked, and only the text the editor read: not a fix the author saved meanwhile.
-      const locked = await loadSongRow(trx, input.id, { forUpdate: true });
+      const locked = await loadSongRow(trx, input.id, ctx.user, { forUpdate: true });
+      if (locked.status === 'private') {
+        fail('BAD_REQUEST', 'SONG_PRIVATE');
+      }
       assertUnchanged(locked, input.seenAt);
       await trx.raw(
         /* sql */ `

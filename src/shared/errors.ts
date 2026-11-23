@@ -17,6 +17,10 @@ const ERROR_CODES = [
   'REJECTION_NOTE_REQUIRED',
   'PLAYLIST_FULL',
   'SONG_CHANGED',
+  'SONG_PRIVATE',
+  'PRIVATE_SONG_NOT_SHARED',
+  'SONG_EDITED_BY_OTHERS',
+  'SONG_IN_OTHERS_PLAYLISTS',
 ] as const;
 export type ErrorCode = (typeof ERROR_CODES)[number];
 

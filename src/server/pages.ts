@@ -74,10 +74,15 @@ async function invitePreview(db: Knex, token: string): Promise<LinkPreview | nul
   if (!invite) {
     return null;
   }
-  return {
-    title: `Pozvánka do playlistu „${invite.name}“`,
-    description: `${invite.ownerName} tě zve, ať se přidáš k playlistu „${invite.name}“ na Zpěvňáku.`,
-  };
+  return invite.kind === 'playlist'
+    ? {
+        title: `Pozvánka do playlistu „${invite.name}“`,
+        description: `${invite.ownerName} tě zve, ať se přidáš k playlistu „${invite.name}“ na Zpěvňáku.`,
+      }
+    : {
+        title: `Pozvánka k písničce „${invite.name}“`,
+        description: `${invite.ownerName} s tebou sdílí písničku „${invite.name}“ na Zpěvňáku.`,
+      };
 }
 
 /** Any song: anyone may open one by its link, a rejected one too (D77). */

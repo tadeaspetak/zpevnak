@@ -1,16 +1,26 @@
 import type { Knex } from 'knex';
 import type { SessionUser } from '../auth/sessions.ts';
 import { fail } from '../trpc/trpc.ts';
-import { SONG_COLUMNS, type SongRow, toSongRecord } from './record.ts';
+import { SONG_COLUMNS, SONG_READABLE, type SongRow, toSongRecord } from './record.ts';
 
 /**
- * The song's row, or NOT_FOUND. Pass a transaction and `forUpdate` to lock it before deciding
- * anything from it: two saves of one song then take turns instead of overwriting each other.
+ * The song's row as `viewer` may see it, or NOT_FOUND: a private song they may not read doesn't
+ * exist for them (D127). Pass a transaction and `forUpdate` to lock it before deciding anything
+ * from it: two saves of one song then take turns instead of overwriting each other.
  */
-export async function loadSongRow(db: Knex, id: number, { forUpdate = false } = {}) {
-  const { rows } = await db.raw(
-    /* sql */ `SELECT ${SONG_COLUMNS} FROM songs s WHERE s.id = :id ${forUpdate ? 'FOR UPDATE' : ''}`,
-    { id },
+export async function loadSongRow(
+  db: Knex,
+  id: number,
+  viewer: SessionUser | null,
+  { forUpdate = false } = {},
+): Promise<SongRow> {
+  const { rows } = await db.raw<{ rows: SongRow[] }>(
+    /* sql */ `
+      SELECT ${SONG_COLUMNS} FROM songs s
+      WHERE s.id = :id AND ${SONG_READABLE}
+      ${forUpdate ? 'FOR UPDATE OF s' : ''}
+    `,
+    { id, viewerId: viewer?.id ?? null },
   );
   const row = rows[0];
   if (!row) {
@@ -29,7 +39,10 @@ export function assertUnchanged(row: SongRow, seenAt: string) {
   }
 }
 
-/** The song as `viewer` gets it. Anyone may open any song, a rejected one too (D77). */
+/**
+ * The song as `viewer` gets it. Anyone may open any public song, a rejected one too (D77); a
+ * private one only those it is shared with.
+ */
 export async function loadSong(db: Knex, id: number, viewer: SessionUser | null) {
-  return toSongRecord(await loadSongRow(db, id), viewer);
+  return toSongRecord(await loadSongRow(db, id, viewer), viewer);
 }

@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { mergePlaylists, mergeSongs, playable, type Catalog } from '../catalog.ts';
+import {
+  mergePlaylists,
+  mergeSongs,
+  playable,
+  privateSongsNotSent,
+  type Catalog,
+} from '../catalog.ts';
 import type { PlaylistRecord, SongRecord } from '../store.ts';
 
 const song = (id: number, title = `Song ${id}`) => ({ id, title }) as SongRecord;
@@ -30,6 +36,28 @@ describe('mergeSongs', () => {
       true,
     );
     expect([...merged.keys()]).toEqual([3]);
+  });
+});
+
+describe('privateSongsNotSent (D127)', () => {
+  const at = (id: number, status: SongRecord['status'], updatedAt: string) =>
+    ({ id, status, updatedAt }) as SongRecord;
+  const cursor = '2026-11-23T12:00:00.000Z';
+
+  it('finds private songs the sync no longer sends: no longer shared, or deleted', () => {
+    const here = songs(
+      at(1, 'private', '2026-11-23T10:00:00.000Z'),
+      at(2, 'private', '2026-11-23T10:00:00.000Z'),
+      // Public songs come only when they change: one not sent is just unchanged.
+      at(3, 'verified', '2026-11-23T10:00:00.000Z'),
+    );
+    const delta = { songs: [at(2, 'private', '2026-11-23T10:00:00.000Z')], cursor };
+    expect(privateSongsNotSent(here, delta)).toEqual([1]);
+  });
+
+  it('keeps one made after the sync started: the answer couldn’t have had it', () => {
+    const here = songs(at(1, 'private', '2026-11-23T12:00:01.000Z'));
+    expect(privateSongsNotSent(here, { songs: [], cursor })).toEqual([]);
   });
 });
 

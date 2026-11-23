@@ -345,6 +345,7 @@ describe('songs.sync', () => {
         'createdBy',
         'id',
         'rejection',
+        'role',
         'source',
         'status',
         'title',

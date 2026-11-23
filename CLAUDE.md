@@ -48,7 +48,8 @@ printed to the server log.
   The providers (theme, translations, queries, toasts, the error boundary) are in
   `src/client/Providers.tsx`; tests render inside the same ones.
 - **Rules both sides need live in `src/shared/` and nowhere else:** who may change a song
-  (`songs.ts`: `canChangeSong`, `isEditor`), every path (`urls.ts`, emails included), the
+  (`songs.ts`: `canChangeSong`, `canDeleteSong`, `isEditor`), who someone is to a shared
+  playlist or private song (`roles.ts`: `MemberRole`, `editsAsMember`), every path (`urls.ts`, emails included), the
   rejection reasons' wording (`rejectionReasons.ts`), validators and limits
   (`validators/index.ts`), the ChordPro parser, tags (`chordpro/tags.ts`: one tag is every
   spelling with one `tagKey`; `setTags` edits the `{tag}` lines), transposing a song's text
@@ -109,8 +110,11 @@ Every change to behaviour ships with its tests in the same commit.
   (`toSongRecord`, `toPlaylistRecord`, `toMe`). Never spread a database row into a response.
 - **Errors are codes.** The server throws `fail(code, 'ERROR_CODE')` with a code from
   `src/shared/errors.ts`; the client translates it (`tError`). The server never sends prose.
-- **Hide existence.** A private playlist or a rejected song answers NOT_FOUND to someone who
-  may not see it, not FORBIDDEN.
+- **Hide existence.** A private playlist or a private song answers NOT_FOUND to someone who
+  may not see it, not FORBIDDEN; a private song does so to the songbook's editors too. Song
+  reads go through `loadSongRow` / `SONG_READABLE` (`src/server/songs/`), never a bare SELECT.
+- **Sharing is one router** (`sharing`, with a `kind`: playlist or song): invites, joining,
+  people, roles. Each kind's tables are in `SHARED_TABLES` (`src/server/sharing/`).
 - **URLs come from `src/shared/urls.ts`** (`url.song(…)`, `routes`), on the client and in the
   server's emails alike. Never build a path by hand.
 - **Translations ship with the code, both languages, every time.** `cs.ts` is the source; `en.ts`

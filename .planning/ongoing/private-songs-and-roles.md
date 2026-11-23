@@ -1,7 +1,7 @@
 # Private songs, and three roles for songs and playlists
 
 **State:** ongoing. Agreed in conversation on 2026-11-23 (a friend's request: their own songs,
-songs in the making). Phase 1 shipped 2026-11-23 (D126).
+songs in the making). Phase 1 shipped 2026-11-23 (D126), phase 2 too (D127).
 
 ## Why
 
@@ -89,10 +89,12 @@ Each ships on its own.
    `canEditPlaylist` are in `src/shared/roles.ts`; the code says `collaborator`/`viewer`, as
    "editor" is a songbook role. The dialog is still the playlist's own (`ShareModal`); phase 2
    pulls out what a song's sharing needs, once there is a second user of it.
-2. **Private songs.** `is_private`, `song_members`, the song's sharing dialog (the component
-   from phase 1), the sync change, out of the queue and blind to editors, both directions of
-   the visibility switch. Until phase 3, a private song can only go into playlists where
-   everyone can already read it.
+2. **Private songs (shipped, D127).** As built, it differs from the sketch above in three
+   ways: private is a song status (`'private'`), not an `is_private` flag, so a private song
+   can't also be pending or approved and every status check leaves it out by itself; sharing
+   is one `sharing` router for playlists and songs (`kind`), with each kind's tables in
+   `SHARED_TABLES`; and a private song's deletion stays out of `song_deletions` (every device
+   syncs those), its people's devices dropping it as a private song no longer sent.
 3. **Private songs in shared playlists.** Access through playlists, the owner-only rule, the
    placeholder.
 

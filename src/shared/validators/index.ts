@@ -9,7 +9,11 @@ export const ROLES = ['user', 'editor', 'admin'] as const;
 export const roleSchema = z.enum(ROLES);
 export type Role = z.infer<typeof roleSchema>;
 
-export type SongStatus = 'pending' | 'verified' | 'rejected';
+/**
+ * Where a song stands. Public songs are reviewed: pending, then verified or rejected. A private
+ * one is outside the songbook and its review (D127).
+ */
+export type SongStatus = 'pending' | 'verified' | 'rejected' | 'private';
 
 export const REJECTION_REASONS = [
   'too_many_mistakes',

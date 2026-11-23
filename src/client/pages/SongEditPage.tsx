@@ -1,6 +1,6 @@
-import { Alert, Button, Container, Stack } from '@mantine/core';
+import { Alert, Button, Container, Stack, Switch } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import {
   Navigate,
   useLocation,
@@ -23,8 +23,9 @@ import { trpc } from '../trpc.ts';
 import { url } from '#shared/urls.ts';
 
 /**
- * /new: a new song, which goes to the review queue. From a search that found nothing it starts
- * with that title, and from a playlist's song picker it goes into the playlist too.
+ * /new: a new song, which goes to the review queue, or stays the author's own, private (D127).
+ * From a search that found nothing it starts with that title, and from a playlist's song picker
+ * it goes into the playlist too.
  */
 export function NewSongPage() {
   const { t, tError } = useI18n();
@@ -38,6 +39,7 @@ export function NewSongPage() {
   const draft = useDraft('new', template);
   const source = draft.source ?? template;
   const editor = useRef<ChordProEditorHandle>(null);
+  const [isPrivate, setPrivate] = useState(false);
   const addToPlaylist = trpc.playlists.edit.useMutation();
   const create = trpc.songs.create.useMutation({
     onSuccess: async (song) => {
@@ -60,7 +62,10 @@ export function NewSongPage() {
           notifications.show({ color: 'red', message: tError(error) });
         }
       } else {
-        notifications.show({ message: t('editor.submitted') });
+        notifications.show({
+          message:
+            song.status === 'private' ? t('editor.savedPrivate') : t('editor.submitted'),
+        });
       }
       navigate(url.song(song));
     },
@@ -92,7 +97,7 @@ export function NewSongPage() {
           onSubmit={(e) => {
             e.preventDefault();
             if (editor.current?.checkTitle() !== false) {
-              create.mutate({ source });
+              create.mutate({ source, isPrivate });
             }
           }}
         >
@@ -105,12 +110,20 @@ export function NewSongPage() {
               onDiscardDraft={draft.restored ? draft.clear : undefined}
               template={template}
               actions={
-                <Button
-                  type="submit"
-                  loading={create.isPending || addToPlaylist.isPending}
-                >
-                  {t('editor.submit')}
-                </Button>
+                <>
+                  {/* Beside the button it changes: private, nothing goes for review. */}
+                  <Switch
+                    label={t('editor.private')}
+                    checked={isPrivate}
+                    onChange={(e) => setPrivate(e.currentTarget.checked)}
+                  />
+                  <Button
+                    type="submit"
+                    loading={create.isPending || addToPlaylist.isPending}
+                  >
+                    {isPrivate ? t('common.save') : t('editor.submit')}
+                  </Button>
+                </>
               }
             />
           </Stack>

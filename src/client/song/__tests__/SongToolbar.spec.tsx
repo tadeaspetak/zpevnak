@@ -13,7 +13,12 @@ const song = {
   updatedAt: '2026-11-22T10:00:00.000Z',
 } as SongRecord;
 
-function toolbar(semitones: number, shown: SongRecord = song, canEdit = false) {
+function toolbar(
+  semitones: number,
+  shown: SongRecord = song,
+  canEdit = false,
+  canDelete = canEdit,
+) {
   renderApp(
     <SongToolbar
       backTo="/"
@@ -25,6 +30,7 @@ function toolbar(semitones: number, shown: SongRecord = song, canEdit = false) {
       pitch={9}
       hasDiagrams={false}
       canEdit={canEdit}
+      canDelete={canDelete}
       canAddToPlaylist={false}
       hidden={false}
     />,
@@ -102,5 +108,32 @@ describe('SongToolbar: saving the key (D119)', () => {
     cleanup();
     toolbar(0, song, true);
     expect((await menu()).some((item) => item?.startsWith('Uložit'))).toBe(false);
+  });
+});
+
+describe('SongToolbar: a private song (D127)', () => {
+  beforeEach(() => {
+    localStorage.setItem('zpevnak.locale', 'cs');
+  });
+
+  const menu = async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Další možnosti' }));
+    return (await screen.findAllByRole('menuitem')).map((item) => item.textContent);
+  };
+  const mine = { ...song, status: 'private', role: 'collaborator' } as SongRecord;
+
+  it('offers its people the sharing, a collaborator editing but not deleting', async () => {
+    toolbar(0, mine, true, false);
+    expect(await menu()).toEqual(['Sdílení', 'Upravit']);
+  });
+
+  it('offers no report to the songbook’s author, who can’t see the song', async () => {
+    toolbar(0, { ...mine, role: 'viewer' } as SongRecord);
+    expect(await menu()).toEqual(['Sdílení']);
+  });
+
+  it('offers the owner of a public song the sharing, to take it back', async () => {
+    toolbar(0, { ...song, status: 'pending', role: 'owner' } as SongRecord, true);
+    expect(await menu()).toContain('Sdílení');
   });
 });

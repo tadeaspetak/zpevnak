@@ -7,6 +7,7 @@ import { reject } from './songs.reject.ts';
 import { sync } from './songs.sync.ts';
 import { update } from './songs.update.ts';
 import { verify } from './songs.verify.ts';
+import { privateBlockersOf, setVisibility } from './songs.visibility.ts';
 
 export const songsRouter = router({
   sync,
@@ -18,4 +19,6 @@ export const songsRouter = router({
   queue,
   delete: deleteSong,
   deleteImpact,
+  setVisibility,
+  privateBlockers: privateBlockersOf,
 });

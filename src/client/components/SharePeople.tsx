@@ -1,6 +1,7 @@
 import {
   ActionIcon,
   Button,
+  SegmentedControl,
   CopyButton,
   Group,
   Loader,
@@ -15,6 +16,7 @@ import {
 } from '@mantine/core';
 import {
   IconBook,
+  IconDoorExit,
   IconCheck,
   IconCopy,
   IconPencil,
@@ -48,6 +50,15 @@ const TEXT = {
     peopleIntroOwner: 'playlists.peopleIntroOwner',
     collaboratorInvite: 'playlists.inviteIntro',
     viewerInvite: 'playlists.viewInviteIntro',
+    removed: 'playlists.removed',
+  },
+  song: {
+    people: 'songs.people',
+    peopleIntro: 'songs.peopleIntro',
+    peopleIntroOwner: 'songs.peopleIntroOwner',
+    collaboratorInvite: 'songs.inviteIntro',
+    viewerInvite: 'songs.viewInviteIntro',
+    removed: 'songs.removed',
   },
 } as const satisfies Record<SharedKind, Record<string, string>>;
 
@@ -107,7 +118,7 @@ export function SharePeople({
       for (const person of stillOut.current) {
         showUndoToast({
           id: `removed-${kind}-${id}-${person.id}`,
-          message: t('playlists.removed', { name: person.displayName }),
+          message: t(TEXT[kind].removed, { name: person.displayName }),
           onUndo: () => restoreLater.current(person),
         });
       }
@@ -152,14 +163,14 @@ export function SharePeople({
                   <NativeSelect
                     size="sm"
                     w={160}
-                    aria-label={t('playlists.roleOf', { name: person.displayName })}
+                    aria-label={t('sharing.roleOf', { name: person.displayName })}
                     value={person.role}
                     disabled={
                       setRole.isPending && setRole.variables?.userId === person.id
                     }
                     data={JOIN_ROLES.map((role) => ({
                       value: role,
-                      label: t(`playlists.role.${role}`),
+                      label: t(`sharing.role.${role}`),
                     }))}
                     onChange={(e) =>
                       setRole.mutate({
@@ -170,7 +181,7 @@ export function SharePeople({
                     }
                   />
                   <IconButton
-                    label={t('playlists.removePerson', { name: person.displayName })}
+                    label={t('sharing.removePerson', { name: person.displayName })}
                     loading={remove.isPending && remove.variables?.userId === person.id}
                     onClick={() => removePerson(person)}
                   >
@@ -179,7 +190,7 @@ export function SharePeople({
                 </Group>
               ) : (
                 <Text size="sm" c="dimmed" style={{ flexShrink: 0 }}>
-                  {t(`playlists.role.${person.role}`)}
+                  {t(`sharing.role.${person.role}`)}
                 </Text>
               )}
             </Group>
@@ -189,7 +200,7 @@ export function SharePeople({
       {removed.map((person) => (
         <UndoMessage
           key={person.id}
-          message={t('playlists.removed', { name: person.displayName })}
+          message={t(text.removed, { name: person.displayName })}
           onUndo={async () => {
             await restore(person);
             setRemoved((list) => list.filter((r) => r.id !== person.id));
@@ -218,8 +229,8 @@ export function SharePeople({
 }
 
 const INVITE_TITLE = {
-  collaborator: 'playlists.inviteTitle',
-  viewer: 'playlists.viewInviteTitle',
+  collaborator: 'sharing.inviteTitle',
+  viewer: 'sharing.viewInviteTitle',
 } as const;
 
 /**
@@ -272,7 +283,7 @@ function InviteLink({
             <Popover.Target>
               <ActionIcon
                 size="lg"
-                aria-label={t('playlists.resetLink', { link: title })}
+                aria-label={t('sharing.resetLink', { link: title })}
                 onClick={() => setConfirmingReset((o) => !o)}
               >
                 <IconRefresh size={18} />
@@ -280,7 +291,7 @@ function InviteLink({
             </Popover.Target>
             <Popover.Dropdown>
               <Stack gap="xs">
-                <Text size="sm">{t('playlists.resetHint')}</Text>
+                <Text size="sm">{t('sharing.resetHint')}</Text>
                 <Group gap="xs" justify="flex-end">
                   <Button
                     variant="default"
@@ -300,7 +311,7 @@ function InviteLink({
                       )
                     }
                   >
-                    {t('playlists.resetConfirm')}
+                    {t('sharing.resetConfirm')}
                   </Button>
                 </Group>
               </Stack>
@@ -310,7 +321,7 @@ function InviteLink({
       />
       {reset.isSuccess && (
         <Text size="sm" fw={600} role="status">
-          {t('playlists.resetDone')}
+          {t('sharing.resetDone')}
         </Text>
       )}
       <ErrorText error={invite.error ?? reset.error} />
@@ -367,12 +378,12 @@ export function LinkField({
           <Group gap={2} wrap="nowrap">
             <CopyButton value={link}>
               {({ copied, copy }) => (
-                <Tooltip label={copied ? t('playlists.copied') : t('playlists.copyLink')}>
+                <Tooltip label={copied ? t('sharing.copied') : t('sharing.copyLink')}>
                   <ActionIcon
                     size="lg"
                     onClick={copy}
                     disabled={!link}
-                    aria-label={t('playlists.copyLink')}
+                    aria-label={t('sharing.copyLink')}
                     color={copied ? 'green' : undefined}
                   >
                     {copied ? <IconCheck size={18} /> : <IconCopy size={18} />}
@@ -409,6 +420,115 @@ export function ShareSection({
         {intro && <Text size="sm">{intro}</Text>}
       </Stack>
       {children}
+    </Stack>
+  );
+}
+
+type Visibility = 'private' | 'public';
+
+/**
+ * Who sees it, private or public, each choice saying what it means. Someone who may not change
+ * it sees the same, unable to; a choice that isn't open stays visible, greyed.
+ */
+export function VisibilitySwitch({
+  label,
+  value,
+  readOnly,
+  onChange,
+  choices,
+}: {
+  label: string;
+  value: Visibility;
+  readOnly: boolean;
+  onChange: (value: Visibility) => void;
+  choices: Record<Visibility, { name: string; what: string; disabled?: boolean }>;
+}) {
+  return (
+    <SegmentedControl
+      fullWidth
+      readOnly={readOnly}
+      aria-label={label}
+      value={value}
+      onChange={(v) => onChange(v as Visibility)}
+      // Two lines that may wrap differently: both segments as tall as the taller one.
+      styles={{
+        root: { alignItems: 'stretch' },
+        control: { display: 'flex' },
+        label: {
+          whiteSpace: 'normal',
+          paddingBlock: 6,
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+      }}
+      data={(['private', 'public'] as const).map((v) => ({
+        value: v,
+        disabled: choices[v].disabled,
+        label: (
+          <Stack gap={0}>
+            <Text size="sm" fw={600}>
+              {choices[v].name}
+            </Text>
+            <Text size="xs" c="dimmed" lh={1.3}>
+              {choices[v].what}
+            </Text>
+          </Stack>
+        ),
+      }))}
+    />
+  );
+}
+
+/**
+ * Leaving something shared with you, asked once more where it was tapped. `onLeft` puts the
+ * catalog and the page right: what's private is gone, what's public stays, no longer yours.
+ */
+export function LeaveButton({
+  kind,
+  id,
+  label,
+  confirm,
+  onLeft,
+}: {
+  kind: SharedKind;
+  id: number;
+  label: string;
+  confirm: string;
+  onLeft: () => void;
+}) {
+  const { t } = useI18n();
+  const [confirming, setConfirming] = useState(false);
+  const leave = trpc.sharing.leave.useMutation({ onSuccess: onLeft });
+  if (!confirming) {
+    return (
+      <Button
+        variant="outline"
+        color="red"
+        leftSection={<IconDoorExit size={16} />}
+        onClick={() => setConfirming(true)}
+      >
+        {label}
+      </Button>
+    );
+  }
+  return (
+    <Stack gap="xs">
+      <Text size="sm">{confirm}</Text>
+      <Group justify="flex-end" gap="xs">
+        <Button variant="default" onClick={() => setConfirming(false)}>
+          {t('common.cancel')}
+        </Button>
+        <Button
+          color="red"
+          loading={leave.isPending}
+          onClick={() => leave.mutate({ kind, id })}
+        >
+          {label}
+        </Button>
+      </Group>
+      <ErrorText error={leave.error} />
     </Stack>
   );
 }

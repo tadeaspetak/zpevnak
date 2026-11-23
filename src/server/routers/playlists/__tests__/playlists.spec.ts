@@ -636,7 +636,7 @@ describe('undoing a removal (D87)', () => {
 
   it('removes at once and answers with the playlist, one fewer', async () => {
     const { record, owner, playlist, collaborator } = await removed();
-    expect(record.playlist.listmateCount).toBe(0);
+    expect(record).toMatchObject({ playlist: { listmateCount: 0 } });
     expect(await memberIds(owner, playlist.id)).not.toContain(collaborator.id);
   });
 
@@ -647,7 +647,7 @@ describe('undoing a removal (D87)', () => {
       id: playlist.id,
       userId: collaborator.id,
     });
-    expect(record.playlist.listmateCount).toBe(1);
+    expect(record).toMatchObject({ playlist: { listmateCount: 1 } });
     const { rows } = await db.raw(
       /* sql */ `SELECT joined_at FROM playlist_collaborators WHERE user_id = :id`,
       { id: collaborator.id },
@@ -679,7 +679,7 @@ describe('undoing a removal (D87)', () => {
       id: playlist.id,
       userId: collaborator.id,
     });
-    expect(record.playlist.listmateCount).toBe(1);
+    expect(record).toMatchObject({ playlist: { listmateCount: 1 } });
   });
 
   it('refuses once the window has passed', async () => {

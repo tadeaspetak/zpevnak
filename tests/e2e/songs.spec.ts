@@ -108,3 +108,42 @@ test('an editor reviews a song from the song itself and comes back to it (D121, 
   await expect(editor.getByRole('heading', { level: 1, name: title })).toBeVisible();
   await expect(editor.getByText('Nobody has approved this song yet.')).toHaveCount(0);
 });
+
+test('an author keeps a song private, and shares it by the reading link (D127)', async ({
+  browser,
+}) => {
+  const title = `Naše ${Date.now()}`;
+  const author = await signedIn(browser, 'user@zpevnak.test');
+  await author.goto('/new');
+  await author
+    .getByRole('textbox', { name: 'ChordPro' })
+    .fill(`{title: ${title}}\n\nla la [D]la`);
+  await author.getByRole('switch', { name: 'Private, just for me' }).check();
+  // Private, nothing goes for review: the button only saves.
+  await author.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(author.getByRole('heading', { level: 1, name: title })).toBeVisible();
+  const songPath = new URL(author.url()).pathname;
+
+  // Not for the songbook's editors: for them it isn't there.
+  const editor = await signedIn(browser, 'editor@zpevnak.test');
+  await editor.goto(songPath);
+  await expect(editor.getByText(/This song isn.t here/)).toBeVisible();
+
+  await author.getByRole('button', { name: 'More options' }).click();
+  await author.getByRole('menuitem', { name: 'Sharing' }).click();
+  await expect(
+    author.getByRole('radio', { name: /^Private\s*Only you and your listmates/ }),
+  ).toBeChecked();
+  const readLink = author.getByRole('textbox', { name: 'Link to read' });
+  await expect(readLink).toHaveValue(/\/join\/\S+$/);
+  const joinPath = new URL(await readLink.inputValue()).pathname;
+
+  // Through the link, the same person reads it.
+  await editor.goto(joinPath);
+  await expect(
+    editor.getByText('You will be able to read it, not change it.'),
+  ).toBeVisible();
+  await expect(editor.getByRole('heading', { level: 1, name: title })).toBeVisible();
+  await editor.getByRole('button', { name: 'More options' }).click();
+  await expect(editor.getByRole('menuitem', { name: 'Edit' })).toHaveCount(0);
+});

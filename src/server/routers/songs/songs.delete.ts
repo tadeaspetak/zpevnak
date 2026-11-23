@@ -1,14 +1,15 @@
 import type { Knex } from 'knex';
 import { z } from 'zod';
-import { canChangeSong } from '#shared/songs.ts';
+import { canDeleteSong } from '#shared/songs.ts';
 import { idSchema } from '#shared/validators/index.ts';
 import type { SessionUser } from '../../auth/sessions.ts';
 import { loadSongRow } from '../../songs/load.ts';
 import { fail, verifiedProcedure } from '../../trpc/trpc.ts';
 
 /**
- * Editors delete any song; an author their own until it is approved (an approved song belongs
- * to the songbook). D78. In a transaction, `forUpdate` holds the song while it goes.
+ * Editors delete any public song; an author their own until it is approved (an approved song
+ * belongs to the songbook). D78. A private song, its owner alone (D127). In a transaction,
+ * `forUpdate` holds the song while it goes.
  */
 async function assertCanDelete(
   db: Knex,
@@ -16,10 +17,17 @@ async function assertCanDelete(
   user: SessionUser,
   forUpdate = false,
 ) {
-  const row = await loadSongRow(db, id, { forUpdate });
-  if (!canChangeSong(user, { status: row.status, createdBy: row.created_by })) {
+  const row = await loadSongRow(db, id, user, { forUpdate });
+  if (
+    !canDeleteSong(user, {
+      status: row.status,
+      createdBy: row.created_by,
+      role: row.viewer_role,
+    })
+  ) {
     fail('FORBIDDEN', 'FORBIDDEN');
   }
+  return row;
 }
 
 /** How many playlists would lose the song: the confirmation says so before anything goes. */
@@ -46,7 +54,7 @@ export const deleteSong = verifiedProcedure
   .input(z.object({ id: idSchema }))
   .mutation(async ({ ctx, input }) => {
     await ctx.db.transaction(async (trx) => {
-      await assertCanDelete(trx, input.id, ctx.user, true);
+      const row = await assertCanDelete(trx, input.id, ctx.user, true);
       // Playlists lose it from their song lists: they changed, and their devices should know.
       await trx.raw(
         /* sql */ `
@@ -56,13 +64,17 @@ export const deleteSong = verifiedProcedure
         { id: input.id },
       );
       await trx.raw(/* sql */ `DELETE FROM songs WHERE id = :id`, { id: input.id });
-      await trx.raw(
-        /* sql */ `
-          INSERT INTO song_deletions (song_id) VALUES (:id)
-          ON CONFLICT (song_id) DO UPDATE SET deleted_at = now()
-        `,
-        { id: input.id },
-      );
+      // Every device syncs the deletions: a private song's id isn't theirs to see. Its people's
+      // devices drop it anyway, as a private song the sync no longer sends.
+      if (row.status !== 'private') {
+        await trx.raw(
+          /* sql */ `
+            INSERT INTO song_deletions (song_id) VALUES (:id)
+            ON CONFLICT (song_id) DO UPDATE SET deleted_at = now()
+          `,
+          { id: input.id },
+        );
+      }
     });
     return { ok: true };
   });

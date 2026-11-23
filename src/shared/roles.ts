@@ -1,5 +1,5 @@
-/** What can be shared with people: a playlist, and (D127, to come) a private song. */
-export const SHARED_KINDS = ['playlist'] as const;
+/** What can be shared with people: a playlist, and a private song (D127). */
+export const SHARED_KINDS = ['playlist', 'song'] as const;
 export type SharedKind = (typeof SHARED_KINDS)[number];
 
 /**

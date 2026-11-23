@@ -18,7 +18,9 @@ export const create = verifiedProcedure
   )
   .mutation(async ({ ctx, input }) => {
     const id = await ctx.db.transaction(async (trx) => {
-      await assertSongsUsable(trx, input.songIds, ctx.user);
+      await assertSongsUsable(trx, input.songIds, ctx.user, {
+        newPlaylistIsPublic: input.isPublic,
+      });
       const { rows } = await trx.raw(
         /* sql */ `
           INSERT INTO playlists (owner_id, name, is_public)
