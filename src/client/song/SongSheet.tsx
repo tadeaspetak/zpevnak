@@ -64,7 +64,11 @@ function LineView({ line, showChords }: { line: Line; showChords: boolean }) {
                 <span className={classes.chord}>
                   {col.chord ? chordLabel(col.chord) : ' '}
                 </span>
-                {!chordOnly && <span className={classes.lyric}>{col.text || ' '}</span>}
+                {/* Empty text under a chord holds the line's height, not a space's width: a
+                    chord on a pause ("Svítá, [F] rozum") would stand in three spaces. */}
+                {!chordOnly && (
+                  <span className={classes.lyric}>{col.text || '\u200b'}</span>
+                )}
               </span>
             ))}
           </span>

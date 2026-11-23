@@ -40,3 +40,18 @@ describe('SongSheet', () => {
     expect(screen.queryByText('Intro')).toBeNull();
   });
 });
+
+describe('SongSheet: a chord on a pause', () => {
+  it('takes no room of its own: its empty text is zero-width', () => {
+    const { container } = renderApp(
+      <SongSheet
+        song={parseSong('{title: T}\nSvítá, [F] rozum šel [C]spát.')}
+        fontScale={1}
+        showDiagrams={false}
+        showChords
+      />,
+    );
+    const pause = container.querySelector('[data-overhang]');
+    expect(pause?.textContent).toBe('F​');
+  });
+});
