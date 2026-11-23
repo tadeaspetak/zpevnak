@@ -11,7 +11,7 @@ export default defineConfig({
       manifest: {
         name: 'Zpěvňák',
         short_name: 'Zpěvňák',
-        description: 'Zpěvník k ohni i na hraní. The campfire songbook.',
+        description: 'Akordy, texty, playlisty. Nic víc, nic míň.',
         lang: 'cs',
         start_url: '/',
         scope: '/',
