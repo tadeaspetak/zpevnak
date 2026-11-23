@@ -13,8 +13,8 @@ export function playlistFacts(playlist: PlaylistRecord, { tn }: I18n) {
   const line = [
     tn('common.songs', playlist.songIds.length),
     playlist.role === 'owner' ? null : playlist.ownerName,
-    playlist.role === 'owner' && playlist.collaboratorCount
-      ? tn('playlists.collaborators', playlist.collaboratorCount)
+    playlist.role === 'owner' && playlist.listmateCount
+      ? tn('playlists.collaborators', playlist.listmateCount)
       : null,
   ]
     .filter(Boolean)
@@ -36,7 +36,8 @@ export function groupPlaylists(
   );
   return {
     mine: sorted.filter((p) => p.role === 'owner'),
-    shared: sorted.filter((p) => p.role === 'collaborator'),
+    // Joined to edit or only to read: shared with them either way.
+    shared: sorted.filter((p) => p.role === 'collaborator' || p.role === 'viewer'),
     others: sorted.filter((p) => p.role === null),
   };
 }

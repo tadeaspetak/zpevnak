@@ -6,6 +6,7 @@ import {
   Group,
   Loader,
   Modal,
+  NativeSelect,
   Paper,
   Popover,
   SegmentedControl,
@@ -17,6 +18,7 @@ import {
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
+  IconBook,
   IconCheck,
   IconCopy,
   IconDoorExit,
@@ -27,6 +29,12 @@ import {
 } from '@tabler/icons-react';
 import { type ReactNode, type Ref, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
+import {
+  canEditPlaylist,
+  JOIN_ROLES,
+  type JoinRole,
+  type PlaylistRole,
+} from '#shared/roles.ts';
 import { url } from '#shared/urls.ts';
 import { putPlaylist } from '../data/catalog.ts';
 import { usePlaylistEdits } from '../data/playlistEdits.ts';
@@ -40,12 +48,13 @@ import { IconButton } from './IconButton.tsx';
 import { showUndoToast, UndoMessage } from './UndoToast.tsx';
 
 type Props = { playlist: PlaylistRecord; opened: boolean; onClose: () => void };
-type Person = { id: number; displayName: string };
+type Person = { id: number; displayName: string; role: PlaylistRole };
 
 /**
  * Sharing a playlist, in one place (D111, D114). Who sees it (private or public, and the link
- * just to look), then the listmates who edit it with the owner, and the owner's invite for
- * more. Everyone in it sees the people; a collaborator can leave.
+ * just to look), then the listmates, each editing it with the owner or only reading it, and the
+ * owner's two invites for more. Everyone in it sees the people and their roles; the owner
+ * changes them; anyone but the owner can leave.
  */
 export function ShareModal({ playlist, opened, onClose }: Props) {
   const { t } = useI18n();
@@ -56,17 +65,10 @@ export function ShareModal({ playlist, opened, onClose }: Props) {
     { id: playlist.id },
     { enabled: opened },
   );
-  // The link is asked for (and made, the first time) when the owner opens this.
-  const invite = trpc.playlists.invite.useMutation();
-  const reset = trpc.playlists.resetInvite.useMutation();
-  const { mutate: askForInvite, isIdle: notAskedYet } = invite;
-  useEffect(() => {
-    if (opened && isOwner && notAskedYet) {
-      askForInvite({ id: playlist.id });
-    }
-  }, [opened, isOwner, notAskedYet, askForInvite, playlist.id]);
   const remove = trpc.playlists.removeCollaborator.useMutation();
-  const [confirmingReset, setConfirmingReset] = useState(false);
+  const setRole = trpc.playlists.setRole.useMutation({
+    onSuccess: () => utils.playlists.members.invalidate({ id: playlist.id }),
+  });
   // Taken out while the dialog is open: they stay in the list, greyed, with the way back
   // where the keyboard can reach it. Closing the dialog hands that over to a toast (D87).
   const [removed, setRemoved] = useState<Person[]>([]);
@@ -104,9 +106,6 @@ export function ShareModal({ playlist, opened, onClose }: Props) {
     onClose();
   };
 
-  // A replaced link is the newer one.
-  const token = reset.data?.token ?? invite.data?.token;
-  const inviteLink = token ? `${window.location.origin}${url.join(token)}` : '';
   const viewLink = `${window.location.origin}${url.playlist(playlist)}`;
   const shown = members.data?.filter((p) => !removed.some((r) => r.id === p.id));
 
@@ -192,15 +191,35 @@ export function ShareModal({ playlist, opened, onClose }: Props) {
                       : undefined
                   }
                 >
-                  {/* One line each: the heading already says they're listmates, so only the
-                      owner is marked, where the others have their ×. */}
-                  <Text fw={500}>{person.displayName}</Text>
-                  {person.role === 'owner' ? (
-                    <Text size="sm" c="dimmed">
-                      {t('playlists.role.owner')}
-                    </Text>
-                  ) : (
-                    isOwner && (
+                  {/* One line each: the name (wrapped rather than cut off beside the owner's
+                      picker), then what they may do. The owner changes it on the spot, and has
+                      the × to take them out. */}
+                  <Text fw={500} miw={0} style={{ overflowWrap: 'anywhere' }}>
+                    {person.displayName}
+                  </Text>
+                  {person.role !== 'owner' && isOwner ? (
+                    <Group gap={4} wrap="nowrap">
+                      {/* The device's own picker, as for roles in the account. */}
+                      <NativeSelect
+                        size="sm"
+                        w={160}
+                        aria-label={t('playlists.roleOf', { name: person.displayName })}
+                        value={person.role}
+                        disabled={
+                          setRole.isPending && setRole.variables?.userId === person.id
+                        }
+                        data={JOIN_ROLES.map((role) => ({
+                          value: role,
+                          label: t(`playlists.role.${role}`),
+                        }))}
+                        onChange={(e) =>
+                          setRole.mutate({
+                            id: playlist.id,
+                            userId: person.id,
+                            role: e.currentTarget.value as JoinRole,
+                          })
+                        }
+                      />
                       <IconButton
                         label={t('playlists.removePerson', { name: person.displayName })}
                         loading={
@@ -210,7 +229,11 @@ export function ShareModal({ playlist, opened, onClose }: Props) {
                       >
                         <IconX size={18} />
                       </IconButton>
-                    )
+                    </Group>
+                  ) : (
+                    <Text size="sm" c="dimmed" style={{ flexShrink: 0 }}>
+                      {t(`playlists.role.${person.role}`)}
+                    </Text>
                   )}
                 </Group>
               ))}
@@ -226,78 +249,18 @@ export function ShareModal({ playlist, opened, onClose }: Props) {
               }}
             />
           ))}
-          <ErrorText error={members.error ?? remove.error} />
+          <ErrorText error={members.error ?? remove.error ?? setRole.error} />
 
           {isOwner && (
-            <Stack gap="xs" mt="lg">
-              <LinkField
-                icon={<IconPencil size={16} />}
-                label={t('playlists.inviteTitle')}
-                description={t('playlists.inviteIntro')}
-                link={inviteLink}
-                loading={invite.isPending}
-                extra={
-                  // The old link stops working for everyone it was sent to: asked first,
-                  // right where it was tapped.
-                  <Popover
-                    opened={confirmingReset}
-                    onChange={setConfirmingReset}
-                    position="bottom-end"
-                    withArrow
-                    shadow="md"
-                    width={260}
-                    trapFocus
-                  >
-                    <Popover.Target>
-                      <ActionIcon
-                        size="lg"
-                        aria-label={t('playlists.resetLink')}
-                        onClick={() => setConfirmingReset((o) => !o)}
-                      >
-                        <IconRefresh size={18} />
-                      </ActionIcon>
-                    </Popover.Target>
-                    <Popover.Dropdown>
-                      <Stack gap="xs">
-                        <Text size="sm">{t('playlists.resetHint')}</Text>
-                        <Group gap="xs" justify="flex-end">
-                          <Button
-                            variant="default"
-                            size="xs"
-                            onClick={() => setConfirmingReset(false)}
-                          >
-                            {t('common.cancel')}
-                          </Button>
-                          <Button
-                            size="xs"
-                            color="red"
-                            loading={reset.isPending}
-                            onClick={() =>
-                              reset.mutate(
-                                { id: playlist.id },
-                                { onSuccess: () => setConfirmingReset(false) },
-                              )
-                            }
-                          >
-                            {t('playlists.resetConfirm')}
-                          </Button>
-                        </Group>
-                      </Stack>
-                    </Popover.Dropdown>
-                  </Popover>
-                }
-              />
-              {reset.isSuccess && (
-                <Text size="sm" fw={600} role="status">
-                  {t('playlists.resetDone')}
-                </Text>
-              )}
-              <ErrorText error={invite.error ?? reset.error} />
+            <Stack gap="lg" mt="lg">
+              {JOIN_ROLES.map((role) => (
+                <InviteLink key={role} playlistId={playlist.id} role={role} />
+              ))}
             </Stack>
           )}
         </Section>
 
-        {playlist.role === 'collaborator' && (
+        {playlist.role !== null && playlist.role !== 'owner' && (
           <>
             <Divider />
             <LeaveButton playlist={playlist} />
@@ -305,6 +268,97 @@ export function ShareModal({ playlist, opened, onClose }: Props) {
         )}
       </Stack>
     </Modal>
+  );
+}
+
+const INVITE_TEXT = {
+  collaborator: { title: 'playlists.inviteTitle', intro: 'playlists.inviteIntro' },
+  viewer: { title: 'playlists.viewInviteTitle', intro: 'playlists.viewInviteIntro' },
+} as const;
+
+/**
+ * The owner's invite link for one role, asked for (and made, the first time) as the dialog
+ * opens, and replaced on its own.
+ */
+function InviteLink({ playlistId, role }: { playlistId: number; role: JoinRole }) {
+  const { t } = useI18n();
+  const invite = trpc.playlists.invite.useMutation();
+  const reset = trpc.playlists.resetInvite.useMutation();
+  const [confirmingReset, setConfirmingReset] = useState(false);
+  const { mutate: askForInvite } = invite;
+  useEffect(() => {
+    askForInvite({ id: playlistId, role });
+  }, [askForInvite, playlistId, role]);
+  // A replaced link is the newer one.
+  const token = reset.data?.token ?? invite.data?.token;
+  const link = token ? `${window.location.origin}${url.join(token)}` : '';
+  const title = t(INVITE_TEXT[role].title);
+  return (
+    <Stack gap="xs">
+      <LinkField
+        icon={canEditPlaylist(role) ? <IconPencil size={16} /> : <IconBook size={16} />}
+        label={title}
+        description={t(INVITE_TEXT[role].intro)}
+        link={link}
+        loading={invite.isPending}
+        extra={
+          // The old link stops working for everyone it was sent to: asked first, right where
+          // it was tapped.
+          <Popover
+            opened={confirmingReset}
+            onChange={setConfirmingReset}
+            position="bottom-end"
+            withArrow
+            shadow="md"
+            width={260}
+            trapFocus
+          >
+            <Popover.Target>
+              <ActionIcon
+                size="lg"
+                aria-label={t('playlists.resetLink', { link: title })}
+                onClick={() => setConfirmingReset((o) => !o)}
+              >
+                <IconRefresh size={18} />
+              </ActionIcon>
+            </Popover.Target>
+            <Popover.Dropdown>
+              <Stack gap="xs">
+                <Text size="sm">{t('playlists.resetHint')}</Text>
+                <Group gap="xs" justify="flex-end">
+                  <Button
+                    variant="default"
+                    size="xs"
+                    onClick={() => setConfirmingReset(false)}
+                  >
+                    {t('common.cancel')}
+                  </Button>
+                  <Button
+                    size="xs"
+                    color="red"
+                    loading={reset.isPending}
+                    onClick={() =>
+                      reset.mutate(
+                        { id: playlistId, role },
+                        { onSuccess: () => setConfirmingReset(false) },
+                      )
+                    }
+                  >
+                    {t('playlists.resetConfirm')}
+                  </Button>
+                </Group>
+              </Stack>
+            </Popover.Dropdown>
+          </Popover>
+        }
+      />
+      {reset.isSuccess && (
+        <Text size="sm" fw={600} role="status">
+          {t('playlists.resetDone')}
+        </Text>
+      )}
+      <ErrorText error={invite.error ?? reset.error} />
+    </Stack>
   );
 }
 
@@ -430,7 +484,7 @@ function LeaveButton({ playlist }: { playlist: PlaylistRecord }) {
       // A public playlist stays visible after leaving, just no longer as yours.
       putPlaylist(
         playlist.id,
-        playlist.isPublic ? { ...playlist, role: null, collaboratorCount: null } : null,
+        playlist.isPublic ? { ...playlist, role: null, listmateCount: null } : null,
       );
       navigate(url.playlists());
     },

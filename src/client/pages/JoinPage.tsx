@@ -63,6 +63,12 @@ export function JoinPage() {
                   name: preview.data.name,
                 })}
               </Text>
+              {/* Which link it is: the same invite reads alike, and does different things. */}
+              <Text>
+                {preview.data.role === 'collaborator'
+                  ? t('join.asCollaborator')
+                  : t('join.asViewer')}
+              </Text>
               {me ? (
                 join.error ? (
                   <ErrorText error={join.error} />

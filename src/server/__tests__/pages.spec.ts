@@ -31,7 +31,9 @@ async function invite(name: string) {
     isPublic: false,
     songIds: [],
   });
-  return (await callerFor(owner).playlists.invite({ id: playlist.id })).token;
+  return (
+    await callerFor(owner).playlists.invite({ id: playlist.id, role: 'collaborator' })
+  ).token;
 }
 
 describe('the pages', () => {

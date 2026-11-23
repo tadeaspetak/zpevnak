@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { applyOp } from '#shared/playlistOps.ts';
 import { idSchema, PLAYLIST_MAX_SONGS } from '#shared/validators/index.ts';
-import { assertMember, loadVisiblePlaylist } from '../../playlists/load.ts';
+import { assertCanEdit, loadVisiblePlaylist } from '../../playlists/load.ts';
 import { assertSongsUsable, writeSongs } from '../../playlists/writeSongs.ts';
 import { fail, verifiedProcedure } from '../../trpc/trpc.ts';
 
@@ -20,7 +20,7 @@ const opSchema = z.discriminatedUnion('type', [
 export const edit = verifiedProcedure
   .input(z.object({ id: idSchema, op: opSchema }))
   .mutation(async ({ ctx, input }) => {
-    await assertMember(ctx.db, input.id, ctx.user);
+    await assertCanEdit(ctx.db, input.id, ctx.user);
     await ctx.db.transaction(async (trx) => {
       await trx.raw(/* sql */ `SELECT 1 FROM playlists WHERE id = :id FOR UPDATE`, {
         id: input.id,

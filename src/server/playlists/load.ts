@@ -1,8 +1,7 @@
 import type { Knex } from 'knex';
+import { canEditPlaylist, type JoinRole, type PlaylistRole } from '#shared/roles.ts';
 import type { SessionUser } from '../auth/sessions.ts';
 import { fail } from '../trpc/trpc.ts';
-
-export type PlaylistRole = 'owner' | 'collaborator';
 
 type PlaylistRow = {
   id: number;
@@ -12,8 +11,9 @@ type PlaylistRow = {
   is_public: boolean;
   updated_at: Date;
   song_ids: number[];
-  collaborator_count: number;
-  is_collaborator: boolean;
+  listmate_count: number;
+  /** The viewer's role if they joined; null if they didn't (or own it). */
+  joined_role: JoinRole | null;
 };
 
 const PLAYLIST_SELECT = /* sql */ `
@@ -23,11 +23,11 @@ const PLAYLIST_SELECT = /* sql */ `
            '{}'
          ) AS song_ids,
          (SELECT count(*)::int FROM playlist_collaborators c WHERE c.playlist_id = p.id)
-           AS collaborator_count,
-         EXISTS (
-           SELECT 1 FROM playlist_collaborators c
+           AS listmate_count,
+         (
+           SELECT c.role FROM playlist_collaborators c
            WHERE c.playlist_id = p.id AND c.user_id = :viewerId
-         ) AS is_collaborator
+         ) AS joined_role
   FROM playlists p
   JOIN users u ON u.id = p.owner_id
   LEFT JOIN playlist_songs ps ON ps.playlist_id = p.id
@@ -37,7 +37,7 @@ function roleOf(row: PlaylistRow, viewer: SessionUser | null): PlaylistRole | nu
   if (row.owner_id === viewer?.id) {
     return 'owner';
   }
-  return row.is_collaborator ? 'collaborator' : null;
+  return row.joined_role;
 }
 
 /**
@@ -53,8 +53,9 @@ function toPlaylistRecord(row: PlaylistRow, viewer: SessionUser | null) {
     isPublic: row.is_public,
     ownerName: row.owner_name,
     role,
-    // Who works on a playlist is its own people's business: null to anyone else (D79).
-    collaboratorCount: role ? row.collaborator_count : null,
+    // Who is in a playlist is its own people's business: null to anyone else (D79). Everyone
+    // it is shared with, readers too.
+    listmateCount: role ? row.listmate_count : null,
     songIds: row.song_ids.map(Number),
     updatedAt: row.updated_at.toISOString(),
   };
@@ -96,10 +97,19 @@ export async function loadVisiblePlaylist(
   return record;
 }
 
-/** Owner or collaborator: may change the songs and the name. */
+/** Anyone in the playlist, a reader too: sees who else is, and may leave. */
 export async function assertMember(db: Knex, id: number, viewer: SessionUser) {
   const playlist = await loadVisiblePlaylist(db, id, viewer);
   if (!playlist.role) {
+    fail('FORBIDDEN', 'FORBIDDEN');
+  }
+  return playlist;
+}
+
+/** Owner or collaborator: may change the songs and the name. */
+export async function assertCanEdit(db: Knex, id: number, viewer: SessionUser) {
+  const playlist = await assertMember(db, id, viewer);
+  if (!canEditPlaylist(playlist.role)) {
     fail('FORBIDDEN', 'FORBIDDEN');
   }
   return playlist;

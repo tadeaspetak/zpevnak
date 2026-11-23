@@ -29,7 +29,10 @@ async function shared() {
     isPublic: false,
     songIds: [s.a.id, s.b.id],
   });
-  const { token } = await callerFor(s.owner).playlists.invite({ id: playlist.id });
+  const { token } = await callerFor(s.owner).playlists.invite({
+    id: playlist.id,
+    role: 'collaborator',
+  });
   await callerFor(collaborator).playlists.join({ token });
   return { ...s, collaborator, playlist, token };
 }
@@ -91,7 +94,7 @@ describe('playlists', () => {
       name: 'Vršek 2026',
       isPublic: false,
       role: 'owner',
-      collaboratorCount: 0,
+      listmateCount: 0,
       ownerName: owner.displayName,
       songIds: [c.id, a.id, b.id, a.id],
     });
@@ -118,7 +121,7 @@ describe('playlists', () => {
     const record = await callerFor(owner).playlists.byId({ id: playlist.id });
     expect(Object.keys(record).sort()).toEqual(
       [
-        'collaboratorCount',
+        'listmateCount',
         'id',
         'isPublic',
         'name',
@@ -258,8 +261,7 @@ describe('sharing', () => {
     const mine = await callerFor(collaborator).playlists.all();
     expect(mine).toMatchObject([{ id: playlist.id, role: 'collaborator' }]);
     expect(
-      (await callerFor(collaborator).playlists.byId({ id: playlist.id }))
-        .collaboratorCount,
+      (await callerFor(collaborator).playlists.byId({ id: playlist.id })).listmateCount,
     ).toBe(1);
   });
 
@@ -268,12 +270,12 @@ describe('sharing', () => {
     await callerFor(owner).playlists.setPublic({ id: playlist.id, isPublic: true });
     for (const member of [owner, collaborator]) {
       expect(
-        (await callerFor(member).playlists.byId({ id: playlist.id })).collaboratorCount,
+        (await callerFor(member).playlists.byId({ id: playlist.id })).listmateCount,
       ).toBe(1);
     }
     for (const outsider of [stranger, null]) {
       expect(
-        (await callerFor(outsider).playlists.byId({ id: playlist.id })).collaboratorCount,
+        (await callerFor(outsider).playlists.byId({ id: playlist.id })).listmateCount,
       ).toBeNull();
     }
   });
@@ -306,11 +308,13 @@ describe('sharing', () => {
 
   it('keeps one invite link until the owner replaces it; the old one then fails', async () => {
     const { owner, playlist, token } = await shared();
-    expect((await callerFor(owner).playlists.invite({ id: playlist.id })).token).toBe(
-      token,
-    );
+    expect(
+      (await callerFor(owner).playlists.invite({ id: playlist.id, role: 'collaborator' }))
+        .token,
+    ).toBe(token);
     const { token: fresh } = await callerFor(owner).playlists.resetInvite({
       id: playlist.id,
+      role: 'collaborator',
     });
     expect(fresh).not.toBe(token);
     const late = await createUser();
@@ -327,6 +331,7 @@ describe('sharing', () => {
       ownerName: owner.displayName,
       // Private: nothing to look at without joining, and no id to look for.
       publicId: null,
+      role: 'collaborator',
     });
     await callerFor(owner).playlists.setPublic({ id: playlist.id, isPublic: true });
     await expect(
@@ -342,7 +347,7 @@ describe('sharing', () => {
   it('keeps the invite link to the owner', async () => {
     const { collaborator, playlist } = await shared();
     await expect(
-      callerFor(collaborator).playlists.invite({ id: playlist.id }),
+      callerFor(collaborator).playlists.invite({ id: playlist.id, role: 'collaborator' }),
     ).rejects.toThrow('FORBIDDEN');
   });
 
@@ -353,7 +358,7 @@ describe('sharing', () => {
       role: 'owner',
     });
     expect(
-      (await callerFor(owner).playlists.byId({ id: playlist.id })).collaboratorCount,
+      (await callerFor(owner).playlists.byId({ id: playlist.id })).listmateCount,
     ).toBe(1);
   });
 
@@ -384,7 +389,7 @@ describe('sharing', () => {
       userId: collaborator.id,
     });
     expect(
-      (await callerFor(owner).playlists.byId({ id: playlist.id })).collaboratorCount,
+      (await callerFor(owner).playlists.byId({ id: playlist.id })).listmateCount,
     ).toBe(0);
   });
 
@@ -405,8 +410,170 @@ describe('sharing', () => {
     const { collaborator, owner, playlist } = await shared();
     await db.raw(`DELETE FROM users WHERE id = ?`, [collaborator.id]);
     expect(
-      (await callerFor(owner).playlists.byId({ id: playlist.id })).collaboratorCount,
+      (await callerFor(owner).playlists.byId({ id: playlist.id })).listmateCount,
     ).toBe(0);
+  });
+});
+
+describe('readers', () => {
+  /** A private playlist with a collaborator, and a reader who joined by the reading link. */
+  async function withReader() {
+    const s = await shared();
+    const reader = await createUser();
+    const { token: viewToken } = await callerFor(s.owner).playlists.invite({
+      id: s.playlist.id,
+      role: 'viewer',
+    });
+    await callerFor(reader).playlists.join({ token: viewToken });
+    return { ...s, reader, viewToken };
+  }
+
+  it('join by the reading link, and see the private playlist and its songs', async () => {
+    const { reader, playlist, a, b } = await withReader();
+    expect(await callerFor(reader).playlists.byId({ id: playlist.id })).toMatchObject({
+      role: 'viewer',
+      songIds: [a.id, b.id],
+      // In it, so they see who else is: the collaborator and themselves.
+      listmateCount: 2,
+    });
+    expect((await callerFor(reader).playlists.all()).map((p) => p.id)).toContain(
+      playlist.id,
+    );
+  });
+
+  it("can't change the songs or the name, and nothing else the owner keeps", async () => {
+    const { reader, playlist, c } = await withReader();
+    const api = callerFor(reader).playlists;
+    // Each started only as it is awaited: none rejects with nobody listening.
+    const refused = [
+      () => api.edit({ id: playlist.id, op: { type: 'add', songId: c.id } }),
+      () => api.rename({ id: playlist.id, name: 'Moje' }),
+      () => api.setPublic({ id: playlist.id, isPublic: true }),
+      () => api.invite({ id: playlist.id, role: 'viewer' }),
+      () => api.delete({ id: playlist.id }),
+    ];
+    for (const call of refused) {
+      await expect(call()).rejects.toThrow('FORBIDDEN');
+    }
+  });
+
+  it('leaves the collaborator editing, beside a reader', async () => {
+    const { collaborator, playlist, c } = await withReader();
+    const api = callerFor(collaborator).playlists;
+    await expect(
+      api.edit({ id: playlist.id, op: { type: 'add', songId: c.id } }),
+    ).resolves.toMatchObject({ role: 'collaborator' });
+    await expect(api.rename({ id: playlist.id, name: 'Vršek' })).resolves.toMatchObject({
+      name: 'Vršek',
+    });
+  });
+
+  it('lists each person with their role, to a reader too, and lets a reader leave', async () => {
+    const { owner, collaborator, reader, playlist } = await withReader();
+    expect(await callerFor(reader).playlists.members({ id: playlist.id })).toEqual([
+      { id: owner.id, displayName: owner.displayName, role: 'owner' },
+      {
+        id: collaborator.id,
+        displayName: collaborator.displayName,
+        role: 'collaborator',
+      },
+      { id: reader.id, displayName: reader.displayName, role: 'viewer' },
+    ]);
+    await callerFor(reader).playlists.leave({ id: playlist.id });
+    await expect(callerFor(reader).playlists.byId({ id: playlist.id })).rejects.toThrow(
+      'NOT_FOUND',
+    );
+  });
+
+  it('a link to edit makes a reader a collaborator; a link to read takes nothing away', async () => {
+    const { owner, collaborator, reader, playlist, token, viewToken } =
+      await withReader();
+    await callerFor(collaborator).playlists.join({ token: viewToken });
+    await callerFor(owner).playlists.join({ token: viewToken });
+    await callerFor(reader).playlists.join({ token });
+    const roles = (await callerFor(owner).playlists.members({ id: playlist.id })).map(
+      (m) => m.role,
+    );
+    expect(roles).toEqual(['owner', 'collaborator', 'collaborator']);
+  });
+
+  it('keeps one link per role, each replaced on its own', async () => {
+    const { owner, playlist, token, viewToken } = await withReader();
+    const api = callerFor(owner).playlists;
+    expect(viewToken).not.toBe(token);
+    expect((await api.invite({ id: playlist.id, role: 'viewer' })).token).toBe(viewToken);
+    const { token: freshView } = await api.resetInvite({
+      id: playlist.id,
+      role: 'viewer',
+    });
+    expect((await api.invite({ id: playlist.id, role: 'collaborator' })).token).toBe(
+      token,
+    );
+    const late = await createUser();
+    await expect(callerFor(late).playlists.join({ token: viewToken })).rejects.toThrow(
+      'INVALID_TOKEN',
+    );
+    await expect(
+      callerFor(late).playlists.join({ token: freshView }),
+    ).resolves.toMatchObject({ role: 'viewer' });
+  });
+
+  it("previews the reading link, saying it's for reading", async () => {
+    const { viewToken } = await withReader();
+    await expect(
+      callerFor(null).playlists.invitePreview({ token: viewToken }),
+    ).resolves.toMatchObject({ name: 'Vánoce', role: 'viewer' });
+  });
+
+  it('the owner changes who edits and who reads; nobody else can', async () => {
+    const { owner, collaborator, reader, playlist, c } = await withReader();
+    const api = callerFor(owner).playlists;
+    await api.setRole({ id: playlist.id, userId: reader.id, role: 'collaborator' });
+    await api.setRole({ id: playlist.id, userId: collaborator.id, role: 'viewer' });
+    await expect(
+      callerFor(reader).playlists.edit({
+        id: playlist.id,
+        op: { type: 'add', songId: c.id },
+      }),
+    ).resolves.toBeTruthy();
+    await expect(
+      callerFor(collaborator).playlists.edit({
+        id: playlist.id,
+        op: { type: 'add', songId: c.id },
+      }),
+    ).rejects.toThrow('FORBIDDEN');
+    await expect(
+      callerFor(reader).playlists.setRole({
+        id: playlist.id,
+        userId: collaborator.id,
+        role: 'collaborator',
+      }),
+    ).rejects.toThrow('FORBIDDEN');
+  });
+
+  it("can't make anyone a member by giving them a role", async () => {
+    const { owner, playlist } = await withReader();
+    const stranger = await createUser();
+    await expect(
+      callerFor(owner).playlists.setRole({
+        id: playlist.id,
+        userId: stranger.id,
+        role: 'viewer',
+      }),
+    ).rejects.toThrow('NOT_FOUND');
+    await expect(callerFor(stranger).playlists.byId({ id: playlist.id })).rejects.toThrow(
+      'NOT_FOUND',
+    );
+  });
+
+  it('an undone removal puts a reader back as a reader', async () => {
+    const { owner, reader, playlist } = await withReader();
+    const api = callerFor(owner).playlists;
+    await api.removeCollaborator({ id: playlist.id, userId: reader.id });
+    await api.restoreCollaborator({ id: playlist.id, userId: reader.id });
+    expect((await callerFor(reader).playlists.byId({ id: playlist.id })).role).toBe(
+      'viewer',
+    );
   });
 });
 
@@ -428,7 +595,7 @@ describe('undoing a removal (D87)', () => {
 
   it('removes at once and answers with the playlist, one fewer', async () => {
     const { record, owner, playlist, collaborator } = await removed();
-    expect(record.collaboratorCount).toBe(0);
+    expect(record.listmateCount).toBe(0);
     expect(await memberIds(owner, playlist.id)).not.toContain(collaborator.id);
   });
 
@@ -438,7 +605,7 @@ describe('undoing a removal (D87)', () => {
       id: playlist.id,
       userId: collaborator.id,
     });
-    expect(record.collaboratorCount).toBe(1);
+    expect(record.listmateCount).toBe(1);
     const { rows } = await db.raw(
       /* sql */ `SELECT joined_at FROM playlist_collaborators WHERE user_id = :id`,
       { id: collaborator.id },
@@ -465,7 +632,7 @@ describe('undoing a removal (D87)', () => {
       id: playlist.id,
       userId: collaborator.id,
     });
-    expect(record.collaboratorCount).toBe(1);
+    expect(record.listmateCount).toBe(1);
   });
 
   it('refuses once the window has passed', async () => {

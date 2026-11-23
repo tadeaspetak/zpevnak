@@ -13,7 +13,7 @@ test('an owner takes a listmate out by mistake, takes it back, and replaces the 
   await owner.goto(`/playlist/${playlist.id}`);
   await owner.getByRole('button', { name: 'Sharing' }).click();
   // The invite link, asked for as the dialog opens: the same one the bandmate joined by.
-  const link = owner.getByRole('textbox', { name: 'Link for listmates' });
+  const link = owner.getByRole('textbox', { name: 'Link to edit' });
   await expect(link).toHaveValue(new RegExp(`/join/${token}$`));
   await owner.getByRole('button', { name: 'Remove Erik Editor' }).click();
   // The toast names the person, in the reader's language (it once crashed outside them).
@@ -24,10 +24,10 @@ test('an owner takes a listmate out by mistake, takes it back, and replaces the 
   await expect(owner.getByRole('button', { name: 'Remove Erik Editor' })).toBeVisible();
 
   // A new link asks first (the old one stops working for everyone), then says so.
-  await owner.getByRole('button', { name: 'Make a new link' }).click();
+  await owner.getByRole('button', { name: 'Replace: Link to edit' }).click();
   await owner.getByRole('button', { name: 'Cancel' }).click();
   await expect(link).toHaveValue(new RegExp(`/join/${token}$`));
-  await owner.getByRole('button', { name: 'Make a new link' }).click();
+  await owner.getByRole('button', { name: 'Replace: Link to edit' }).click();
   await owner.getByRole('button', { name: 'Make a new one' }).click();
   await expect(
     owner.getByText('Done, the old link no longer works.', { exact: false }),
@@ -35,6 +35,41 @@ test('an owner takes a listmate out by mistake, takes it back, and replaces the 
   // The new link replaces the old one in its field.
   await expect(link).not.toHaveValue(new RegExp(`/join/${token}$`));
   await expect(link).toHaveValue(/\/join\/\S+$/);
+});
+
+test('a reader joins by the reading link, only reads, and can edit once the owner lets them', async ({
+  browser,
+}) => {
+  const owner = await signedIn(browser, 'user@zpevnak.test');
+  const { playlist } = await playlistWithInvite(owner, `Zpěváci ${Date.now()}`);
+  await owner.goto(`/playlist/${playlist.id}`);
+  await owner.getByRole('button', { name: 'Sharing' }).click();
+  const readLink = owner.getByRole('textbox', { name: 'Link to read' });
+  await expect(readLink).toHaveValue(/\/join\/\S+$/);
+  const joinPath = new URL(await readLink.inputValue()).pathname;
+
+  // The singer opens the link: it says what they'll be able to do, and takes them in.
+  const reader = await signedIn(browser, 'editor@zpevnak.test');
+  await reader.goto(joinPath);
+  await expect(
+    reader.getByRole('heading', { level: 1, name: playlist.name }),
+  ).toBeVisible();
+  await expect(reader.getByRole('button', { name: 'Sharing' })).toBeVisible();
+  await expect(reader.getByRole('button', { name: 'Edit playlist' })).toHaveCount(0);
+  await expect(reader.getByRole('button', { name: 'Add songs' })).toHaveCount(0);
+
+  // The owner sees them as a reader, and lets them edit.
+  await owner.keyboard.press('Escape');
+  await owner.getByRole('button', { name: 'Sharing' }).click();
+  const role = owner.getByRole('combobox', { name: 'What Erik Editor can do' });
+  await expect(role).toHaveValue('viewer');
+  await role.selectOption({ label: 'Can edit' });
+  await expect(role).toHaveValue('collaborator');
+
+  await reader.getByRole('button', { name: 'Settings' }).click();
+  await reader.getByRole('button', { name: 'Get what’s new' }).click();
+  await reader.keyboard.press('Escape');
+  await expect(reader.getByRole('button', { name: 'Edit playlist' })).toBeVisible();
 });
 
 test('a listmate taken out while editing leaves the editor', async ({ browser }) => {

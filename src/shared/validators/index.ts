@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { JOIN_ROLES } from '../roles.ts';
 
 export const LOCALES = ['cs', 'en'] as const;
 export const localeSchema = z.enum(LOCALES);
@@ -49,6 +50,8 @@ export const seenAtSchema = z.iso.datetime();
 
 /** A playlist invite link's secret. */
 export const inviteTokenSchema = z.string().min(16).max(64);
+/** Which invite link: to edit, or only to read. */
+export const joinRoleSchema = z.enum(JOIN_ROLES);
 
 /** The most songs a playlist holds: a long evening, with room to spare. */
 export const PLAYLIST_MAX_SONGS = 500;

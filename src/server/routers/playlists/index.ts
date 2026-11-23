@@ -12,6 +12,7 @@ import {
   members,
   removeCollaborator,
   restoreCollaborator,
+  setRole,
 } from './playlists.members.ts';
 import { rename } from './playlists.rename.ts';
 import { setPublic } from './playlists.setPublic.ts';
@@ -32,4 +33,5 @@ export const playlistsRouter = router({
   leave,
   removeCollaborator,
   restoreCollaborator,
+  setRole,
 });

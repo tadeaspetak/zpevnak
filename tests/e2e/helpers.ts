@@ -21,7 +21,7 @@ export async function playlistWithInvite(owner: Page, name: string, isPublic = f
   });
   const playlist = (await created.json()).result.data as { id: number; name: string };
   const invite = await owner.request.post('/trpc/playlists.invite', {
-    data: { id: playlist.id },
+    data: { id: playlist.id, role: 'collaborator' },
   });
   const { token } = (await invite.json()).result.data as { token: string };
   return { playlist, token };

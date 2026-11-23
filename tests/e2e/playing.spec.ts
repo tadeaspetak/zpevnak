@@ -159,7 +159,7 @@ test('a bandmate opens an invite link, signs up there, and lands in the playlist
   });
   const playlist = (await created.json()).result.data as { id: number; name: string };
   const invite = await owner.request.post('/trpc/playlists.invite', {
-    data: { id: playlist.id },
+    data: { id: playlist.id, role: 'collaborator' },
   });
   const { token } = (await invite.json()).result.data as { token: string };
   await owner.close();

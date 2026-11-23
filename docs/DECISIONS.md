@@ -454,6 +454,16 @@ From the first UX walk of the song view and a playlist session (2026-11-10): _In
   no reader to choose another. Names never follow a preposition (Czech would decline them). The
   tab title stays the app's. Development serves pages the same way (Vite in `custom` mode).
   (2026-11-23)
+- **D126. Someone in a playlist edits it or only reads it.** Three roles: the owner, **Může
+  upravovat** (collaborator: the songs and the name, as before) and **Jen čte** (viewer: sees
+  it, private too, sees who else is in it, may leave). Phrases, not nouns, so nobody needs the
+  app's lingo; "parťáci" are everyone in it. Two invite links, **Odkaz pro úpravy** (the old
+  link, so links already sent do what they did) and **Odkaz pro čtení**, each replaced on its
+  own; the join page says which. A link never takes editing away; a link to edit makes a reader
+  a collaborator. The owner changes anyone's role in Sdílení (the device's own picker), and an
+  undone removal puts the person back in their role. In code `collaborator`/`viewer`, not
+  "editor", which is a role in the whole songbook. First phase of
+  `.planning/ongoing/private-songs-and-roles.md`. (2026-11-23)
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed

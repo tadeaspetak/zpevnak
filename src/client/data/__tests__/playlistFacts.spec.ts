@@ -12,7 +12,7 @@ const playlist = (over: Partial<PlaylistRecord>) =>
     role: 'owner',
     ownerName: 'Jana',
     isPublic: false,
-    collaboratorCount: 0,
+    listmateCount: 0,
     updatedAt: '2026-11-10T10:00:00.000Z',
     ...over,
   }) as PlaylistRecord;
@@ -20,13 +20,13 @@ const playlist = (over: Partial<PlaylistRecord>) =>
 describe('playlistFacts (D112)', () => {
   it('says songs, and for one’s own the listmates only when there are some', () => {
     expect(playlistFacts(playlist({}), { t, tn } as never).line).toBe('2 common.songs');
-    expect(
-      playlistFacts(playlist({ collaboratorCount: 2 }), { t, tn } as never).line,
-    ).toBe('2 common.songs · 2 playlists.collaborators');
+    expect(playlistFacts(playlist({ listmateCount: 2 }), { t, tn } as never).line).toBe(
+      '2 common.songs · 2 playlists.collaborators',
+    );
   });
 
   it('names whose someone else’s playlist is, by name alone', () => {
-    for (const role of ['collaborator', null] as const) {
+    for (const role of ['collaborator', 'viewer', null] as const) {
       expect(playlistFacts(playlist({ role }), { t, tn } as never).line).toBe(
         '2 common.songs · Jana',
       );
@@ -47,12 +47,14 @@ describe('groupPlaylists', () => {
       playlist({ id: 2, role: 'owner', updatedAt: '2026-11-11T10:00:00.000Z' }),
       playlist({ id: 3, role: 'collaborator' }),
       playlist({ id: 4, role: null }),
+      // Joined only to read: shared all the same.
+      playlist({ id: 5, role: 'viewer' }),
     ];
     const groups = groupPlaylists(lists, { 1: 500 });
     expect({
       mine: groups.mine.map((p) => p.id),
       shared: groups.shared.map((p) => p.id),
       others: groups.others.map((p) => p.id),
-    }).toEqual({ mine: [1, 2], shared: [3], others: [4] });
+    }).toEqual({ mine: [1, 2], shared: [3, 5], others: [4] });
   });
 });
