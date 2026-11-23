@@ -44,3 +44,12 @@ export function applyOp(songIds: number[], op: PlaylistOp): number[] {
   const to = Math.max(0, Math.min(without.length, op.to));
   return [...without.slice(0, to), op.songId, ...without.slice(to)];
 }
+
+/**
+ * A song switched in or out of a playlist by one tap: added at the end when it isn't there,
+ * otherwise its last appearance taken out (a song may be in a playlist twice).
+ */
+export function toggleOp(songIds: number[], songId: number): PlaylistOp {
+  const last = songIds.lastIndexOf(songId);
+  return last === -1 ? { type: 'add', songId } : { type: 'remove', songId, index: last };
+}

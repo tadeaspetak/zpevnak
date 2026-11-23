@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { url } from '#shared/urls.ts';
 import { playlistWithInvite, signedIn } from './helpers.ts';
 
 test('an owner takes a listmate out by mistake, takes it back, and replaces the link', async ({
@@ -168,4 +169,31 @@ test('an owner shares a public playlist to look at, and the invite offers just l
   await expect(
     stranger.getByRole('heading', { level: 1, name: playlist.name }),
   ).toBeVisible();
+});
+
+test('a player ticks a song into a playlist and unticks it out again (D124)', async ({
+  browser,
+}) => {
+  const player = await signedIn(browser, 'user@zpevnak.test');
+  const { playlist } = await playlistWithInvite(player, `Koledy ${Date.now()}`);
+  const title = `Rolničky ${Date.now()}`;
+  const created = await player.request.post('/trpc/songs.create', {
+    data: { source: `{title: ${title}}\n\nla la [D]la` },
+  });
+  const song = (await created.json()).result.data as { id: number };
+
+  await player.goto(url.song({ id: song.id, title, artist: null }));
+  await player.getByRole('button', { name: 'More options' }).click();
+  await player.getByRole('menuitem', { name: 'Add to playlist' }).click();
+  const option = player.getByRole('checkbox', { name: playlist.name });
+  await expect(option).not.toBeChecked();
+  await option.click();
+  await expect(option).toBeChecked();
+  // Still open: a tap switches, it doesn't close the dialog.
+  await option.click();
+  await expect(option).not.toBeChecked();
+  await player.keyboard.press('Escape');
+
+  await player.goto(url.playlist(playlist));
+  await expect(player.getByText(title)).toHaveCount(0);
 });

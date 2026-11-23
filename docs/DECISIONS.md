@@ -440,6 +440,10 @@ From the first UX walk of the song view and a playlist session (2026-11-10): _In
   rejecting goes back to it, not on to the next song in the queue, and the back arrow says
   "Zpět: {title}". There is no skip: that walks the queue. From the queue, nothing changes.
   (2026-11-23)
+- **D124. Adding to a playlist is a checkbox per playlist.** Ticked: the song is in it; a tap
+  switches it in (at the end) or out (its last appearance, as the playlist's own picker does,
+  `toggleOp`), and the dialog stays open. A new playlist with the song still closes it, with a
+  toast. Before, tapping a playlist that had the song added it a second time. (2026-11-23)
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed

@@ -1,45 +1,49 @@
 import {
   Button,
+  Checkbox,
   Divider,
+  Group,
   Modal,
   Stack,
   Text,
   TextInput,
-  UnstyledButton,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconCheck, IconPlus } from '@tabler/icons-react';
 import { useState } from 'react';
+import { toggleOp } from '#shared/playlistOps.ts';
 import { putPlaylist, useCatalog } from '../data/catalog.ts';
 import { touchPlaylist } from '../data/session.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc } from '../trpc.ts';
 import { ErrorText } from './ErrorText.tsx';
-import classes from './SongRow.module.css';
+import classes from './AddToPlaylistModal.module.css';
 
 type Props = { songId: number | null; onClose: () => void };
 
-/** Adds a song to the end of one of my playlists, or to a new one. */
+/**
+ * The song in or out of each of my playlists, a checkbox each (D124): ticked is in, a tap
+ * switches it, and the dialog stays open for the next one. Or a new playlist with the song.
+ */
 export function AddToPlaylistModal({ songId, onClose }: Props) {
   const { t } = useI18n();
   const { playlists } = useCatalog();
   // Every playlist the viewer may change: their own and those they collaborate on.
   const mine = [...playlists.values()].filter((p) => p.role !== null);
   const [name, setName] = useState('');
-  const added = (playlist: Parameters<typeof putPlaylist>[1] & object) => {
-    putPlaylist(playlist.id, playlist);
-    notifications.show({
-      message: t('playlists.added', { name: playlist.name }),
-      icon: <IconCheck size={16} />,
-    });
-    close();
-  };
   // A failure shows in the dialog through `.error`; the next opening starts clean.
-  const edit = trpc.playlists.edit.useMutation({ onSuccess: added });
+  const edit = trpc.playlists.edit.useMutation({
+    onSuccess: (playlist) => putPlaylist(playlist.id, playlist),
+  });
   const create = trpc.playlists.create.useMutation({
     onSuccess: (playlist) => {
       touchPlaylist(playlist.id);
-      added(playlist);
+      putPlaylist(playlist.id, playlist);
+      notifications.show({
+        message: t('playlists.added', { name: playlist.name }),
+        icon: <IconCheck size={16} />,
+      });
+      close();
     },
   });
   const close = () => {
@@ -55,21 +59,23 @@ export function AddToPlaylistModal({ songId, onClose }: Props) {
         <Stack gap="sm">
           <ErrorText error={edit.error ?? create.error} />
           {mine.length > 0 && (
-            <Stack gap={0}>
+            <Stack gap={4}>
               {mine.map((p) => (
-                <UnstyledButton
+                <Checkbox.Card
                   key={p.id}
-                  className={classes.row}
-                  disabled={edit.isPending}
-                  onClick={() => edit.mutate({ id: p.id, op: { type: 'add', songId } })}
+                  className={classes.option}
+                  checked={p.songIds.includes(songId)}
+                  // One change at a time per playlist: a second tap waits for the first.
+                  disabled={edit.isPending && edit.variables?.id === p.id}
+                  onClick={() =>
+                    edit.mutate({ id: p.id, op: toggleOp(p.songIds, songId) })
+                  }
                 >
-                  <Text fw={600}>{p.name}</Text>
-                  {p.songIds.includes(songId) && (
-                    <Text size="xs" c="dimmed">
-                      ✓
-                    </Text>
-                  )}
-                </UnstyledButton>
+                  <Group wrap="nowrap" gap="sm">
+                    <Checkbox.Indicator />
+                    <Text fw={600}>{p.name}</Text>
+                  </Group>
+                </Checkbox.Card>
               ))}
             </Stack>
           )}

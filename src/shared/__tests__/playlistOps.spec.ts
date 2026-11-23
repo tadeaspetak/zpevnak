@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyOp, nearestIndex } from '../playlistOps.ts';
+import { applyOp, nearestIndex, toggleOp } from '../playlistOps.ts';
 
 describe('applyOp', () => {
   it('adds to the end', () => {
@@ -69,5 +69,16 @@ describe('nearestIndex', () => {
 
   it('is -1 when the song is not there', () => {
     expect(nearestIndex([1, 2], 3, 0)).toBe(-1);
+  });
+});
+
+describe('toggleOp', () => {
+  it('adds a song that isn’t there at the end', () => {
+    expect(toggleOp([1, 2], 3)).toEqual({ type: 'add', songId: 3 });
+  });
+
+  it('takes out the last appearance of a song that is', () => {
+    expect(toggleOp([5, 2, 5], 5)).toEqual({ type: 'remove', songId: 5, index: 2 });
+    expect(applyOp([5, 2, 5], toggleOp([5, 2, 5], 5))).toEqual([5, 2]);
   });
 });

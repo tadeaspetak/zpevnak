@@ -12,7 +12,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { ConfirmModal } from '../components/ConfirmModal.tsx';
 import { VerifyEmailAlert } from '../components/VerifyEmailAlert.tsx';
-import type { PlaylistOp } from '#shared/playlistOps.ts';
+import { toggleOp, type PlaylistOp } from '#shared/playlistOps.ts';
 import { showUndoToast } from '../components/UndoToast.tsx';
 import { Page } from '../components/Page.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
@@ -88,12 +88,7 @@ export function PlaylistPage() {
   // Only while they may: someone taken out of the playlist meanwhile leaves the editor.
   const isEditing = editing && canEdit;
   const facts = playlistFacts(playlist, { t, tn });
-  const toggle = (songId: number) => {
-    const last = playlist.songIds.lastIndexOf(songId);
-    edits.edit(
-      last === -1 ? { type: 'add', songId } : { type: 'remove', songId, index: last },
-    );
-  };
+  const toggle = (songId: number) => edits.edit(toggleOp(playlist.songIds, songId));
   const currentPosition = session?.playlistId === id ? session.position : null;
   // Taking a song out is one tap, so putting it back is one tap too, in its place (D87).
   const editWithUndo = (op: PlaylistOp) => {

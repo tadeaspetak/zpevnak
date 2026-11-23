@@ -1,0 +1,9 @@
+/* A whole row to tap, quiet until ticked. */
+.option {
+  padding: 0.6rem var(--mantine-spacing-sm);
+  border-color: transparent;
+
+  &[data-checked] {
+    border-color: var(--mantine-primary-color-filled);
+  }
+}
