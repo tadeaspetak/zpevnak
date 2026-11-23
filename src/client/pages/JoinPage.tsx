@@ -8,6 +8,7 @@ import { PageHeader } from '../components/PageHeader.tsx';
 import { putShared } from '../data/catalog.ts';
 import { touchPlaylist } from '../data/session.ts';
 import { useMe } from '../hooks/useMe.ts';
+import { useOnline } from '../hooks/useOnline.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc } from '../trpc.ts';
 import { editsAsMember } from '#shared/roles.ts';
@@ -24,6 +25,7 @@ export function JoinPage() {
   const navigate = useNavigate();
   const token = useParams().token ?? '';
   const { me, known } = useMe();
+  const online = useOnline();
   const preview = trpc.sharing.invitePreview.useQuery({ token }, { retry: false });
   const join = trpc.sharing.join.useMutation({
     onSuccess: (shared) => {
@@ -85,6 +87,9 @@ export function JoinPage() {
         <Stack maw={460} mx="auto" gap="md">
           {preview.error ? (
             <ErrorText error={preview.error} />
+          ) : !preview.data && !online ? (
+            // An invite is the server's to read: offline, say so rather than spin.
+            <Text>{t('common.needsConnection')}</Text>
           ) : !preview.data || !known ? (
             <PageLoader />
           ) : (

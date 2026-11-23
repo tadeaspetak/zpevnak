@@ -1,11 +1,16 @@
 import { MantineProvider, Modal, mergeThemeOverrides, Notification } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type ReactNode, useMemo } from 'react';
 import { ErrorBoundary } from './components/ErrorBoundary.tsx';
 import { I18nProvider, useI18n } from './i18n/index.tsx';
 import { cssVariablesResolver, theme } from './theme.ts';
 import { trpc, trpcReactClient } from './trpc.ts';
+
+// React Query takes itself for online until an `offline` event says otherwise, so in an app
+// opened with no signal (at the gig) a playlist edit failed and was lost instead of waiting for
+// the connection, as the offline hint promises. It starts from what the browser knows.
+onlineManager.setOnline(navigator.onLine);
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { refetchOnWindowFocus: false } },

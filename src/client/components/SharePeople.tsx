@@ -36,6 +36,7 @@ import { url } from '#shared/urls.ts';
 import { putShared } from '../data/catalog.ts';
 import { refocusWithin } from '../focus.ts';
 import { useMe } from '../hooks/useMe.ts';
+import { useOnline } from '../hooks/useOnline.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc, trpcClient } from '../trpc.ts';
 import { ErrorText } from './ErrorText.tsx';
@@ -85,7 +86,8 @@ export function SharePeople({
   const text = TEXT[kind];
   const utils = trpc.useUtils();
   const thing = { kind, id };
-  const members = trpc.sharing.members.useQuery(thing);
+  const online = useOnline();
+  const members = trpc.sharing.members.useQuery(thing, { enabled: online });
   const remove = trpc.sharing.removeMember.useMutation();
   const setRole = trpc.sharing.setRole.useMutation({
     onSuccess: () => utils.sharing.members.invalidate(thing),
@@ -180,6 +182,12 @@ export function SharePeople({
       ref={people}
     >
       {members.isLoading && <Loader size="sm" />}
+      {/* The people and the links are the server's: offline, say so rather than spin. */}
+      {!online && !members.data && (
+        <Text size="sm" c="dimmed">
+          {t('sharing.offline')}
+        </Text>
+      )}
       {/* The people as one box, so they read as one list under the sentence. */}
       {shown && (
         <Paper withBorder radius="md">
@@ -274,7 +282,7 @@ export function SharePeople({
       )}
       <ErrorText error={members.error ?? remove.error ?? setRole.error ?? undoError} />
 
-      {isOwner && (
+      {isOwner && online && (
         <Stack gap="lg" mt="lg">
           {JOIN_ROLES.map((role) => (
             <InviteLink

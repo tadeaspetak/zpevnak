@@ -13,6 +13,7 @@ export const en: Record<keyof typeof cs, string> = {
   'common.offline': 'Offline',
   'common.offlineHint':
     "You're offline. Your songs are on this device; changes save once you're back online.",
+  'common.needsConnection': 'You’re offline. This works once you’re connected.',
   'common.somethingWrong': 'Something went wrong. Try again.',
   'common.unverified': 'Not approved',
   'common.rejected': 'Rejected',
@@ -58,6 +59,7 @@ export const en: Record<keyof typeof cs, string> = {
   'session.leave': 'Leave playlist',
 
   'song.notFound': "This song isn't here, or you can't see it.",
+  'song.notOnDevice': 'This song isn’t on this device. It will show once you’re online.',
   'song.transpose': 'Transpose',
   'song.transposeDown': 'Down a semitone',
   'song.transposeUp': 'Up a semitone',
@@ -148,12 +150,16 @@ export const en: Record<keyof typeof cs, string> = {
   'playlists.added': 'Added to {name}',
   'playlists.newWithSong': 'New playlist with this song',
   'playlists.notFound': "This playlist isn't here, or it's private.",
+  'playlists.notOnDevice':
+    'This playlist isn’t on this device. It will show once you’re online.',
   'playlists.signInToCreate': 'Log in to make your own playlists.',
   'sharing.role.owner': 'Owner',
   'sharing.role.collaborator': 'Can edit',
   'sharing.role.viewer': 'Can only read',
   'sharing.roleOf': 'What {name} can do',
   'sharing.you': '(you)',
+  'sharing.offline':
+    'Who is in it, and the links for listmates, show once you’re online.',
   'playlists.collaborators_one': '{count}\u00a0listmate',
   'playlists.collaborators_few': '{count}\u00a0listmates',
   'playlists.collaborators_many': '{count}\u00a0listmates',

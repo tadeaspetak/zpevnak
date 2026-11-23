@@ -50,10 +50,16 @@ function makeTranslator(locale: Locale) {
     const pluralKey = `${key}_${form}` as MessageKey;
     return interpolate(dict[pluralKey] ?? dict[`${key}_other` as MessageKey], { count });
   };
-  /** The translated message for a server error, or the generic one. */
+  /**
+   * The translated message for a server error, or the generic one; with no connection, that it
+   * needs one, rather than "something went wrong".
+   */
   const tError = (error: unknown) => {
     const message = (error as { message?: unknown } | null)?.message;
-    return isErrorCode(message) ? t(`error.${message}`) : t('common.somethingWrong');
+    if (isErrorCode(message)) {
+      return t(`error.${message}`);
+    }
+    return navigator.onLine ? t('common.somethingWrong') : t('common.needsConnection');
   };
   const dates = new Intl.DateTimeFormat(locale, {
     day: 'numeric',

@@ -12,6 +12,7 @@ import type { SongRecord } from '../data/store.ts';
 import { isPlainTap, useHideOnScroll } from '../hooks/useHideOnScroll.ts';
 import { useKeys } from '../hooks/useKeys.ts';
 import { useMe } from '../hooks/useMe.ts';
+import { useOnline } from '../hooks/useOnline.ts';
 import { useSwipe } from '../hooks/useSwipe.ts';
 import { useWakeLock } from '../hooks/useWakeLock.ts';
 import { useI18n } from '../i18n/index.tsx';
@@ -83,7 +84,11 @@ export function PlaylistSongPage() {
     return <PageLoader full />;
   }
   if (!playlist) {
-    return <Missing text={t('playlists.notFound')} />;
+    return (
+      <Missing
+        text={navigator.onLine ? t('playlists.notFound') : t('playlists.notOnDevice')}
+      />
+    );
   }
   return (
     <SongPlayer
@@ -108,17 +113,21 @@ type PlaylistContext = {
   removed: boolean;
 };
 
-/** Finds the song in the catalog; failing that (a rejected song an editor opens), asks the server. */
+/**
+ * Finds the song in the catalog; failing that (a song the device hasn't synced yet), asks the
+ * server. Offline there is no one to ask: `offline` says why it isn't here.
+ */
 function useSong(songId: number | null) {
   const { songs, loaded, synced } = useCatalog();
+  const online = useOnline();
   const fromCatalog = songId === null ? undefined : songs.get(songId);
   const fallback = trpc.songs.byId.useQuery(
     { id: songId ?? 0 },
     { enabled: songId !== null && loaded && synced && !fromCatalog, retry: false },
   );
   const song: SongRecord | undefined = fromCatalog ?? fallback.data;
-  const pending = !loaded || (!fromCatalog && (!synced || fallback.isLoading));
-  return { song, pending };
+  const pending = !loaded || (!fromCatalog && online && (!synced || fallback.isLoading));
+  return { song, pending, offline: !online && !song };
 }
 
 function SongPlayer({
@@ -130,7 +139,7 @@ function SongPlayer({
 }) {
   const { t } = useI18n();
   const navigate = useNavigate();
-  const { song, pending } = useSong(songId);
+  const { song, pending, offline } = useSong(songId);
   const { session } = usePlayer();
   const prefs = usePrefs();
   const { me } = useMe();
@@ -221,7 +230,7 @@ function SongPlayer({
     return <PageLoader full />;
   }
   if (!song || !shown) {
-    return <Missing text={t('song.notFound')} />;
+    return <Missing text={offline ? t('song.notOnDevice') : t('song.notFound')} />;
   }
 
   const canEdit = canChangeSong(me, song);

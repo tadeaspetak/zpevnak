@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router';
 import { url } from '#shared/urls.ts';
 import { dropSong, putSong } from '../data/catalog.ts';
 import type { SongRecord } from '../data/store.ts';
+import { useOnline } from '../hooks/useOnline.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc } from '../trpc.ts';
 import { ErrorText } from './ErrorText.tsx';
@@ -29,6 +30,7 @@ export function SongShareModal({ song, opened, onClose }: Props) {
   const { t } = useI18n();
   const isOwner = song.role === 'owner';
   const isPrivate = song.status === 'private';
+  const online = useOnline();
   const blockers = trpc.songs.privateBlockers.useQuery(
     { id: song.id },
     { enabled: opened && isOwner && !isPrivate },
@@ -62,7 +64,8 @@ export function SongShareModal({ song, opened, onClose }: Props) {
         <ShareSection title={t('songs.whoSees')}>
           <VisibilitySwitch
             label={t('songs.whoSees')}
-            readOnly={!isOwner || visibility.isPending}
+            // Publishing or taking back is the server's to decide: not offline.
+            readOnly={!isOwner || visibility.isPending || !online}
             value={isPrivate ? 'private' : 'public'}
             onChange={(v) => {
               if (v === 'public') {

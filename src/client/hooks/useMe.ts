@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import type { Me } from '#server/auth/me.ts';
 import { readLocalJson, writeLocalJson } from '../data/local.ts';
+import { useOnline } from './useOnline.ts';
 import { trpc } from '../trpc.ts';
 
 /**
@@ -9,6 +10,7 @@ import { trpc } from '../trpc.ts';
  */
 export function useMe() {
   const query = trpc.auth.me.useQuery(undefined, { staleTime: 5 * 60_000, retry: 1 });
+  const online = useOnline();
   useEffect(() => {
     if (query.isSuccess) {
       writeLocalJson('me', query.data);
@@ -22,6 +24,7 @@ export function useMe() {
     me,
     isEditor,
     isAdmin: me?.role === 'admin',
-    known: query.isSuccess || query.isError,
+    // Offline the question waits for the connection: the last answer is all there is to know.
+    known: query.isSuccess || query.isError || !online,
   };
 }

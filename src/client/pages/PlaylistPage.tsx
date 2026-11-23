@@ -34,6 +34,7 @@ import { useI18n } from '../i18n/index.tsx';
 import { trpc, trpcClient } from '../trpc.ts';
 import { idFromRef, url } from '#shared/urls.ts';
 import { useCanonicalPath } from '../hooks/useCanonicalPath.ts';
+import { useOnline } from '../hooks/useOnline.ts';
 import classes from './PlaylistPage.module.css';
 import { IconButton } from '../components/IconButton.tsx';
 
@@ -42,6 +43,7 @@ export function PlaylistPage() {
   const navigate = useNavigate();
   const id = idFromRef(useParams().playlistRef) ?? 0;
   const { playlists, songs, loaded } = useCatalog();
+  const online = useOnline();
   const { session } = usePlayer();
   const { me } = useMe();
   const playlist = playlists.get(id);
@@ -77,7 +79,7 @@ export function PlaylistPage() {
           backLabel={backLabel}
         />
         <Page>
-          <Text>{t('playlists.notFound')}</Text>
+          <Text>{online ? t('playlists.notFound') : t('playlists.notOnDevice')}</Text>
         </Page>
       </>
     );
