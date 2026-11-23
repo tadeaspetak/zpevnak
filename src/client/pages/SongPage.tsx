@@ -25,7 +25,7 @@ import { followSong, playlistSteps } from '../song/followSong.ts';
 import { useCanonicalPath } from '../hooks/useCanonicalPath.ts';
 import classes from './SongPage.module.css';
 import { PageLoader } from '../components/PageLoader.tsx';
-import { canChangeSong } from '#shared/songs.ts';
+import { canChangeSong, isEditor } from '#shared/songs.ts';
 
 /** /song/:songRef: one song on its own. */
 export function SongPage() {
@@ -245,7 +245,11 @@ function SongPlayer({
         canAddToPlaylist={Boolean(me?.emailVerified)}
         hidden={toolbar.hidden}
       />
-      <SongStatusBanner song={song} fixTo={canEdit ? url.editSong(song.id) : undefined} />
+      <SongStatusBanner
+        song={song}
+        fixTo={canEdit ? url.editSong(song.id) : undefined}
+        reviewTo={isEditor(me) ? url.review(song.id) : undefined}
+      />
       {/* A tap on the song hides the toolbar and the playlist bar, or brings them back, when
           things get tight (D93, D109).
           A pointer convenience on top of scrolling, which does the same, so no key of its own. */}

@@ -430,6 +430,9 @@ From the first UX walk of the song view and a playlist session (2026-11-10): _In
   is a tag, never an artist: "Koledy" and "Písničky z pohádek" became tags and left the artist
   field. Search results no longer name the tag that found a song; the line under it does.
   (2026-11-23)
+- **D121. From an unchecked song straight to its review.** An editor sees "Zkontrolovat" in the
+  quiet "nobody has approved this song yet" line (D82) and lands on the song's review screen, not
+  the queue to find it in. Everyone else sees the line alone. (2026-11-23)
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed

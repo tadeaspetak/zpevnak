@@ -110,6 +110,7 @@ export const cs = {
   'song.nextUp': 'Další: {title}',
   'song.lastInPlaylist': 'Poslední v playlistu',
   'song.unverifiedNote': 'Tuhle písničku zatím nikdo neschválil.',
+  'song.review': 'Zkontrolovat',
   'song.rejectedNote': 'Zamítnuto: {reason}',
   'song.rejectedFix': 'Oprav ji a ulož, pošle se ke kontrole znovu.',
   'song.fix': 'Opravit',

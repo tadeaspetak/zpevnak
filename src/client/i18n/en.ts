@@ -107,6 +107,7 @@ export const en: Record<keyof typeof cs, string> = {
   'song.nextUp': 'Next: {title}',
   'song.lastInPlaylist': 'Last in the playlist',
   'song.unverifiedNote': 'Nobody has approved this song yet.',
+  'song.review': 'Review',
   'song.rejectedNote': 'Rejected: {reason}',
   'song.fix': 'Fix it',
   'song.rejectedFix': 'Fix it and save; it goes back for review.',
