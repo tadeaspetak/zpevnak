@@ -86,6 +86,13 @@ export const cs = {
   'song.deleteConfirm': 'Opravdu chceš smazat „{title}“? Nejde to vzít zpátky.',
   'song.deleteImpact': 'Zmizí i z playlistů, ve kterých je ({count}).',
   'song.deleted': 'Písnička je smazaná.',
+  'song.saveKey': 'Uložit v tónině {key}',
+  'song.saveTransposed': 'Uložit transponovanou',
+  'song.saveKeyBody':
+    'Akordy se v písničce přepíšou natrvalo, pro všechny. Dosavadní znění zůstane v historii písničky.',
+  'song.saveKeyDiagrams': 'Akordové diagramy se smažou: hmaty platí pro původní tóninu.',
+  'song.keySaved': 'Uloženo v tónině {key}.',
+  'song.transposedSaved': 'Uloženo transponované.',
   'song.rejectedWaiting': 'Tahle písnička byla zamítnuta a čeká na opravu.',
   'song.reportMistake': 'Nahlásit chybu',
   'song.reportSubject': 'Chyba v písničce: {title}',

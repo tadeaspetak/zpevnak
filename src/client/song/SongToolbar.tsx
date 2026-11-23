@@ -11,6 +11,7 @@ import { useDisclosure } from '@mantine/hooks';
 import {
   IconArrowLeft,
   IconClef,
+  IconDeviceFloppy,
   IconDots,
   IconEdit,
   IconMessageReport,
@@ -31,6 +32,7 @@ import { songText } from '../data/songText.ts';
 import type { SongRecord } from '../data/store.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { url } from '#shared/urls.ts';
+import { SaveKeyModal } from './SaveKeyModal.tsx';
 import classes from './SongToolbar.module.css';
 import { IconButton } from '../components/IconButton.tsx';
 
@@ -41,6 +43,8 @@ type Props = {
   originalKey: string | null;
   shownKey: string | null;
   semitones: number;
+  /** The pitch the song starts from (`songPitch`), which a transposition is kept against. */
+  pitch: number | null;
   hasDiagrams: boolean;
   /** May edit the song, and so delete it: the same people (canChangeSong, D78). */
   canEdit: boolean;
@@ -61,6 +65,7 @@ export function SongToolbar(props: Props) {
     originalKey,
     shownKey,
     semitones,
+    pitch,
     hasDiagrams,
     canEdit,
     canAddToPlaylist,
@@ -70,6 +75,7 @@ export function SongToolbar(props: Props) {
   const prefs = usePrefs();
   const [adding, { open: openAdd, close: closeAdd }] = useDisclosure(false);
   const [deleting, { open: openDelete, close: closeDelete }] = useDisclosure(false);
+  const [savingKey, { open: openSaveKey, close: closeSaveKey }] = useDisclosure(false);
   const tags = songText(song).tags;
 
   // A song without a {key} shows how far it's transposed instead. A real minus sign: a
@@ -100,7 +106,7 @@ export function SongToolbar(props: Props) {
           >
             <ActionIcon
               size="lg"
-              onClick={() => prefs.setTranspose(song.id, semitones - 1)}
+              onClick={() => prefs.setTranspose(song.id, semitones - 1, pitch)}
               aria-label={t('song.transposeDown')}
             >
               <IconMinus size={18} />
@@ -120,7 +126,7 @@ export function SongToolbar(props: Props) {
                 <UnstyledButton
                   className={classes.key}
                   data-changed
-                  onClick={() => prefs.setTranspose(song.id, 0)}
+                  onClick={() => prefs.setTranspose(song.id, 0, pitch)}
                   aria-label={`${keyLabel}: ${resetLabel}`}
                 >
                   <IconClef size={18} aria-hidden />
@@ -132,7 +138,7 @@ export function SongToolbar(props: Props) {
             )}
             <ActionIcon
               size="lg"
-              onClick={() => prefs.setTranspose(song.id, semitones + 1)}
+              onClick={() => prefs.setTranspose(song.id, semitones + 1, pitch)}
               aria-label={t('song.transposeUp')}
             >
               <IconPlus size={18} />
@@ -185,6 +191,17 @@ export function SongToolbar(props: Props) {
                   {t('song.reportMistake')}
                 </Menu.Item>
               )}
+              {/* Who may edit the song may make the key they picked its own (D119). */}
+              {canEdit && semitones !== 0 && (
+                <Menu.Item
+                  leftSection={<IconDeviceFloppy size={16} />}
+                  onClick={openSaveKey}
+                >
+                  {shownKey
+                    ? t('song.saveKey', { key: shownKey })
+                    : t('song.saveTransposed')}
+                </Menu.Item>
+              )}
               {canEdit && (
                 <Menu.Item
                   component={Link}
@@ -214,6 +231,16 @@ export function SongToolbar(props: Props) {
       </header>
       <AddToPlaylistModal songId={adding ? song.id : null} onClose={closeAdd} />
       {canEdit && <DeleteSongModal song={song} opened={deleting} onClose={closeDelete} />}
+      {canEdit && semitones !== 0 && (
+        <SaveKeyModal
+          song={song}
+          semitones={semitones}
+          shownKey={shownKey}
+          hasDiagrams={hasDiagrams}
+          opened={savingKey}
+          onClose={closeSaveKey}
+        />
+      )}
     </>
   );
 }

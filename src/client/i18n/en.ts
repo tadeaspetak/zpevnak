@@ -82,6 +82,14 @@ export const en: Record<keyof typeof cs, string> = {
   'song.deleteConfirm': "Do you really want to delete “{title}”? It can't be taken back.",
   'song.deleteImpact': 'It also leaves the playlists it is in ({count}).',
   'song.deleted': 'The song is deleted.',
+  'song.saveKey': 'Save in {key}',
+  'song.saveTransposed': 'Save transposed',
+  'song.saveKeyBody':
+    'The song’s chords are rewritten for good, for everyone. The previous text stays in the song’s history.',
+  'song.saveKeyDiagrams':
+    'Chord diagrams are removed: their fingerings are for the original key.',
+  'song.keySaved': 'Saved in {key}.',
+  'song.transposedSaved': 'Saved transposed.',
   'song.rejectedWaiting': 'This song was rejected and is waiting to be fixed.',
   'song.reportMistake': 'Report a mistake',
   'song.reportSubject': 'Mistake in a song: {title}',

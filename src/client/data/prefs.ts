@@ -9,9 +9,37 @@ type Prefs = {
   showDiagrams: boolean;
   /** Two columns for songs that ask for them. Off means a long song just scrolls down. */
   showColumns: boolean;
-  /** Song id → semitones, for the songs someone transposed. */
-  transpose: Record<number, number>;
+  /** Song id → how far it's transposed, for the songs someone transposed. */
+  transpose: Record<number, StoredTranspose>;
 };
+
+/**
+ * Semitones, and the pitch the song started from when they were set (`songPitch`). Saved from
+ * before that pitch was kept: semitones alone.
+ */
+type StoredTranspose = number | { semitones: number; from: number };
+
+/**
+ * How far to transpose a song that now starts from `from`. Saved in another key since (D119),
+ * the song keeps sounding where the player put it: "+3 from A" is "±0" once the text is in C.
+ */
+export function semitonesFor(
+  stored: StoredTranspose | undefined,
+  from: number | null,
+): number {
+  if (stored === undefined) {
+    return 0;
+  }
+  if (typeof stored === 'number') {
+    return stored;
+  }
+  if (from === null || from === stored.from) {
+    return stored.semitones;
+  }
+  // The nearer way round: −5 rather than +7.
+  const moved = (((stored.semitones + stored.from - from) % 12) + 12) % 12;
+  return moved > 6 ? moved - 12 : moved;
+}
 
 export const FONT_SCALES = [0.8, 0.9, 1, 1.15, 1.3, 1.5, 1.75, 2];
 
@@ -63,18 +91,22 @@ export function usePrefs() {
     update({ showColumns });
   }, []);
 
-  const setTranspose = useCallback((songId: number, semitones: number) => {
-    // Kept between -11 and +11; 0 is not stored at all.
-    const normalized = semitones % 12;
-    const transpose = { ...prefs.transpose };
-    if (normalized === 0) {
-      delete transpose[songId];
-    } else {
-      transpose[songId] = normalized;
-    }
-    writeLocalJson('transpose', transpose);
-    update({ transpose });
-  }, []);
+  /** `from`: the pitch the song starts from as it is now (`songPitch`). */
+  const setTranspose = useCallback(
+    (songId: number, semitones: number, from: number | null) => {
+      // Kept between -11 and +11; 0 is not stored at all.
+      const normalized = semitones % 12;
+      const transpose = { ...prefs.transpose };
+      if (normalized === 0) {
+        delete transpose[songId];
+      } else {
+        transpose[songId] = from === null ? normalized : { semitones: normalized, from };
+      }
+      writeLocalJson('transpose', transpose);
+      update({ transpose });
+    },
+    [],
+  );
 
   return {
     ...state,

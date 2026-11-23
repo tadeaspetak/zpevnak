@@ -83,11 +83,12 @@ const PRINT_ONLY = new Set([
 
 const FORMATTING_RE = /(font|size|colou?r)$/;
 
-type Directive = { name: string; value: string };
+export type Directive = { name: string; value: string };
 
 const DIRECTIVE_RE = /^\{\s*([^\s:}]+)\s*(?::\s*|\s+)?(.*?)\s*\}\s*$/;
 
-function readDirective(line: string): Directive | null {
+/** A directive line's name (aliases resolved: `{t:}` is `title`) and value, or null. */
+export function readDirective(line: string): Directive | null {
   const match = DIRECTIVE_RE.exec(line);
   if (!match) {
     return null;

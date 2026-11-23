@@ -418,6 +418,13 @@ From the first UX walk of the song view and a playlist session (2026-11-10): _In
   (`/tag/vanocni`) lists its songs A–Z, and a song opened there goes back to it, as one opened
   from search results does (D60). Tags show as chips on home and in the song's ⋯ menu, never on
   the sheet (D20). (2026-11-22)
+- **D119. A transposed key can become the song's own.** Whoever may edit the song (D78) finds
+  "Uložit v tónině {key}" in the ⋯ menu while it's transposed: the text is rewritten in that key
+  (chords and `{key}`, in the song's notation; tabs as written; `{define}` diagrams dropped, the
+  dialog says so) and saved as an ordinary edit, a version (D86) checked against `seenAt` (D106).
+  A transposition kept on a device remembers the pitch the song started from (its key, or its
+  first chord), so after such a save every device still plays it where its player put it. Not
+  a key per playlist: a third layer of keys, for a need not yet seen. (2026-11-23)
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed

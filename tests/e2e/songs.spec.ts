@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { idFromRef, url } from '#shared/urls.ts';
 import { signedIn } from './helpers.ts';
 
 test('a contributor pastes chords above lyrics, converts them, and an editor approves the song', async ({
@@ -53,4 +54,34 @@ test('an editor tags a song, and a player finds it among the tag’s songs (D118
   await expect(player.getByRole('heading', { level: 1, name: title })).toBeVisible();
   await player.getByRole('link', { name: `Back to ${tag}` }).click();
   await expect(player).toHaveURL(/\/tag\/koledy-\d+$/);
+});
+
+test('an editor transposes a song and saves it in that key, for everyone (D119)', async ({
+  browser,
+}) => {
+  const title = `Hvězdy ${Date.now()}`;
+  const editor = await signedIn(browser, 'editor@zpevnak.test');
+  await editor.goto('/new');
+  await editor
+    .getByRole('textbox', { name: 'ChordPro' })
+    .fill(`{title: ${title}}\n{key: A}\n\n[A]la la [D]la [E]lo`);
+  await editor.getByRole('button', { name: 'Submit for review' }).click();
+  await expect(editor.getByRole('heading', { level: 1, name: title })).toBeVisible();
+  const songId = idFromRef(new URL(editor.url()).pathname.split('/')[2]);
+
+  for (let i = 0; i < 3; i++) {
+    await editor.getByRole('button', { name: 'Up a semitone' }).click();
+  }
+  await expect(editor.getByRole('button', { name: 'C: Back to A' })).toBeVisible();
+  await editor.getByRole('button', { name: 'More options' }).click();
+  await editor.getByRole('menuitem', { name: 'Save in C' }).click();
+  await editor.getByRole('dialog').getByRole('button', { name: 'Save' }).click();
+  await expect(editor.getByText('Saved in C.')).toBeVisible();
+  // The song's own key now: nothing transposed, nothing to go back to.
+  await expect(editor.getByRole('button', { name: /Back to/ })).toHaveCount(0);
+
+  await editor.goto(url.editSong(Number(songId)));
+  await expect(editor.getByRole('textbox', { name: 'ChordPro' })).toHaveValue(
+    `{title: ${title}}\n{key: C}\n\n[C]la la [F]la [G]lo`,
+  );
 });

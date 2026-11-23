@@ -5,7 +5,8 @@ import { ErrorText } from './ErrorText.tsx';
 
 /**
  * Asks before something that can't be taken back: what will happen, Cancel, and the red
- * button. A failure shows here, in the dialog, where the eye is: not on the page behind it.
+ * button; or, for a change that is only big (`danger={false}`), the orange one. A failure shows
+ * here, in the dialog, where the eye is: not on the page behind it.
  */
 export function ConfirmModal({
   opened,
@@ -16,6 +17,7 @@ export function ConfirmModal({
   onConfirm,
   loading,
   disabled = false,
+  danger = true,
   error,
 }: {
   opened: boolean;
@@ -26,6 +28,7 @@ export function ConfirmModal({
   onConfirm: () => void;
   loading: boolean;
   disabled?: boolean;
+  danger?: boolean;
   error: unknown;
 }) {
   const { t } = useI18n();
@@ -38,7 +41,12 @@ export function ConfirmModal({
           <Button variant="default" onClick={onClose}>
             {t('common.cancel')}
           </Button>
-          <Button color="red" loading={loading} disabled={disabled} onClick={onConfirm}>
+          <Button
+            color={danger ? 'red' : undefined}
+            loading={loading}
+            disabled={disabled}
+            onClick={onConfirm}
+          >
             {confirmLabel}
           </Button>
         </Group>

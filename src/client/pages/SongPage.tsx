@@ -3,10 +3,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router';
 import type { SongLinkState } from '../components/SongRow.tsx';
 import { parseSong } from '#shared/chordpro/parse.ts';
-import { transposeSong } from '#shared/chordpro/transpose.ts';
+import { songPitch, transposeSong } from '#shared/chordpro/transpose.ts';
 import { PlaylistPill } from '../components/PlaylistPill.tsx';
 import { useCatalog } from '../data/catalog.ts';
-import { usePrefs } from '../data/prefs.ts';
+import { semitonesFor, usePrefs } from '../data/prefs.ts';
 import { playPlaylist, songPlayed, usePlayer } from '../data/session.ts';
 import type { SongRecord } from '../data/store.ts';
 import { isPlainTap, useHideOnScroll } from '../hooks/useHideOnScroll.ts';
@@ -139,8 +139,9 @@ function SongPlayer({
   const toolbar = useHideOnScroll();
   useCanonicalPath(!playlist && song ? url.song(song) : null);
 
-  const semitones = song ? (prefs.transpose[song.id] ?? 0) : 0;
   const parsed = useMemo(() => (song ? parseSong(song.source) : null), [song]);
+  const pitch = parsed ? songPitch(parsed) : null;
+  const semitones = song ? semitonesFor(prefs.transpose[song.id], pitch) : 0;
   const shown = useMemo(
     () => (parsed ? transposeSong(parsed, semitones) : null),
     [parsed, semitones],
@@ -238,6 +239,7 @@ function SongPlayer({
         originalKey={parsed?.meta.key ?? null}
         shownKey={shown.meta.key}
         semitones={semitones}
+        pitch={pitch}
         hasDiagrams={(parsed?.definitions.length ?? 0) > 0}
         canEdit={canEdit}
         canAddToPlaylist={Boolean(me?.emailVerified)}

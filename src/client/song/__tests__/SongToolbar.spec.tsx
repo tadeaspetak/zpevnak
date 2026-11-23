@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react';
+import { cleanup, fireEvent, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { renderApp } from '#tests/client/render.tsx';
 import type { SongRecord } from '../../data/store.ts';
@@ -13,7 +13,7 @@ const song = {
   updatedAt: '2026-11-22T10:00:00.000Z',
 } as SongRecord;
 
-function toolbar(semitones: number, shown: SongRecord = song) {
+function toolbar(semitones: number, shown: SongRecord = song, canEdit = false) {
   renderApp(
     <SongToolbar
       backTo="/"
@@ -22,8 +22,9 @@ function toolbar(semitones: number, shown: SongRecord = song) {
       originalKey="A"
       shownKey={semitones === 0 ? 'A' : 'H'}
       semitones={semitones}
+      pitch={9}
       hasDiagrams={false}
-      canEdit={false}
+      canEdit={canEdit}
       canAddToPlaylist={false}
       hidden={false}
     />,
@@ -77,5 +78,29 @@ describe('SongToolbar: the song’s tags (D118)', () => {
     const items = await screen.findAllByRole('menuitem');
     expect(items.map((item) => item.textContent)).toEqual(['Nahlásit chybu']);
     expect(screen.queryByText('Štítky')).toBeNull();
+  });
+});
+
+describe('SongToolbar: saving the key (D119)', () => {
+  beforeEach(() => {
+    localStorage.setItem('zpevnak.locale', 'cs');
+  });
+
+  const menu = async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Další možnosti' }));
+    return (await screen.findAllByRole('menuitem')).map((item) => item.textContent);
+  };
+
+  it('offers whoever may edit the song to save it in the key it is transposed to', async () => {
+    toolbar(2, song, true);
+    expect(await menu()).toContain('Uložit v tónině H');
+  });
+
+  it('offers it to nobody else, and not in the song’s own key', async () => {
+    toolbar(2, song, false);
+    expect(await menu()).not.toContain('Uložit v tónině H');
+    cleanup();
+    toolbar(0, song, true);
+    expect((await menu()).some((item) => item?.startsWith('Uložit'))).toBe(false);
   });
 });
