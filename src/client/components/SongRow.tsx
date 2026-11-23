@@ -1,6 +1,7 @@
 import { Box, Group, Text, UnstyledButton } from '@mantine/core';
 import type { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router';
+import { byline, songText } from '../data/songText.ts';
 import type { SongRecord } from '../data/store.ts';
 import { StatusBadge } from './StatusBadge.tsx';
 import classes from './SongRow.module.css';
@@ -53,8 +54,9 @@ export function SongRow({ song, to, detail, leading, active, linkState }: Props)
 }
 
 /**
- * A song as every list shows it: the title, marked when it isn't approved, the artist under it,
- * and anything a list adds (`children`). Takes the room left in its row, cutting long names.
+ * A song as every list shows it: the title, marked when it isn't approved, the artist and tags
+ * under it (`byline`), and anything a list adds (`children`). Takes the room left in its row,
+ * cutting long names.
  */
 export function SongLabel({
   song,
@@ -63,6 +65,7 @@ export function SongLabel({
   song: SongRecord;
   children?: ReactNode;
 }) {
+  const line = byline(song.artist, songText(song).tags);
   return (
     <Box flex={1} miw={0}>
       <Group gap={6} wrap="nowrap">
@@ -71,9 +74,9 @@ export function SongLabel({
         </Text>
         <StatusBadge status={song.status} />
       </Group>
-      {song.artist && (
+      {line && (
         <Text size="sm" c="dimmed" truncate>
-          {song.artist}
+          {line}
         </Text>
       )}
       {children}

@@ -62,18 +62,10 @@ describe('songSearch', () => {
     expect(songSearch(songs, null)('koledníci')[0]?.lyricsLine).toBeNull();
   });
 
-  it('finds a song by its tag, and says which tag found it instead of a lyrics line', () => {
+  it('finds a song by its tag, with no lyrics line: the tag is under its title', () => {
     const [hit] = songSearch(songs, null)('vanocni');
     expect(hit?.song.title).toBe('Zvonky');
-    expect(hit?.tags).toEqual(['Vánoční']);
     expect(hit?.lyricsLine).toBeNull();
-  });
-
-  it('names no tag when the tags did not find the song', () => {
-    const [hit] = songSearch(songs, null)('cinky');
-    expect(hit?.song.title).toBe('Zvonky');
-    expect(hit?.tags).toEqual([]);
-    expect(hit?.lyricsLine).toBe('cinky linky la');
   });
 
   it("finds someone else's rejected song for nobody but its author (D77)", () => {

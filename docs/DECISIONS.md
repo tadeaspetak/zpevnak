@@ -425,6 +425,11 @@ From the first UX walk of the song view and a playlist session (2026-11-10): _In
   A transposition kept on a device remembers the pitch the song started from (its key, or its
   first chord), so after such a save every device still plays it where its player put it. Not
   a key per playlist: a third layer of keys, for a need not yet seen. (2026-11-23)
+- **D120. Tags stand beside the artist** (refines D118). Under a song's title, in every list and
+  on the sheet: "Lucie Bílá | Pohádky", or the tags alone for a song with no artist. A category
+  is a tag, never an artist: "Koledy" and "Písničky z pohádek" became tags and left the artist
+  field. Search results no longer name the tag that found a song; the line under it does.
+  (2026-11-23)
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed

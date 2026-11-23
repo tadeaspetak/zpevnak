@@ -7,7 +7,7 @@ const layout = (line: string) => layoutLine(parseLyricsLine(line));
 describe('layoutLine', () => {
   it('puts each chord over the start of its word', () => {
     expect(layout('[Am]la la [D]lo')).toEqual([
-      [{ chord: 'Am', text: 'la' }],
+      [{ chord: 'Am', text: 'la', overhang: true }],
       [{ chord: null, text: 'la' }],
       [{ chord: 'D', text: 'lo' }],
     ]);
@@ -17,10 +17,32 @@ describe('layoutLine', () => {
     expect(layout('ka[Am]ra mel')).toEqual([
       [
         { chord: null, text: 'ka' },
-        { chord: 'Am', text: 'ra' },
+        { chord: 'Am', text: 'ra', overhang: true },
       ],
       [{ chord: null, text: 'mel' }],
     ]);
+  });
+
+  it('lets a chord reach over the words after it, so a short word isn’t pushed apart', () => {
+    const [first] = layout('[C]Z jedné strany, [F]z druhé');
+    expect(first).toEqual([{ chord: 'C', text: 'Z', overhang: true }]);
+  });
+
+  it('counts the space before the next chord as room', () => {
+    expect(layout('andě[G]lé [D]v')[0]).toEqual([
+      { chord: null, text: 'andě' },
+      { chord: 'G', text: 'lé', overhang: true },
+    ]);
+  });
+
+  it('keeps a chord’s room when the next chord is too close to reach over', () => {
+    expect(layout('[Cmaj7]a [G]b')[0]).toEqual([{ chord: 'Cmaj7', text: 'a' }]);
+    expect(layout('[Am]a')[0]).toEqual([{ chord: 'Am', text: 'a' }]);
+    expect(
+      layout('[A] [D] [E]')
+        .flat()
+        .some((col) => col.overhang),
+    ).toBe(false);
   });
 
   it('gives a chord over a space a word of its own', () => {

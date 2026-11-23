@@ -1,7 +1,11 @@
 import type { Segment } from '#shared/chordpro/types.ts';
 
-/** A chord and the text under it. */
-type Column = { chord: string | null; text: string };
+/**
+ * A chord and the text under it. `overhang`: the chord is wider than its text but may reach over
+ * the text after it, since the next chord is far enough away; the column keeps its text's width,
+ * so a short word under a chord ("[C]Z jedné") isn't pushed apart from the next.
+ */
+type Column = { chord: string | null; text: string; overhang?: true };
 /** Columns that must stay on one line: a word, even when a chord sits mid-word. */
 export type Word = Column[];
 
@@ -48,7 +52,39 @@ export function layoutLine(segments: Segment[]): Word[] {
   if (beforeLast && !chordOnly(beforeLast) && chordOnly(last)) {
     words.splice(-2, 2, [...beforeLast, { chord: null, text: ' ' }, ...(last as Word)]);
   }
+  markOverhangs(words);
   return words;
+}
+
+/**
+ * Characters a chord may overhang beyond its own: its padding, and one more, because the font
+ * is proportional and a count of characters only estimates their width.
+ */
+const OVERHANG_MARGIN = 2;
+
+function markOverhangs(words: Word[]) {
+  const columns = words.flatMap((word, w) =>
+    word.map((col, c) => ({ col, startsWord: c === 0 && w > 0 })),
+  );
+  columns.forEach(({ col }, i) => {
+    // A bold chord and its padding outgrow plain text of one more character too.
+    if (col.chord === null || col.text.length > col.chord.length + 1) {
+      return;
+    }
+    // The text from this chord to the next one: what the chord could reach over.
+    let room = col.text.length;
+    for (const next of columns.slice(i + 1)) {
+      // The space before a word is room too, also when the next chord starts that word.
+      room += next.startsWord ? 1 : 0;
+      if (next.col.chord !== null) {
+        break;
+      }
+      room += next.col.text.length;
+    }
+    if (room >= col.chord.length + OVERHANG_MARGIN) {
+      col.overhang = true;
+    }
+  });
 }
 
 export function hasChords(segments: Segment[]): boolean {

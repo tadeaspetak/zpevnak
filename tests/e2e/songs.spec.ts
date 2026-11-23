@@ -48,7 +48,7 @@ test('an editor tags a song, and a player finds it among the tag’s songs (D118
 
   const player = await signedIn(browser, 'user@zpevnak.test');
   await player.goto('/');
-  await player.getByRole('link', { name: tag }).click();
+  await player.getByRole('link', { name: tag, exact: true }).click();
   await expect(player.getByRole('heading', { level: 1, name: tag })).toBeVisible();
   await player.getByRole('link', { name: new RegExp(title) }).click();
   await expect(player.getByRole('heading', { level: 1, name: title })).toBeVisible();

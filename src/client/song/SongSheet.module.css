@@ -170,6 +170,12 @@
   white-space: pre;
 }
 
+/* Wider than its text, the chord reaches over the text after it instead of pushing it away
+   (`layoutLine` marks where there is room before the next chord). */
+.col[data-overhang] .chord {
+  width: 0;
+}
+
 .chordLine .word + .word {
   margin-left: 0.6em;
 }

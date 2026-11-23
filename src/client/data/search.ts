@@ -19,8 +19,6 @@ export type SearchHit = {
   song: SongRecord;
   /** The lyrics line that matched, when the match wasn't in the title, artist or tags. */
   lyricsLine: string | null;
-  /** The song's tags the query matched: they say why a song is here that doesn't say so itself. */
-  tags: string[];
 };
 
 function buildIndex(songs: SongRecord[]) {
@@ -71,20 +69,16 @@ function searchSongs(
     if (!song) {
       return [];
     }
-    const { lyrics, tags } = songText(song);
+    const { lyrics } = songText(song);
     // Every word found in the title, artist or tags: that explains the hit, no lyrics line
     // needed.
     const inHeader = Object.values(result.match).every((fields) =>
       fields.some((f) => f !== 'lyrics'),
     );
-    const tagTerms = Object.entries(result.match)
-      .filter(([, fields]) => fields.includes('tags'))
-      .map(([term]) => term);
     return [
       {
         song,
         lyricsLine: inHeader ? null : matchingLine(lyrics, result.terms),
-        tags: tags.filter((tag) => tagTerms.some((term) => fold(tag).includes(term))),
       },
     ];
   });

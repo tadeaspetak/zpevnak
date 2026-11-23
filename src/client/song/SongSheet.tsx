@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { Block, Line, Song } from '#shared/chordpro/types.ts';
+import { byline } from '../data/songText.ts';
 import { useWide } from '../hooks/useBreakpoints.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { ChordDiagram } from './ChordDiagram.tsx';
@@ -59,7 +60,7 @@ function LineView({ line, showChords }: { line: Line; showChords: boolean }) {
           {w > 0 && ' '}
           <span className={classes.word}>
             {word.map((col, c) => (
-              <span key={c} className={classes.col}>
+              <span key={c} className={classes.col} data-overhang={col.overhang}>
                 <span className={classes.chord}>
                   {col.chord ? chordLabel(col.chord) : ' '}
                 </span>
@@ -213,11 +214,12 @@ export function SongSheet({
     return <SectionView key={i} block={block} showChords={showChords} />;
   });
 
+  const line = byline(song.artist, song.meta.tags);
   return (
     <article className={classes.sheet} style={style} lang="und">
       <header className={classes.header}>
         <h1 className={classes.title}>{song.meta.title}</h1>
-        {song.artist && <p className={classes.artist}>{song.artist}</p>}
+        {line && <p className={classes.artist}>{line}</p>}
         {meta.length > 0 && <p className={classes.meta}>{meta.join(' · ')}</p>}
       </header>
       {showChords && showDiagrams && song.definitions.length > 0 && (

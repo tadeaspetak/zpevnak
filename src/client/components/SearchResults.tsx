@@ -1,5 +1,4 @@
-import { Anchor, Group, Stack, Text, Title } from '@mantine/core';
-import { IconTag } from '@tabler/icons-react';
+import { Anchor, Stack, Text, Title } from '@mantine/core';
 import { useMemo, useState, type KeyboardEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useCatalog } from '../data/catalog.ts';
@@ -128,7 +127,13 @@ export function SearchResults({ query, items, selected }: Props) {
                 song={item.hit.song}
                 to={item.to}
                 active={isSelected(item)}
-                detail={<HitDetail hit={item.hit} />}
+                detail={
+                  item.hit.lyricsLine && (
+                    <Text size="sm" fs="italic" truncate>
+                      „{item.hit.lyricsLine}“
+                    </Text>
+                  )
+                }
               />
             ))}
           </Stack>
@@ -136,28 +141,6 @@ export function SearchResults({ query, items, selected }: Props) {
       )}
     </Stack>
   );
-}
-
-/** Why a song was found, when its title and artist don't say: the tag, or the lyrics line. */
-function HitDetail({ hit }: { hit: SearchHit }) {
-  if (hit.lyricsLine) {
-    return (
-      <Text size="sm" fs="italic" truncate>
-        „{hit.lyricsLine}“
-      </Text>
-    );
-  }
-  if (hit.tags.length > 0) {
-    return (
-      <Group gap={4} wrap="nowrap" c="dimmed">
-        <IconTag size={14} aria-hidden />
-        <Text size="sm" truncate>
-          {hit.tags.join(', ')}
-        </Text>
-      </Group>
-    );
-  }
-  return null;
 }
 
 /**

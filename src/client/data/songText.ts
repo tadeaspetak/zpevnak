@@ -1,5 +1,5 @@
 import { lyricsText, parseSong } from '#shared/chordpro/parse.ts';
-import { tagsIn } from '#shared/chordpro/tags.ts';
+import { tagKey, tagsIn } from '#shared/chordpro/tags.ts';
 import type { SongRecord } from './store.ts';
 
 type SongText = { lyrics: string; tags: string[] };
@@ -15,4 +15,15 @@ export function songText(song: SongRecord): SongText {
     cache.set(key, text);
   }
   return text;
+}
+
+/**
+ * The line under a song's title: its artist, then its tags after a pipe ("Lucie Bílá | Pohádky");
+ * a song without an artist shows its tags alone (D120). Null when it has neither.
+ */
+export function byline(artist: string | null, tags: string[]): string | null {
+  const seen = new Set<string>();
+  const unique = tags.filter((tag) => !seen.has(tagKey(tag)) && seen.add(tagKey(tag)));
+  const parts = [artist, unique.join(', ')].filter(Boolean);
+  return parts.length > 0 ? parts.join(' | ') : null;
 }
