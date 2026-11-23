@@ -98,3 +98,7 @@ Agreed to leave, for now:
 - **Importing the old songbook:** deliberately not done (D11). Songs get added one by one, which is
   also how they get checked; `~/dev/projects/songbook` has ~430 ChordPro files to draw from.
 - **Plans:** song history, credits and suggestions in `.planning/ongoing/` (slice 1 done, D86).
+
+## Found along the way (2026-11-23)
+
+- [ ] Review screen: the red "Zamítnout" fails AA contrast (axe via `yarn ux:probe`).

@@ -7,9 +7,10 @@ import { StatusBadge } from './StatusBadge.tsx';
 import classes from './SongRow.module.css';
 
 /**
- * Carried by a link into a song from a list that isn't the song's fixed parent, so the song's
- * back arrow (one level up, D60) lands on that list: the overview's search results (no
- * `backName`), or a tag's songs (the tag's name).
+ * Carried by a link from a page that isn't the next page's fixed parent, so its back arrow (one
+ * level up, D60) lands where the link was: into a song from the overview's search results (no
+ * `backName`) or a tag's songs (the tag's name); into a review from the song itself (its title,
+ * D123).
  */
 export type SongLinkState = { backTo: string; backName?: string };
 

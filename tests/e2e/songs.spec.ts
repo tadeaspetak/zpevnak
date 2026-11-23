@@ -85,3 +85,26 @@ test('an editor transposes a song and saves it in that key, for everyone (D119)'
     `{title: ${title}}\n{key: C}\n\n[C]la la [F]la [G]lo`,
   );
 });
+
+test('an editor reviews a song from the song itself and comes back to it (D121, D123)', async ({
+  browser,
+}) => {
+  const title = `Sněženky ${Date.now()}`;
+  const author = await signedIn(browser, 'user@zpevnak.test');
+  await author.goto('/new');
+  await author
+    .getByRole('textbox', { name: 'ChordPro' })
+    .fill(`{title: ${title}}\n\nla la [D]la`);
+  await author.getByRole('button', { name: 'Submit for review' }).click();
+  await expect(author.getByRole('heading', { level: 1, name: title })).toBeVisible();
+  const songUrl = author.url();
+
+  const editor = await signedIn(browser, 'editor@zpevnak.test');
+  await editor.goto(songUrl);
+  await editor.getByRole('link', { name: 'Review' }).click();
+  await expect(editor.getByRole('link', { name: `Back to ${title}` })).toBeVisible();
+  await editor.getByRole('button', { name: 'Approve' }).click();
+  await expect(editor).toHaveURL(songUrl);
+  await expect(editor.getByRole('heading', { level: 1, name: title })).toBeVisible();
+  await expect(editor.getByText('Nobody has approved this song yet.')).toHaveCount(0);
+});

@@ -9,9 +9,10 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import { type ReactNode, useRef } from 'react';
-import { Navigate, useNavigate, useParams } from 'react-router';
+import { Navigate, useLocation, useNavigate, useParams } from 'react-router';
 import { DeleteSongModal } from '../components/DeleteSongModal.tsx';
 import { RejectModal } from '../components/RejectModal.tsx';
+import type { SongLinkState } from '../components/SongRow.tsx';
 import { ErrorText } from '../components/ErrorText.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
 import { PageLoader } from '../components/PageLoader.tsx';
@@ -30,7 +31,8 @@ import { IconButton } from '../components/IconButton.tsx';
 /**
  * An editor's review of one song: fix the ChordPro right here, then verify or reject.
  * After either, or a skip, the song that followed it opens, so a queue is worked through in one
- * sitting, and a song put off for later comes round again only after the rest.
+ * sitting, and a song put off for later comes round again only after the rest. Opened from the
+ * song itself (D121), it goes back to that song instead, and its back arrow does too (D123).
  */
 export function ReviewPage() {
   const id = Number(useParams().id);
@@ -43,6 +45,8 @@ function ReviewSong({ id }: { id: number }) {
   const { t, formatDate } = i18n;
   const { playlists } = useCatalog();
   const navigate = useNavigate();
+  // Opened from the song: back there when done, not on through the queue.
+  const fromSong = (useLocation().state as SongLinkState | null) ?? null;
   const { me, isEditor, known } = useMe();
   const utils = trpc.useUtils();
   const song = trpc.songs.byId.useQuery({ id }, { enabled: isEditor });
@@ -75,7 +79,11 @@ function ReviewSong({ id }: { id: number }) {
     // A rejected song leaves everyone else's catalog; the sync tells this device too.
     void syncCatalog(me?.id ?? null);
     notifications.show({ message, icon, color });
-    await goToNext();
+    if (fromSong) {
+      navigate(fromSong.backTo, { replace: true });
+    } else {
+      await goToNext();
+    }
   };
 
   const save = trpc.songs.update.useMutation({
@@ -108,6 +116,10 @@ function ReviewSong({ id }: { id: number }) {
     },
   });
 
+  const back = fromSong?.backName
+    ? { to: fromSong.backTo, label: t('nav.backTo', { name: fromSong.backName }) }
+    : { to: url.queue(), label: t('nav.backTo', { name: t('queue.title') }) };
+
   if (known && !isEditor) {
     return <Navigate to={url.home()} replace />;
   }
@@ -117,8 +129,8 @@ function ReviewSong({ id }: { id: number }) {
         <PageHeader
           width="80rem"
           title={t('queue.title')}
-          backTo={url.queue()}
-          backLabel={t('nav.backTo', { name: t('queue.title') })}
+          backTo={back.to}
+          backLabel={back.label}
         />
         <Container py="md">
           {song.isLoading ? <PageLoader /> : <ErrorText error={song.error} />}
@@ -137,8 +149,8 @@ function ReviewSong({ id }: { id: number }) {
       <PageHeader
         width="80rem"
         title={song.data.title}
-        backTo={url.queue()}
-        backLabel={t('nav.backTo', { name: t('queue.title') })}
+        backTo={back.to}
+        backLabel={back.label}
         actions={
           <>
             {position > 0 && (
@@ -146,7 +158,8 @@ function ReviewSong({ id }: { id: number }) {
                 {position} / {pending.data?.length}
               </Badge>
             )}
-            {position > 0 && (pending.data?.length ?? 0) > 1 && (
+            {/* Skipping walks the queue: not where a review from the song is headed. */}
+            {!fromSong && position > 0 && (pending.data?.length ?? 0) > 1 && (
               <IconButton label={t('queue.skip')} onClick={() => void goToNext()}>
                 <IconPlayerTrackNext size={20} />
               </IconButton>

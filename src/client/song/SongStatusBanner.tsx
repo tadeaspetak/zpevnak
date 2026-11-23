@@ -5,7 +5,8 @@ import {
   IconInfoCircle,
   IconPencil,
 } from '@tabler/icons-react';
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
+import type { SongLinkState } from '../components/SongRow.tsx';
 import type { SongRecord } from '../data/store.ts';
 import { useI18n } from '../i18n/index.tsx';
 import classes from './SongStatusBanner.module.css';
@@ -31,6 +32,12 @@ export function SongStatusBanner({
   inForm?: boolean;
 }) {
   const { t } = useI18n();
+  const location = useLocation();
+  // The review comes back here when done, and its back arrow says so (D123).
+  const reviewState: SongLinkState = {
+    backTo: location.pathname + location.search,
+    backName: song.title,
+  };
   const rejection = song.rejection;
   // "Other" says nothing by itself: the editor's note is the reason.
   const noteIsReason = rejection?.reason === 'other' && Boolean(rejection.note);
@@ -43,6 +50,7 @@ export function SongStatusBanner({
             <Button
               component={Link}
               to={reviewTo}
+              state={reviewState}
               size="xs"
               variant="default"
               leftSection={<IconChecklist size={14} />}

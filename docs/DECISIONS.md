@@ -436,6 +436,10 @@ From the first UX walk of the song view and a playlist session (2026-11-10): _In
 - **D122. Every chorus is labelled "Refrén"**, the first as much as a repeat (`{chorus}`), unless
   the song names it itself. Only repeats used to say so, and the first chorus had the bar alone,
   which doesn't explain itself. (2026-11-23)
+- **D123. A review opened from the song returns to the song** (refines D121, D60). Approving or
+  rejecting goes back to it, not on to the next song in the queue, and the back arrow says
+  "Zpět: {title}". There is no skip: that walks the queue. From the queue, nothing changes.
+  (2026-11-23)
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed
