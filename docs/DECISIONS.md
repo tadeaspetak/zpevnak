@@ -463,7 +463,7 @@ From the first UX walk of the song view and a playlist session (2026-11-10): _In
   a collaborator. The owner changes anyone's role in Sdílení (the device's own picker), and an
   undone removal puts the person back in their role. In code `collaborator`/`viewer`, not
   "editor", which is a role in the whole songbook. First phase of
-  `.planning/ongoing/private-songs-and-roles.md`. (2026-11-23)
+  `.planning/done/private-songs-and-roles.md`. (2026-11-23)
 - **D127. A song can be private.** Public stays the default; on a new song, "Soukromá, jen pro
   mě" keeps it the author's own. A private song is outside the songbook: never reviewed (its
   status is `private`, so it can't also be approved), and it doesn't exist (NOT_FOUND) for
@@ -477,7 +477,7 @@ From the first UX walk of the song view and a playlist session (2026-11-10): _In
   other devices (`song_withdrawals`); a private song's id never goes out in `song_deletions`.
   Until a playlist shares its songs (phase 3), a private song goes only into a private playlist
   whose people can all read it already. Lists mark it with a lock. Phase 2 of
-  `.planning/ongoing/private-songs-and-roles.md`. (2026-11-23)
+  `.planning/done/private-songs-and-roles.md`. (2026-11-23)
 - **D128. A playlist shares its private songs with its people.** Everyone in a playlist, a
   reader too, reads every private song in it, for as long as they are in it and the song is;
   worked out from the memberships as they are, never copied. Reading only: it gives no role in
@@ -490,7 +490,7 @@ From the first UX walk of the song view and a playlist session (2026-11-10): _In
   (`READABLE_PRIVATE_SONG_IDS`), from the viewer's side: their own, those shared with them,
   those in their playlists. The sync reads changed public songs by `updated_at` and the
   viewer's private songs from that set, two indexed reads rather than one pass over every
-  song. Phase 3 of `.planning/ongoing/private-songs-and-roles.md`. (2026-11-23)
+  song. Phase 3 of `.planning/done/private-songs-and-roles.md`. (2026-11-23)
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed

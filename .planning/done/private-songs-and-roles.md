@@ -110,7 +110,8 @@ Each ships on its own.
   sharing changed. Each one gone from the device on the next sync (a sync spec, and one e2e).
 - The public → private checks, each one refusing on its own, and passing when none applies.
 
-## Open questions
+## Open questions (closed)
 
-- Czech for the placeholder, the links and the switch: decided while building, by looking.
-- Does "Parťáci" stay as the people section's heading, with the roles beside the names?
+- Czech for the placeholder, the links and the switch: the placeholder was dropped (D128); the
+  links are Odkaz pro úpravy / pro čtení (D126), the switch "Soukromá, jen pro mě" (D127).
+- "Parťáci" stays the people section's heading, the roles beside the names (D126).
