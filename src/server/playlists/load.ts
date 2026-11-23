@@ -1,6 +1,7 @@
 import type { Knex } from 'knex';
 import { editsAsMember, type JoinRole, type MemberRole } from '#shared/roles.ts';
 import type { SessionUser } from '../auth/sessions.ts';
+import { SONG_READABLE } from '../songs/record.ts';
 import { fail } from '../trpc/trpc.ts';
 
 type PlaylistRow = {
@@ -18,8 +19,11 @@ type PlaylistRow = {
 
 const PLAYLIST_SELECT = /* sql */ `
   SELECT p.id, p.owner_id, u.display_name AS owner_name, p.name, p.is_public, p.updated_at,
+         -- Only the songs the viewer may read: someone outside the playlist doesn't learn of a
+         -- private song in it, not even that one is there (D128). Its people read them all.
          coalesce(
-           array_agg(ps.song_id ORDER BY ps.position) FILTER (WHERE ps.song_id IS NOT NULL),
+           array_agg(ps.song_id ORDER BY ps.position)
+             FILTER (WHERE ps.song_id IS NOT NULL AND ${SONG_READABLE}),
            '{}'
          ) AS song_ids,
          (SELECT count(*)::int FROM playlist_collaborators c WHERE c.playlist_id = p.id)
@@ -31,6 +35,7 @@ const PLAYLIST_SELECT = /* sql */ `
   FROM playlists p
   JOIN users u ON u.id = p.owner_id
   LEFT JOIN playlist_songs ps ON ps.playlist_id = p.id
+  LEFT JOIN songs s ON s.id = ps.song_id
 `;
 
 function roleOf(row: PlaylistRow, viewer: SessionUser | null): MemberRole | null {

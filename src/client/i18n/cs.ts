@@ -340,7 +340,7 @@ export const cs = {
     'Mezitím ji někdo změnil. Načti stránku znovu: tvoje úpravy zůstanou a uvidíš, co se změnilo.',
   'error.SONG_PRIVATE': 'Soukromá písnička se neschvaluje.',
   'error.PRIVATE_SONG_NOT_SHARED':
-    'Soukromou písničku jde přidat jen do soukromého playlistu, kde ji všichni můžou číst.',
+    'Tuhle soukromou písničku tam ještě všichni nevidí. Přidat ji tam může jen její vlastník.',
   'error.SONG_EDITED_BY_OTHERS':
     'Na písničce už pracoval někdo další, soukromá být nemůže.',
   'error.SONG_IN_OTHERS_PLAYLISTS':

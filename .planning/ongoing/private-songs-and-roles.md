@@ -1,7 +1,7 @@
 # Private songs, and three roles for songs and playlists
 
-**State:** ongoing. Agreed in conversation on 2026-11-23 (a friend's request: their own songs,
-songs in the making). Phase 1 shipped 2026-11-23 (D126), phase 2 too (D127).
+**State:** done: all three phases shipped 2026-11-23 (D126, D127, D128). Agreed in
+conversation on 2026-11-23 (a friend's request: their own songs, songs in the making).
 
 ## Why
 
@@ -95,8 +95,10 @@ Each ships on its own.
    is one `sharing` router for playlists and songs (`kind`), with each kind's tables in
    `SHARED_TABLES`; and a private song's deletion stays out of `song_deletions` (every device
    syncs those), its people's devices dropping it as a private song no longer sent.
-3. **Private songs in shared playlists.** Access through playlists, the owner-only rule, the
-   placeholder.
+3. **Private songs in shared playlists (shipped, D128).** As built: no placeholder. A playlist's
+   songs are only those its viewer may read, so someone outside never learns a private song is
+   there; its people read them all, so nobody editing it sees a list with gaps. The sync is two
+   reads (changed public songs by `updated_at`, the viewer's private songs from their side).
 
 ## Tests that matter most
 

@@ -239,3 +239,27 @@ test('a player ticks a song into a playlist and unticks it out again (D124)', as
   await player.goto(url.playlist(playlist));
   await expect(player.getByText(title)).toHaveCount(0);
 });
+
+test('a bandmate in a playlist plays the owner’s private song in it (D128)', async ({
+  browser,
+}) => {
+  const owner = await signedIn(browser, 'user@zpevnak.test');
+  const title = `Naše vlastní ${Date.now()}`;
+  const created = await owner.request.post('/trpc/songs.create', {
+    data: { source: `{title: ${title}}\n\nla la [D]la`, isPrivate: true },
+  });
+  const song = (await created.json()).result.data as { id: number };
+  const { playlist } = await playlistWithInvite(owner, `Zkouška ${Date.now()}`);
+  await owner.request.post('/trpc/playlists.edit', {
+    data: { id: playlist.id, op: { type: 'add', songId: song.id } },
+  });
+  const invite = await owner.request.post('/trpc/sharing.invite', {
+    data: { kind: 'playlist', id: playlist.id, role: 'viewer' },
+  });
+  const { token } = (await invite.json()).result.data as { token: string };
+
+  const bandmate = await signedIn(browser, 'editor@zpevnak.test');
+  await bandmate.goto(url.join(token));
+  await bandmate.getByRole('link', { name: new RegExp(title) }).click();
+  await expect(bandmate.getByRole('heading', { level: 1, name: title })).toBeVisible();
+});

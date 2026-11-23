@@ -1,39 +1,26 @@
 import type { Knex } from 'knex';
 import type { SessionUser } from '../auth/sessions.ts';
 import { inSearch } from '#shared/songs.ts';
-import { SONG_READABLE, type SongRow } from '../songs/record.ts';
+import { readablePrivateSongIds, SONG_READABLE, type SongRow } from '../songs/record.ts';
 import { fail } from '../trpc/trpc.ts';
 
 /**
- * Where the songs are going: a playlist that exists (its people as they are now), or a new one
- * of `user`'s, public or not.
- */
-type Target = { playlistId: number } | { newPlaylistIsPublic: boolean };
-
-/**
  * Refuses songs the user can't find (unknown, someone else's rejected: D77, or a private one
- * they may not read: D127), and a private song in a playlist where anyone couldn't already read
- * it: someone the playlist is shared with, or anybody at all for a public one.
+ * they may not read: D127). And a private song where it would reach someone new: a playlist
+ * shares its songs with its people (D128), so only the song's owner may put it where anyone in
+ * the playlist can't read it yet. Anyone else who reads it may add it where all of them can.
+ * `playlistId` null is a new playlist of the user's, who is then its only person.
  */
 export async function assertSongsUsable(
   trx: Knex | Knex.Transaction,
   songIds: number[],
   user: SessionUser,
-  target: Target,
+  playlistId: number | null,
 ): Promise<void> {
   const unique = [...new Set(songIds)];
   if (unique.length === 0) {
     return;
   }
-  const playlistId = 'playlistId' in target ? target.playlistId : null;
-  const isPublic =
-    'playlistId' in target
-      ? (
-          await trx.raw(/* sql */ `SELECT is_public FROM playlists WHERE id = :id`, {
-            id: target.playlistId,
-          })
-        ).rows[0].is_public
-      : target.newPlaylistIsPublic;
   const { rows } = await trx.raw<{
     rows: (Pick<SongRow, 'id' | 'status' | 'created_by'> & {
       readable: boolean;
@@ -48,10 +35,7 @@ export async function assertSongsUsable(
                  UNION
                  SELECT c.user_id FROM playlist_collaborators c WHERE c.playlist_id = :playlistId
                ) people
-               WHERE people.user_id IS DISTINCT FROM s.created_by AND NOT EXISTS (
-                 SELECT 1 FROM song_members m
-                 WHERE m.song_id = s.id AND m.user_id = people.user_id
-               )
+               WHERE s.id NOT IN (${readablePrivateSongIds('people.user_id')})
              ) AS read_by_all
       FROM songs s WHERE s.id = ANY(:ids)
     `,
@@ -63,7 +47,10 @@ export async function assertSongsUsable(
   if (findable.length !== unique.length) {
     fail('BAD_REQUEST', 'NOT_FOUND');
   }
-  if (rows.some((r) => r.status === 'private' && (isPublic || !r.read_by_all))) {
+  const passesOn = rows.some(
+    (r) => r.status === 'private' && r.created_by !== user.id && !r.read_by_all,
+  );
+  if (passesOn) {
     fail('BAD_REQUEST', 'PRIVATE_SONG_NOT_SHARED');
   }
 }

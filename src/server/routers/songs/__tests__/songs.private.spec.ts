@@ -298,57 +298,132 @@ describe('making a song public or private', () => {
   });
 });
 
-describe('a private song in playlists (until a playlist shares its songs)', () => {
-  it('goes into its owner’s private playlist', async () => {
+/** A private playlist of `owner`'s with a reader and a collaborator, joined by its links. */
+async function bandPlaylist(owner: SessionUser, isPublic = false) {
+  const playlist = await callerFor(owner).playlists.create({
+    name: 'Kapela',
+    isPublic,
+    songIds: [],
+  });
+  const join = async (role: JoinRole) => {
+    const person = await createUser();
+    const { token } = await callerFor(owner).sharing.invite({
+      kind: 'playlist',
+      id: playlist.id,
+      role,
+    });
+    await callerFor(person).sharing.join({ token });
+    return person;
+  };
+  return {
+    playlist,
+    reader: await join('viewer'),
+    collaborator: await join('collaborator'),
+  };
+}
+
+describe('a playlist shares its private songs with its people (D128)', () => {
+  it('its owner puts it in, and everyone in the playlist reads it, on the device too', async () => {
     const { owner, song } = await setup();
+    const { playlist, reader, collaborator } = await bandPlaylist(owner);
+    await callerFor(owner).playlists.edit({
+      id: playlist.id,
+      op: { type: 'add', songId: song.id },
+    });
+    for (const person of [reader, collaborator]) {
+      // Read through the playlist: no role in the song, no say in it.
+      expect(await callerFor(person).songs.byId({ id: song.id })).toMatchObject({
+        role: null,
+      });
+      expect(await syncedIds(person)).toContain(song.id);
+      expect(
+        (await callerFor(person).playlists.byId({ id: playlist.id })).songIds,
+      ).toEqual([song.id]);
+      await expect(
+        callerFor(person).songs.update({
+          id: song.id,
+          source: SONG('Moje'),
+          seenAt: await seenAt(song.id),
+        }),
+      ).rejects.toThrow('FORBIDDEN');
+    }
+  });
+
+  it('for as long as they are in it, and the song is', async () => {
+    const { owner, song } = await setup();
+    const { playlist, reader, collaborator } = await bandPlaylist(owner);
+    await callerFor(owner).playlists.edit({
+      id: playlist.id,
+      op: { type: 'add', songId: song.id },
+    });
+    await callerFor(reader).sharing.leave({ kind: 'playlist', id: playlist.id });
+    await expect(callerFor(reader).songs.byId({ id: song.id })).rejects.toThrow(
+      'NOT_FOUND',
+    );
+    await callerFor(owner).playlists.edit({
+      id: playlist.id,
+      op: { type: 'remove', songId: song.id, index: 0 },
+    });
+    await expect(callerFor(collaborator).songs.byId({ id: song.id })).rejects.toThrow(
+      'NOT_FOUND',
+    );
+    expect(await syncedIds(collaborator)).not.toContain(song.id);
+  });
+
+  it('outside a public playlist, nobody learns it is there, not even its place', async () => {
+    const { owner, stranger, editor, song } = await setup();
+    const other = await callerFor(owner).songs.create({ source: SONG('Veřejná') });
+    const { playlist } = await bandPlaylist(owner, true);
+    for (const songId of [song.id, other.id]) {
+      await callerFor(owner).playlists.edit({
+        id: playlist.id,
+        op: { type: 'add', songId },
+      });
+    }
+    for (const user of [null, stranger, editor]) {
+      expect((await callerFor(user).playlists.byId({ id: playlist.id })).songIds).toEqual(
+        [other.id],
+      );
+      await expect(callerFor(user).songs.byId({ id: song.id })).rejects.toThrow(
+        'NOT_FOUND',
+      );
+    }
+  });
+
+  it('only its owner passes it on: someone it is shared with may not', async () => {
+    const { owner, song } = await setup();
+    const friend = await sharedWith(owner, song.id, 'collaborator');
+    const { playlist } = await bandPlaylist(friend);
     await expect(
-      callerFor(owner).playlists.create({
+      callerFor(friend).playlists.edit({
+        id: playlist.id,
+        op: { type: 'add', songId: song.id },
+      }),
+    ).rejects.toThrow('PRIVATE_SONG_NOT_SHARED');
+  });
+
+  it('anyone who reads it may add it where everyone already can', async () => {
+    const { owner, song } = await setup();
+    const { playlist, collaborator } = await bandPlaylist(owner);
+    await callerFor(owner).playlists.edit({
+      id: playlist.id,
+      op: { type: 'add', songId: song.id },
+    });
+    // Its people read it through this playlist already: a second time passes nothing on.
+    await expect(
+      callerFor(collaborator).playlists.edit({
+        id: playlist.id,
+        op: { type: 'add', songId: song.id },
+      }),
+    ).resolves.toMatchObject({ songIds: [song.id, song.id] });
+    // And into a new playlist of their own, where they are the only one.
+    await expect(
+      callerFor(collaborator).playlists.create({
         name: 'Moje',
         isPublic: false,
         songIds: [song.id],
       }),
     ).resolves.toMatchObject({ songIds: [song.id] });
-  });
-
-  it('not into a public playlist', async () => {
-    const { owner, song } = await setup();
-    await expect(
-      callerFor(owner).playlists.create({
-        name: 'Všem',
-        isPublic: true,
-        songIds: [song.id],
-      }),
-    ).rejects.toThrow('PRIVATE_SONG_NOT_SHARED');
-  });
-
-  it('into a shared playlist once everyone in it can read the song', async () => {
-    const { owner, song } = await setup();
-    const playlist = await callerFor(owner).playlists.create({
-      name: 'Kapela',
-      isPublic: false,
-      songIds: [],
-    });
-    const { token } = await callerFor(owner).sharing.invite({
-      kind: 'playlist',
-      id: playlist.id,
-      role: 'viewer',
-    });
-    const bandmate = await createUser();
-    await callerFor(bandmate).sharing.join({ token });
-    const add = () =>
-      callerFor(owner).playlists.edit({
-        id: playlist.id,
-        op: { type: 'add', songId: song.id },
-      });
-    await expect(add()).rejects.toThrow('PRIVATE_SONG_NOT_SHARED');
-
-    const { token: songToken } = await callerFor(owner).sharing.invite({
-      kind: 'song',
-      id: song.id,
-      role: 'viewer',
-    });
-    await callerFor(bandmate).sharing.join({ token: songToken });
-    await expect(add()).resolves.toMatchObject({ songIds: [song.id] });
   });
 
   it('is unknown to someone who may not read it', async () => {

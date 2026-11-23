@@ -342,7 +342,7 @@ export const en: Record<keyof typeof cs, string> = {
     'Someone changed it meanwhile. Reload the page: your edits stay, and you’ll see what changed.',
   'error.SONG_PRIVATE': 'A private song isn’t reviewed.',
   'error.PRIVATE_SONG_NOT_SHARED':
-    'A private song goes only into a private playlist where everyone can read it.',
+    'Not everyone there can see this private song yet. Only its owner can add it there.',
   'error.SONG_EDITED_BY_OTHERS':
     'Someone else has worked on this song: it can’t be private.',
   'error.SONG_IN_OTHERS_PLAYLISTS':

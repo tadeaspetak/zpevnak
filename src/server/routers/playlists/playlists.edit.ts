@@ -32,9 +32,7 @@ export const edit = verifiedProcedure
         { id: input.id },
       );
       if (input.op.type === 'add') {
-        await assertSongsUsable(trx, [input.op.songId], ctx.user, {
-          playlistId: input.id,
-        });
+        await assertSongsUsable(trx, [input.op.songId], ctx.user, input.id);
         if (rows.length >= PLAYLIST_MAX_SONGS) {
           fail('BAD_REQUEST', 'PLAYLIST_FULL');
         }

@@ -478,6 +478,19 @@ From the first UX walk of the song view and a playlist session (2026-11-10): _In
   Until a playlist shares its songs (phase 3), a private song goes only into a private playlist
   whose people can all read it already. Lists mark it with a lock. Phase 2 of
   `.planning/ongoing/private-songs-and-roles.md`. (2026-11-23)
+- **D128. A playlist shares its private songs with its people.** Everyone in a playlist, a
+  reader too, reads every private song in it, for as long as they are in it and the song is;
+  worked out from the memberships as they are, never copied. Reading only: it gives no role in
+  the song (no edits, no say in its people). Only the song's owner puts it where it reaches
+  someone new; anyone else who reads it may add it only where everyone in the playlist already
+  can. Outside a playlist (a public one's visitors), a private song in it isn't shown at all,
+  not as a placeholder: the playlist's songs are only those the viewer may read, so nobody
+  learns one is there (the plan's placeholder, dropped). Replaces D127's stopgap (only into a
+  private playlist whose people all read it). Who may read a private song is written once
+  (`READABLE_PRIVATE_SONG_IDS`), from the viewer's side: their own, those shared with them,
+  those in their playlists. The sync reads changed public songs by `updated_at` and the
+  viewer's private songs from that set, two indexed reads rather than one pass over every
+  song. Phase 3 of `.planning/ongoing/private-songs-and-roles.md`. (2026-11-23)
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed
