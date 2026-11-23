@@ -34,6 +34,7 @@ import {
 import { url } from '#shared/urls.ts';
 import { putShared } from '../data/catalog.ts';
 import { refocusWithin } from '../focus.ts';
+import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc, trpcClient } from '../trpc.ts';
 import { ErrorText } from './ErrorText.tsx';
@@ -48,6 +49,7 @@ const TEXT = {
     people: 'playlists.people',
     peopleIntro: 'playlists.peopleIntro',
     peopleIntroOwner: 'playlists.peopleIntroOwner',
+    peopleIntroViewer: 'playlists.peopleIntroViewer',
     collaboratorInvite: 'playlists.inviteIntro',
     viewerInvite: 'playlists.viewInviteIntro',
     removed: 'playlists.removed',
@@ -56,6 +58,7 @@ const TEXT = {
     people: 'songs.people',
     peopleIntro: 'songs.peopleIntro',
     peopleIntroOwner: 'songs.peopleIntroOwner',
+    peopleIntroViewer: 'songs.peopleIntroViewer',
     collaboratorInvite: 'songs.inviteIntro',
     viewerInvite: 'songs.viewInviteIntro',
     removed: 'songs.removed',
@@ -77,6 +80,7 @@ export function SharePeople({
   isOwner: boolean;
 }) {
   const { t } = useI18n();
+  const { me } = useMe();
   const text = TEXT[kind];
   const utils = trpc.useUtils();
   const thing = { kind, id };
@@ -89,6 +93,17 @@ export function SharePeople({
   // where the keyboard can reach it. Closing the dialog hands that over to a toast (D87).
   const [removed, setRemoved] = useState<Person[]>([]);
   const people = useRef<HTMLDivElement>(null);
+  // Where the keyboard goes once a row has changed under it: never to the next person's ×,
+  // where a second Enter would take them out too.
+  const focusOn = (selector: string) =>
+    requestAnimationFrame(() => {
+      const target = people.current?.querySelector<HTMLElement>(selector);
+      if (target) {
+        target.focus();
+      } else {
+        refocusWithin(people.current);
+      }
+    });
 
   const restore = async (person: Person) => {
     putShared(
@@ -104,7 +119,7 @@ export function SharePeople({
           putShared(record);
           setRemoved((list) => [...list, person]);
           await utils.sharing.members.invalidate(thing);
-          refocusWithin(people.current);
+          focusOn(`[data-undo-for="${person.id}"] button`);
         },
       },
     );
@@ -127,10 +142,17 @@ export function SharePeople({
   );
 
   const shown = members.data?.filter((p) => !removed.some((r) => r.id === p.id));
+  const myRole = members.data?.find((p) => p.id === me?.id)?.role;
   return (
     <ShareSection
       title={t(text.people)}
-      intro={isOwner ? t(text.peopleIntroOwner) : t(text.peopleIntro)}
+      intro={t(
+        isOwner
+          ? text.peopleIntroOwner
+          : myRole === 'viewer'
+            ? text.peopleIntroViewer
+            : text.peopleIntro,
+      )}
       ref={people}
     >
       {members.isLoading && <Loader size="sm" />}
@@ -154,8 +176,15 @@ export function SharePeople({
               {/* One line each: the name (wrapped rather than cut off beside the owner's
                   picker), then what they may do. The owner changes it on the spot, and has
                   the × to take them out. */}
-              <Text fw={500} miw={0} style={{ overflowWrap: 'anywhere' }}>
+              <Text fw={500} miw={0} style={{ overflowWrap: 'break-word' }}>
                 {person.displayName}
+                {/* Among the others, themselves. */}
+                {person.id === me?.id && (
+                  <Text span c="dimmed" fw={400}>
+                    {' '}
+                    {t('sharing.you')}
+                  </Text>
+                )}
               </Text>
               {person.role !== 'owner' && isOwner ? (
                 <Group gap={4} wrap="nowrap">
@@ -164,6 +193,7 @@ export function SharePeople({
                     size="sm"
                     w={160}
                     aria-label={t('sharing.roleOf', { name: person.displayName })}
+                    data-role-of={person.id}
                     value={person.role}
                     disabled={
                       setRole.isPending && setRole.variables?.userId === person.id
@@ -198,14 +228,16 @@ export function SharePeople({
         </Paper>
       )}
       {removed.map((person) => (
-        <UndoMessage
-          key={person.id}
-          message={t(text.removed, { name: person.displayName })}
-          onUndo={async () => {
-            await restore(person);
-            setRemoved((list) => list.filter((r) => r.id !== person.id));
-          }}
-        />
+        <div key={person.id} data-undo-for={person.id}>
+          <UndoMessage
+            message={t(text.removed, { name: person.displayName })}
+            onUndo={async () => {
+              await restore(person);
+              setRemoved((list) => list.filter((r) => r.id !== person.id));
+              focusOn(`[data-role-of="${person.id}"]`);
+            }}
+          />
+        </div>
       ))}
       <ErrorText error={members.error ?? remove.error ?? setRole.error} />
 

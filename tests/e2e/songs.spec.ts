@@ -128,6 +128,15 @@ test('an author keeps a song private, and shares it by the reading link (D127)',
   const editor = await signedIn(browser, 'editor@zpevnak.test');
   await editor.goto(songPath);
   await expect(editor.getByText(/This song isn.t here/)).toBeVisible();
+  // Signed out, the same page, and the way in: signing in comes back to the song.
+  const stranger = await browser.newPage({ baseURL: 'http://localhost:3101' });
+  await stranger.addInitScript(() => localStorage.setItem('zpevnak.locale', 'en'));
+  await stranger.goto(songPath);
+  await expect(stranger.getByText(/This song isn.t here/)).toBeVisible();
+  await expect(stranger.getByRole('link', { name: 'Log in' })).toHaveAttribute(
+    'href',
+    url.logIn(songPath),
+  );
 
   await author.getByRole('button', { name: 'More options' }).click();
   await author.getByRole('menuitem', { name: 'Sharing' }).click();

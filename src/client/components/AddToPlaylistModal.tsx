@@ -58,25 +58,27 @@ export function AddToPlaylistModal({ songId, onClose }: Props) {
     <Modal opened={songId !== null} onClose={close} title={t('song.addToPlaylist')}>
       {songId !== null && (
         <Stack gap="sm">
-          <ErrorText error={edit.error ?? create.error} />
           {mine.length > 0 && (
             <Stack gap={4}>
               {mine.map((p) => (
-                <Checkbox.Card
-                  key={p.id}
-                  className={classes.option}
-                  checked={p.songIds.includes(songId)}
-                  // One change at a time per playlist: a second tap waits for the first.
-                  disabled={edit.isPending && edit.variables?.id === p.id}
-                  onClick={() =>
-                    edit.mutate({ id: p.id, op: toggleOp(p.songIds, songId) })
-                  }
-                >
-                  <Group wrap="nowrap" gap="sm">
-                    <Checkbox.Indicator />
-                    <Text fw={600}>{p.name}</Text>
-                  </Group>
-                </Checkbox.Card>
+                <Stack key={p.id} gap={4}>
+                  <Checkbox.Card
+                    className={classes.option}
+                    checked={p.songIds.includes(songId)}
+                    // One change at a time per playlist: a second tap waits for the first.
+                    disabled={edit.isPending && edit.variables?.id === p.id}
+                    onClick={() =>
+                      edit.mutate({ id: p.id, op: toggleOp(p.songIds, songId) })
+                    }
+                  >
+                    <Group wrap="nowrap" gap="sm">
+                      <Checkbox.Indicator />
+                      <Text fw={600}>{p.name}</Text>
+                    </Group>
+                  </Checkbox.Card>
+                  {/* Under the playlist it is about: "there" needs no name. */}
+                  {edit.variables?.id === p.id && <ErrorText error={edit.error} />}
+                </Stack>
               ))}
             </Stack>
           )}
@@ -95,6 +97,7 @@ export function AddToPlaylistModal({ songId, onClose }: Props) {
                 onChange={(e) => setName(e.currentTarget.value)}
                 required
               />
+              <ErrorText error={create.error} />
               <Button
                 type="submit"
                 leftSection={<IconPlus size={16} />}

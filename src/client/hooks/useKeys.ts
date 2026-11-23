@@ -1,15 +1,20 @@
 import { useEffect } from 'react';
 
+const OVERLAY = '[role="menu"], [role="dialog"], [role="listbox"]';
+
 /**
  * Whether the key belongs to something open on top of the page rather than to the page: a
  * menu, a popover or a dialog (focus inside it, or still on the button that opened it), or a
- * component that already handled it. Esc there closes that thing, never leaves the song.
+ * component that already handled it. Esc there closes that thing, never leaves the song. Also
+ * while one is open at all: a button that went away as it was pressed (Zrušit, Beru zpátky)
+ * drops the focus to the page, behind the dialog still open.
  */
 function belongsToOverlay(e: KeyboardEvent, target: HTMLElement | null) {
   return (
     e.defaultPrevented ||
-    Boolean(target?.closest('[role="menu"], [role="dialog"], [role="listbox"]')) ||
-    target?.getAttribute('aria-expanded') === 'true'
+    Boolean(target?.closest(OVERLAY)) ||
+    target?.getAttribute('aria-expanded') === 'true' ||
+    document.querySelector(OVERLAY) !== null
   );
 }
 

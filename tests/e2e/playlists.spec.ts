@@ -20,8 +20,14 @@ test('an owner takes a listmate out by mistake, takes it back, and replaces the 
   await expect(
     owner.getByText('Erik Editor is no longer in the playlist.'),
   ).toBeVisible();
-  await owner.getByRole('button', { name: 'Undo' }).click();
+  // The keyboard lands on the way back, not on the next person's ×.
+  const undo = owner.getByRole('button', { name: 'Undo' });
+  await expect(undo).toBeFocused();
+  await undo.click();
   await expect(owner.getByRole('button', { name: 'Remove Erik Editor' })).toBeVisible();
+  await expect(
+    owner.getByRole('combobox', { name: 'What Erik Editor can do' }),
+  ).toBeFocused();
 
   // A new link asks first (the old one stops working for everyone), then says so.
   await owner.getByRole('button', { name: 'Replace: Link to edit' }).click();
@@ -60,6 +66,9 @@ test('a reader joins by the reading link, only reads, and can edit once the owne
   await reader.goto(joinPath);
   await expect(
     reader.getByRole('heading', { level: 1, name: playlist.name }),
+  ).toBeVisible();
+  await expect(
+    reader.getByText(`You’re in “${playlist.name}” and can read it.`),
   ).toBeVisible();
   await expect(reader.getByRole('button', { name: 'Sharing' })).toBeVisible();
   await expect(reader.getByRole('button', { name: 'Edit playlist' })).toHaveCount(0);

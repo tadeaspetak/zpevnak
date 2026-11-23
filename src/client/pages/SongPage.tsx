@@ -1,4 +1,4 @@
-import { Alert, Button, Center, Stack, Text } from '@mantine/core';
+import { Alert, Button, Center, Group, Stack, Text } from '@mantine/core';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router';
 import type { SongLinkState } from '../components/SongRow.tsx';
@@ -268,6 +268,7 @@ function SongPlayer({
           showDiagrams={prefs.showDiagrams && semitones === 0}
           showColumns={prefs.showColumns}
           showChords={prefs.showChords}
+          isPrivate={song.status === 'private'}
         />
       </div>
       {playlist?.removed && (
@@ -318,15 +319,34 @@ function useBack(playlist: PlaylistContext | null) {
   return { to: url.home(), label: t('nav.backHome') };
 }
 
+/**
+ * A song or playlist that isn't here for the viewer. Gone, or private and not theirs: one text
+ * for both, so nothing says a private one exists. Signed out, signing in is the likely way in,
+ * and comes back here.
+ */
 function Missing({ text }: { text: string }) {
   const { t } = useI18n();
+  const { me, known } = useMe();
+  const location = useLocation();
+  const signedOut = known && !me;
   return (
     <Center h="100dvh" p="md">
       <Stack align="center">
         <Text ta="center">{text}</Text>
-        <Button component={Link} to={url.home()}>
-          {t('notFound.home')}
-        </Button>
+        <Group justify="center" gap="sm">
+          {signedOut && (
+            <Button component={Link} to={url.logIn(location.pathname + location.search)}>
+              {t('auth.logIn')}
+            </Button>
+          )}
+          <Button
+            component={Link}
+            to={url.home()}
+            variant={signedOut ? 'default' : undefined}
+          >
+            {t('notFound.home')}
+          </Button>
+        </Group>
       </Stack>
     </Center>
   );

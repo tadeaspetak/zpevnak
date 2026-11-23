@@ -10,6 +10,7 @@ import { touchPlaylist } from '../data/session.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc } from '../trpc.ts';
+import { editsAsMember } from '#shared/roles.ts';
 import { url } from '#shared/urls.ts';
 import { PageLoader } from '../components/PageLoader.tsx';
 
@@ -29,12 +30,25 @@ export function JoinPage() {
       putShared(shared);
       if (shared.kind === 'playlist') {
         touchPlaylist(shared.playlist.id);
+        // Which link it was shows only now: say what they may do.
         notifications.show({
-          message: t('playlists.joined', { name: shared.playlist.name }),
+          message: t(
+            editsAsMember(shared.playlist.role)
+              ? 'playlists.joinedEdit'
+              : 'playlists.joinedRead',
+            { name: shared.playlist.name },
+          ),
         });
         navigate(url.playlist(shared.playlist), { replace: true });
       } else {
-        notifications.show({ message: t('songs.joined', { name: shared.song.title }) });
+        notifications.show({
+          message: t(
+            editsAsMember(shared.song.role) ? 'songs.joinedEdit' : 'songs.joinedRead',
+            {
+              name: shared.song.title,
+            },
+          ),
+        });
         navigate(url.song(shared.song), { replace: true });
       }
     },

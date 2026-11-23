@@ -1,5 +1,6 @@
 import { Button, Divider, Group, Modal, Paper, Stack, Text } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
+import { IconEye } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { url } from '#shared/urls.ts';
@@ -10,6 +11,7 @@ import { trpc } from '../trpc.ts';
 import { ErrorText } from './ErrorText.tsx';
 import {
   LeaveButton,
+  LinkField,
   SharePeople,
   ShareSection,
   VisibilitySwitch,
@@ -31,7 +33,16 @@ export function SongShareModal({ song, opened, onClose }: Props) {
     { id: song.id },
     { enabled: opened && isOwner && !isPrivate },
   );
-  const visibility = trpc.songs.setVisibility.useMutation({ onSuccess: putSong });
+  const visibility = trpc.songs.setVisibility.useMutation({
+    onSuccess: (saved) => {
+      putSong(saved);
+      // Said, as a new song's submission is: the switch alone doesn't tell it went through.
+      notifications.show({
+        message:
+          saved.status === 'private' ? t('songs.madePrivate') : t('songs.published'),
+      });
+    },
+  });
   const [publishing, setPublishing] = useState(false);
   const whyNotPrivate = blockers.data?.editedByOthers
     ? t('songs.cantGoPrivateEdited')
@@ -63,7 +74,7 @@ export function SongShareModal({ song, opened, onClose }: Props) {
             choices={{
               private: {
                 name: t('songs.visibilityPrivate'),
-                what: t('songs.privateWhat'),
+                what: t(isOwner ? 'songs.privateWhat' : 'songs.privateWhatOthers'),
                 disabled: isOwner && privateClosed,
               },
               public: {
@@ -106,6 +117,12 @@ export function SongShareModal({ song, opened, onClose }: Props) {
             </Paper>
           )}
           <ErrorText error={visibility.error ?? blockers.error} />
+          {/* Always there, as a playlist's is (D115): private, it still takes its people in. */}
+          <LinkField
+            icon={<IconEye size={16} />}
+            label={t('songs.linkTitle')}
+            link={`${window.location.origin}${url.song(song)}`}
+          />
         </ShareSection>
 
         {/* Mounted while the dialog is open: closing it hands any undo to a toast. */}

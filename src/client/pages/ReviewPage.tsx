@@ -153,7 +153,8 @@ function ReviewSong({ id }: { id: number }) {
         backLabel={back.label}
         actions={
           <>
-            {position > 0 && (
+            {/* Where in the queue: only on a walk through it, not from the song (D123). */}
+            {!fromSong && position > 0 && (
               <Badge size="lg">
                 {position} / {pending.data?.length}
               </Badge>

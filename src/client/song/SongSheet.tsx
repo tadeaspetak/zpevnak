@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { Block, Line, Song } from '#shared/chordpro/types.ts';
+import { IconLock } from '@tabler/icons-react';
 import { byline } from '../data/songText.ts';
 import { useWide } from '../hooks/useBreakpoints.ts';
 import { useI18n } from '../i18n/index.tsx';
@@ -22,6 +23,8 @@ type Props = {
   showDiagrams: boolean;
   /** Chords above the lyrics; false shows the words alone, for singing along. */
   showChords?: boolean;
+  /** Kept to a few people (D127): a small lock after the title, as in the lists. */
+  isPrivate?: boolean;
   /**
    * Lay the song in its columns where they fit (a wide screen, and the whole song on it);
    * false for one long column.
@@ -184,6 +187,7 @@ export function SongSheet({
   showDiagrams,
   showColumns = true,
   showChords = true,
+  isPrivate = false,
 }: Props) {
   const { t } = useI18n();
   const style = { '--song-scale': fontScale } as CSSProperties;
@@ -220,7 +224,16 @@ export function SongSheet({
   return (
     <article className={classes.sheet} style={style} lang="und">
       <header className={classes.header}>
-        <h1 className={classes.title}>{song.meta.title}</h1>
+        <h1 className={classes.title}>
+          {song.meta.title}
+          {isPrivate && (
+            <IconLock
+              className={classes.private}
+              role="img"
+              aria-label={t('songs.privateMark')}
+            />
+          )}
+        </h1>
         {line && <p className={classes.artist}>{line}</p>}
         {meta.length > 0 && <p className={classes.meta}>{meta.join(' · ')}</p>}
       </header>

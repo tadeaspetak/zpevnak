@@ -57,7 +57,7 @@ export const en: Record<keyof typeof cs, string> = {
   'session.position': '{position} of {total}',
   'session.leave': 'Leave playlist',
 
-  'song.notFound': "This song isn't here. It may have been rejected or removed.",
+  'song.notFound': "This song isn't here, or you can't see it.",
   'song.transpose': 'Transpose',
   'song.transposeDown': 'Down a semitone',
   'song.transposeUp': 'Up a semitone',
@@ -151,8 +151,9 @@ export const en: Record<keyof typeof cs, string> = {
   'playlists.signInToCreate': 'Log in to make your own playlists.',
   'sharing.role.owner': 'Owner',
   'sharing.role.collaborator': 'Can edit',
-  'sharing.role.viewer': 'Only reads',
+  'sharing.role.viewer': 'Can only read',
   'sharing.roleOf': 'What {name} can do',
+  'sharing.you': '(you)',
   'playlists.collaborators_one': '{count}\u00a0listmate',
   'playlists.collaborators_few': '{count}\u00a0listmates',
   'playlists.collaborators_many': '{count}\u00a0listmates',
@@ -161,6 +162,8 @@ export const en: Record<keyof typeof cs, string> = {
   'playlists.peopleIntroOwner':
     'Listmates either edit the playlist with you, or only read it. Only you manage them.',
   'playlists.peopleIntro': 'Listmates either edit the playlist, or only read it.',
+  'playlists.peopleIntroViewer':
+    'Listmates either edit the playlist, or only read it. You read it; to edit it, ask the owner for the link to edit.',
   'playlists.share': 'Sharing',
   'playlists.whoSees': 'Visibility',
   'playlists.publicWhat': 'Anyone can see it, no account needed',
@@ -180,7 +183,8 @@ export const en: Record<keyof typeof cs, string> = {
   'sharing.resetLink': 'Replace: {link}',
   'sharing.resetConfirm': 'Make a new one',
   'sharing.resetDone': 'Done, the old link no longer works.',
-  'playlists.joined': 'You’re in “{name}”.',
+  'playlists.joinedEdit': 'You’re in “{name}” and can edit it.',
+  'playlists.joinedRead': 'You’re in “{name}” and can read it.',
   'playlists.left': 'You’ve left “{name}”.',
   'playlists.pickerPlaceholder': 'Search songs and lyrics…',
   'sharing.resetHint': 'The old link stops working. Whoever already joined stays.',
@@ -355,6 +359,8 @@ export const en: Record<keyof typeof cs, string> = {
 
   'songs.people': 'Listmates',
   'songs.peopleIntro': 'Listmates either edit the song, or only read it.',
+  'songs.peopleIntroViewer':
+    'Listmates either edit the song, or only read it. You read it; to edit it, ask the owner for the link to edit.',
   'songs.peopleIntroOwner':
     'Listmates either edit the song with you, or only read it. Only you manage them.',
   'songs.inviteIntro': 'Whoever joins through it can edit the song.',
@@ -365,11 +371,15 @@ export const en: Record<keyof typeof cs, string> = {
   'songs.whoSees': 'Visibility',
   'songs.visibilityPrivate': 'Private',
   'songs.privateWhat': 'Only you and your listmates see it',
+  'songs.privateWhatOthers': 'Only its owner and listmates see it',
   'songs.visibilityPublic': 'Public',
   'songs.publicWhat': 'In the songbook for everyone, once approved',
   'songs.publishConfirm':
     'The song goes for approval and everyone will see it. It can go private again only while nobody else works on it.',
   'songs.publish': 'Publish',
+  'songs.published': 'Published, waiting for approval.',
+  'songs.madePrivate': 'The song is private again.',
+  'songs.linkTitle': 'Link to the song',
   'songs.cantGoPrivateEdited':
     'It can’t be private any more: someone else has worked on it.',
   'songs.cantGoPrivateUsed':
@@ -378,7 +388,8 @@ export const en: Record<keyof typeof cs, string> = {
   'songs.leave': 'Leave the song',
   'songs.leaveConfirm': 'Leave “{name}”? You can come back through the owner’s link.',
   'songs.left': '“{name}” is no longer shared with you.',
-  'songs.joined': '“{name}” is now shared with you.',
+  'songs.joinedEdit': '“{name}” is now shared with you. You can edit it.',
+  'songs.joinedRead': '“{name}” is now shared with you. You can read it.',
   'join.titleSong': 'Song invite',
   'join.introSong': '{owner} shares the song “{name}” with you.',
   'join.asCollaboratorSong': 'You will be able to edit it too.',

@@ -51,4 +51,18 @@ describe('useKeys', () => {
     expect(onEscape).not.toHaveBeenCalled();
     expect(onNext).not.toHaveBeenCalled();
   });
+
+  it('leaves Esc to an open dialog even when the focus fell to the page', () => {
+    const { onEscape } = setup();
+    // As a dialog's button that went away as it was pressed leaves it: focus on the body.
+    const dialog = document.createElement('div');
+    dialog.setAttribute('role', 'dialog');
+    document.body.append(dialog);
+    try {
+      fireEvent.keyDown(document.body, { key: 'Escape' });
+      expect(onEscape).not.toHaveBeenCalled();
+    } finally {
+      dialog.remove();
+    }
+  });
 });
