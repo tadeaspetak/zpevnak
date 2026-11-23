@@ -139,7 +139,14 @@ export function pages(db: Knex, shell: (url: string) => Promise<string>) {
     (preview: (params: Record<string, string>) => Promise<LinkPreview | null>) =>
     async (req: Request, res: Response) => {
       const html = await shell(req.originalUrl);
-      const found = await preview(req.params as Record<string, string>);
+      // A preview is a nicety: whatever stops it (the database away, an id out of range), the
+      // page still opens, as it did before there were previews.
+      const found = await preview(req.params as Record<string, string>).catch(
+        (error: unknown) => {
+          console.error(`No link preview for ${req.originalUrl}:`, error);
+          return null;
+        },
+      );
       res.setHeader('Cache-Control', 'no-cache');
       res.type('html').send(found ? withLinkPreview(html, found) : html);
     };

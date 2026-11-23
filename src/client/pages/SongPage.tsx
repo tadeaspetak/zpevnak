@@ -6,7 +6,7 @@ import { parseSong } from '#shared/chordpro/parse.ts';
 import { songPitch, transposeSong } from '#shared/chordpro/transpose.ts';
 import { PlaylistPill } from '../components/PlaylistPill.tsx';
 import { useCatalog } from '../data/catalog.ts';
-import { semitonesFor, usePrefs } from '../data/prefs.ts';
+import { semitonesFor, usePinnedTranspose, usePrefs } from '../data/prefs.ts';
 import { playPlaylist, songPlayed, usePlayer } from '../data/session.ts';
 import type { SongRecord } from '../data/store.ts';
 import { isPlainTap, useHideOnScroll } from '../hooks/useHideOnScroll.ts';
@@ -141,6 +141,7 @@ function SongPlayer({
 
   const parsed = useMemo(() => (song ? parseSong(song.source) : null), [song]);
   const pitch = parsed ? songPitch(parsed) : null;
+  usePinnedTranspose(song?.id ?? null, pitch);
   const semitones = song ? semitonesFor(prefs.transpose[song.id], pitch) : 0;
   const shown = useMemo(
     () => (parsed ? transposeSong(parsed, semitones) : null),

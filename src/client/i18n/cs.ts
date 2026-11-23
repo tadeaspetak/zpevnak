@@ -345,6 +345,8 @@ export const cs = {
     'Na písničce už pracoval někdo další, soukromá být nemůže.',
   'error.SONG_IN_OTHERS_PLAYLISTS':
     'Písnička je v playlistu někoho dalšího, soukromá být nemůže.',
+  'error.SONG_NOT_PRIVATE':
+    'Sdílet s lidmi jde jen soukromou písničku. Veřejnou vidí všichni.',
   'error.crashed':
     'Tady se něco pokazilo. Písničky máš v zařízení, načtení znovu pomůže.',
   'error.reload': 'Načíst znovu',

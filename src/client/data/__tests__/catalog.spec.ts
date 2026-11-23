@@ -40,24 +40,21 @@ describe('mergeSongs', () => {
 });
 
 describe('privateSongsNotSent (D127)', () => {
-  const at = (id: number, status: SongRecord['status'], updatedAt: string) =>
-    ({ id, status, updatedAt }) as SongRecord;
-  const cursor = '2026-11-23T12:00:00.000Z';
+  const at = (id: number, status: SongRecord['status']) => ({ id, status }) as SongRecord;
 
   it('finds private songs the sync no longer sends: no longer shared, or deleted', () => {
     const here = songs(
-      at(1, 'private', '2026-11-23T10:00:00.000Z'),
-      at(2, 'private', '2026-11-23T10:00:00.000Z'),
+      at(1, 'private'),
+      at(2, 'private'),
       // Public songs come only when they change: one not sent is just unchanged.
-      at(3, 'verified', '2026-11-23T10:00:00.000Z'),
+      at(3, 'verified'),
     );
-    const delta = { songs: [at(2, 'private', '2026-11-23T10:00:00.000Z')], cursor };
-    expect(privateSongsNotSent(here, delta)).toEqual([1]);
+    expect(privateSongsNotSent(here, [at(2, 'private')], new Set())).toEqual([1]);
   });
 
-  it('keeps one made after the sync started: the answer couldn’t have had it', () => {
-    const here = songs(at(1, 'private', '2026-11-23T12:00:01.000Z'));
-    expect(privateSongsNotSent(here, { songs: [], cursor })).toEqual([]);
+  it('keeps one put here while the sync ran: made, or joined by an invite, meanwhile', () => {
+    // Joined: the song itself is old, so its date says nothing about the answer.
+    expect(privateSongsNotSent(songs(at(1, 'private')), [], new Set([1]))).toEqual([]);
   });
 });
 

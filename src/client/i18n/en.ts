@@ -347,6 +347,8 @@ export const en: Record<keyof typeof cs, string> = {
     'Someone else has worked on this song: it can’t be private.',
   'error.SONG_IN_OTHERS_PLAYLISTS':
     'The song is in someone else’s playlist: it can’t be private.',
+  'error.SONG_NOT_PRIVATE':
+    'Only a private song is shared with people. A public one is everyone’s.',
   'error.crashed':
     'Something broke here. Your songs are on the device; reloading will help.',
   'error.reload': 'Reload',

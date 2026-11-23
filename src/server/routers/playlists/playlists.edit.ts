@@ -20,11 +20,12 @@ const opSchema = z.discriminatedUnion('type', [
 export const edit = verifiedProcedure
   .input(z.object({ id: idSchema, op: opSchema }))
   .mutation(async ({ ctx, input }) => {
-    await assertCanEdit(ctx.db, input.id, ctx.user);
     await ctx.db.transaction(async (trx) => {
       await trx.raw(/* sql */ `SELECT 1 FROM playlists WHERE id = :id FOR UPDATE`, {
         id: input.id,
       });
+      // Under the lock: someone made a reader meanwhile no longer edits (D104).
+      await assertCanEdit(trx, input.id, ctx.user);
       const { rows } = await trx.raw<{ rows: { song_id: number }[] }>(
         /* sql */ `
           SELECT song_id FROM playlist_songs WHERE playlist_id = :id ORDER BY position

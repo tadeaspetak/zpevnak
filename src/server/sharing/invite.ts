@@ -10,16 +10,21 @@ export function newInviteToken(): string {
 
 export type Invite = { kind: SharedKind; id: number; ownerId: number; role: JoinRole };
 
-/** What an invite token leads to, and the role it gives; null if nothing. */
+/**
+ * What an invite token leads to, and the role it gives; null if nothing. A link leads nowhere
+ * while its thing can't be shared (`invitable`), or once nobody owns it (an author's account
+ * gone): nobody would manage who joined.
+ */
 export async function findInvite(db: Knex, token: string): Promise<Invite | null> {
   for (const kind of SHARED_KINDS) {
-    const { things, owner } = SHARED_TABLES[kind];
+    const { things, owner, invitable } = SHARED_TABLES[kind];
     const { rows } = await db.raw(
       /* sql */ `
         SELECT id, ${owner} AS owner_id,
                CASE WHEN invite_token = :token THEN 'collaborator' ELSE 'viewer' END AS role
         FROM ${things}
-        WHERE invite_token = :token OR view_token = :token
+        WHERE (invite_token = :token OR view_token = :token)
+          AND ${owner} IS NOT NULL AND ${invitable}
       `,
       { token },
     );

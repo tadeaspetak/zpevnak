@@ -79,8 +79,11 @@ export const routes = {
   verify: '/verify',
 };
 
-/** The id at the start of a reference: "12-andelska" → 12, "12" → 12. */
+/**
+ * The id at the start of a reference: "12-andelska" → 12, "12" → 12. Null for anything no id can
+ * be, too long a number included (it would come out rounded, and past the database's range).
+ */
 export function idFromRef(reference: string | undefined): number | null {
   const id = Number.parseInt(reference ?? '', 10);
-  return Number.isInteger(id) && id > 0 ? id : null;
+  return Number.isSafeInteger(id) && id > 0 ? id : null;
 }

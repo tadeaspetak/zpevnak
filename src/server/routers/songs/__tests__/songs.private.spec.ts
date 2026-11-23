@@ -185,6 +185,49 @@ describe('sharing a private song', () => {
   });
 });
 
+describe('a private song’s links', () => {
+  it('aren’t made for a public song, and lead nowhere while the song is public', async () => {
+    const { owner, song } = await setup();
+    const { token } = await callerFor(owner).sharing.invite({
+      kind: 'song',
+      id: song.id,
+      role: 'viewer',
+    });
+    await callerFor(owner).songs.setVisibility({ id: song.id, isPrivate: false });
+    await expect(
+      callerFor(owner).sharing.invite({ kind: 'song', id: song.id, role: 'viewer' }),
+    ).rejects.toThrow('SONG_NOT_PRIVATE');
+    const late = await createUser();
+    await expect(callerFor(late).sharing.join({ token })).rejects.toThrow(
+      'INVALID_TOKEN',
+    );
+    await expect(callerFor(null).sharing.invitePreview({ token })).rejects.toThrow(
+      'INVALID_TOKEN',
+    );
+    // Private again, the same link works again.
+    await callerFor(owner).songs.setVisibility({ id: song.id, isPrivate: true });
+    await expect(callerFor(late).sharing.join({ token })).resolves.toMatchObject({
+      kind: 'song',
+    });
+  });
+
+  it('lead nowhere once nobody owns the song (its author’s account gone)', async () => {
+    const { owner, song } = await setup();
+    const { token } = await callerFor(owner).sharing.invite({
+      kind: 'song',
+      id: song.id,
+      role: 'viewer',
+    });
+    await db.raw(/* sql */ `DELETE FROM users WHERE id = :id`, { id: owner.id });
+    await expect(callerFor(null).sharing.invitePreview({ token })).rejects.toThrow(
+      'INVALID_TOKEN',
+    );
+    await expect(callerFor(await createUser()).sharing.join({ token })).rejects.toThrow(
+      'INVALID_TOKEN',
+    );
+  });
+});
+
 describe('syncing private songs', () => {
   it('sends them whole every time, and not once access has ended', async () => {
     const { owner, song } = await setup();

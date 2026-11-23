@@ -77,19 +77,22 @@ function loadFromDevice() {
 /**
  * Private songs this device has that the sync didn't send: no longer shared with the viewer, or
  * deleted (D127). The sync sends every private song the viewer may read, so one missing is gone,
- * unless it is newer than the answer: put here after the sync started (one just made).
+ * unless it was put here while the sync ran (`putMeanwhile`: one just made, or just joined by an
+ * invite, which the answer may predate whatever the song's own date).
  */
 export function privateSongsNotSent(
   songs: Map<number, SongRecord>,
-  delta: { songs: SongRecord[]; cursor: string },
+  sentSongs: SongRecord[],
+  putMeanwhile: ReadonlySet<number>,
 ): number[] {
-  const sent = new Set(delta.songs.map((s) => s.id));
+  const sent = new Set(sentSongs.map((s) => s.id));
   return [...songs.values()]
-    .filter(
-      (s) => s.status === 'private' && !sent.has(s.id) && s.updatedAt <= delta.cursor,
-    )
+    .filter((s) => s.status === 'private' && !sent.has(s.id) && !putMeanwhile.has(s.id))
     .map((s) => s.id);
 }
+
+/** Songs put into the catalog since the running sync started (`privateSongsNotSent`). */
+const putDuringSync = new Set<number>();
 
 /** The songs after a sync: the delta applied, or, for a new viewer, the delta alone. */
 export function mergeSongs(
@@ -137,6 +140,7 @@ async function runSync(viewer: number | null) {
         storePlaylists([]),
       ]);
     }
+    putDuringSync.clear();
     const [songDelta, playlists] = await Promise.all([
       trpcClient.songs.sync.query({ since: replaceAll ? null : cursor }),
       trpcClient.playlists.all.query(),
@@ -146,7 +150,7 @@ async function runSync(viewer: number | null) {
       songs: songDelta.songs,
       removedIds: [
         ...songDelta.removedIds,
-        ...privateSongsNotSent(state.songs, songDelta),
+        ...privateSongsNotSent(state.songs, songDelta.songs, putDuringSync),
       ],
     };
     update({
@@ -190,6 +194,7 @@ export function syncCatalog(viewer: number | null): Promise<void> {
 
 /** Applies a song the server just returned, without waiting for the next sync. */
 export function putSong(song: SongRecord) {
+  putDuringSync.add(song.id);
   const songs = new Map(state.songs);
   songs.set(song.id, song);
   update({ songs });

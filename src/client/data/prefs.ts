@@ -1,5 +1,5 @@
 /** How the player likes songs shown, per device. */
-import { useCallback, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useSyncExternalStore } from 'react';
 import { readLocalJson, writeLocalJson } from './local.ts';
 
 type Prefs = {
@@ -116,4 +116,20 @@ export function usePrefs() {
     setShowColumns,
     setTranspose,
   };
+}
+
+/**
+ * Gives a transposition saved as semitones alone (before D119 kept the starting pitch) the pitch
+ * the song has now, the first time it is open with one. From then on a key saved for everyone
+ * moves it right; left bare, "+3" would land on top of the new key. A song that has gone through
+ * a saved key before this first visit can't be told apart, and keeps its old offset.
+ */
+export function usePinnedTranspose(songId: number | null, pitch: number | null) {
+  const { transpose, setTranspose } = usePrefs();
+  const stored = songId === null ? undefined : transpose[songId];
+  useEffect(() => {
+    if (songId !== null && typeof stored === 'number' && pitch !== null) {
+      setTranspose(songId, stored, pitch);
+    }
+  }, [songId, stored, pitch, setTranspose]);
 }

@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { FONT_SCALES, semitonesFor, usePrefs } from '../prefs.ts';
+import { FONT_SCALES, semitonesFor, usePinnedTranspose, usePrefs } from '../prefs.ts';
 
 describe('usePrefs', () => {
   it('keeps a transposition within an octave, and forgets it back in the key', () => {
@@ -27,6 +27,16 @@ describe('usePrefs', () => {
   it('reads a transposition saved before the starting pitch was kept, and none as 0', () => {
     expect(semitonesFor(4, 0)).toBe(4);
     expect(semitonesFor(undefined, 0)).toBe(0);
+  });
+
+  it('pins a bare transposition to the song’s pitch, so a key saved later moves it', () => {
+    const { result } = renderHook(() => usePrefs());
+    act(() => result.current.setTranspose(7, 3, null));
+    expect(result.current.transpose[7]).toBe(3);
+    renderHook(() => usePinnedTranspose(7, 9));
+    expect(result.current.transpose[7]).toEqual({ semitones: 3, from: 9 });
+    // Then saved in C for everyone: it still sounds in C.
+    expect(semitonesFor(result.current.transpose[7], 0)).toBe(0);
   });
 
   it('steps the text size along its scale, and stops at either end', () => {

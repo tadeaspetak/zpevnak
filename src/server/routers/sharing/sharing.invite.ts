@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { idSchema, joinRoleSchema, sharedKindSchema } from '#shared/validators/index.ts';
-import { assertOwnerOf } from '../../sharing/access.ts';
+import { assertCanInvite } from '../../sharing/access.ts';
 import { newInviteToken } from '../../sharing/invite.ts';
 import { INVITE_COLUMN, SHARED_TABLES } from '../../sharing/tables.ts';
 import { verifiedProcedure } from '../../trpc/trpc.ts';
@@ -13,7 +13,7 @@ const input = z.object({ kind: sharedKindSchema, id: idSchema, role: joinRoleSch
  * and sent along more freely.
  */
 export const invite = verifiedProcedure.input(input).mutation(async ({ ctx, input }) => {
-  await assertOwnerOf(ctx.db, input.kind, input.id, ctx.user);
+  await assertCanInvite(ctx.db, input.kind, input.id, ctx.user);
   const column = INVITE_COLUMN[input.role];
   const { rows } = await ctx.db.raw(
     /* sql */ `
@@ -30,7 +30,7 @@ export const invite = verifiedProcedure.input(input).mutation(async ({ ctx, inpu
 export const resetInvite = verifiedProcedure
   .input(input)
   .mutation(async ({ ctx, input }) => {
-    await assertOwnerOf(ctx.db, input.kind, input.id, ctx.user);
+    await assertCanInvite(ctx.db, input.kind, input.id, ctx.user);
     const token = newInviteToken();
     await ctx.db.raw(
       /* sql */ `

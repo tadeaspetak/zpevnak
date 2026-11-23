@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import express from 'express';
 import request from 'supertest';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { url } from '#shared/urls.ts';
 import { pages, withLinkPreview } from '../pages.ts';
 import {
@@ -157,12 +157,26 @@ describe('the pages', () => {
     );
   });
 
+  it('opens the page without a preview when the preview fails', async () => {
+    // The database away for the preview's query: the shell still goes out.
+    const spy = vi.spyOn(db, 'raw').mockRejectedValueOnce(new Error('connection lost'));
+    const quiet = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const res = await request(app).get('/song/5').expect(200);
+      expect(res.text).toBe(shell);
+    } finally {
+      spy.mockRestore();
+      quiet.mockRestore();
+    }
+  });
+
   it("keeps the app's own preview for a link that leads nowhere, and for other pages", async () => {
     for (const path of [
       url.join('x'.repeat(22)),
       url.join('short'),
       '/song/999',
       '/song/nonsense',
+      '/song/99999999999999999999',
       '/playlist/999-nic',
       '/',
       '/playlists',

@@ -21,6 +21,7 @@ const ERROR_CODES = [
   'PRIVATE_SONG_NOT_SHARED',
   'SONG_EDITED_BY_OTHERS',
   'SONG_IN_OTHERS_PLAYLISTS',
+  'SONG_NOT_PRIVATE',
 ] as const;
 export type ErrorCode = (typeof ERROR_CODES)[number];
 

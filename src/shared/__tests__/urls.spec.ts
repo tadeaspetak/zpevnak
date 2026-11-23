@@ -53,5 +53,7 @@ describe('idFromRef', () => {
     expect(idFromRef('andelska')).toBeNull();
     expect(idFromRef('0')).toBeNull();
     expect(idFromRef(undefined)).toBeNull();
+    // Rounded by JavaScript, and past the database's bigint: it once made a link a 500.
+    expect(idFromRef('99999999999999999999')).toBeNull();
   });
 });

@@ -1,5 +1,10 @@
 import type { Knex } from 'knex';
 
+// Outside the batch's shared transaction: an enum value added in a transaction can't be used
+// until it commits, and the next migration (an index on status = 'private') uses it. Each
+// statement list below still runs as one unit.
+export const config = { transaction: false };
+
 export async function up(knex: Knex): Promise<void> {
   await knex.raw(/* sql */ `
     -- A private song is outside the songbook: never reviewed, seen only by its owner and the

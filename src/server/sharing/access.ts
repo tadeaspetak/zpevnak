@@ -47,6 +47,22 @@ export async function assertMemberOf(
   return { ...shared, role };
 }
 
+/**
+ * Only the owner hands out links, and only for what can be shared: any playlist, a private song
+ * (a public one is everyone's: D127).
+ */
+export async function assertCanInvite(
+  db: Knex,
+  kind: SharedKind,
+  id: number,
+  viewer: SessionUser,
+): Promise<void> {
+  const shared = await assertOwnerOf(db, kind, id, viewer);
+  if (shared.kind === 'song' && shared.song.status !== 'private') {
+    fail('BAD_REQUEST', 'SONG_NOT_PRIVATE');
+  }
+}
+
 /** Only the owner hands out links and manages the people. */
 export async function assertOwnerOf(
   db: Knex,
