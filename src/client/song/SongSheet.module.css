@@ -59,6 +59,14 @@
   min-width: calc(3.75rem * var(--song-scale, 1));
 }
 
+.noDiagram {
+  font-size: 0.7em;
+  color: var(--mantine-color-dimmed);
+  text-align: center;
+  max-width: calc(3.75rem * var(--song-scale, 1));
+  margin-top: 0.4em;
+}
+
 .diagram svg {
   width: calc(3.75rem * var(--song-scale, 1));
 }

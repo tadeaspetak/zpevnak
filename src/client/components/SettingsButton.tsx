@@ -17,17 +17,15 @@ import { useMatch } from 'react-router';
 import { idFromRef, routes } from '#shared/urls.ts';
 import type { Locale } from '#shared/validators/index.ts';
 import { FONT_SCALES, usePrefs } from '../data/prefs.ts';
-import { useWide } from '../hooks/useBreakpoints.ts';
 import { useFullscreen } from '../hooks/useFullscreen.ts';
 import { usePlayer } from '../data/session.ts';
+import type { NoteSystem } from '#shared/chordpro/chord.ts';
+import { INSTRUMENTS, type Instrument } from '#shared/chordpro/shapes.ts';
+import { useNotation } from '../hooks/useNotation.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { RefreshAction } from './RefreshAction.tsx';
 
-type Props = {
-  size?: 'lg' | 'xl';
-  /** In a song: whether it has diagrams, and how far it's transposed (diagrams need its key). */
-  song?: { hasDiagrams: boolean; semitones: number };
-};
+type Props = { size?: 'lg' | 'xl' };
 
 /**
  * Every setting, on this device, from every page (D113): how songs are shown, and the app's
@@ -35,15 +33,14 @@ type Props = {
  * what's new, with the playlist on the page and the one being played (D116, D117). Next to
  * search, at the top right everywhere.
  */
-export function SettingsButton({ size = 'lg', song }: Props) {
+export function SettingsButton({ size = 'lg' }: Props) {
   const { t, locale, setLocale } = useI18n();
   const { colorScheme, setColorScheme } = useMantineColorScheme();
   const prefs = usePrefs();
   const fullscreen = useFullscreen();
   const { session } = usePlayer();
   const playlistIds = useRefreshedPlaylists(session?.playlistId);
-  const wide = useWide();
-  const semitones = song?.semitones ?? 0;
+  const notation = useNotation();
   const label = prefs.showChords
     ? t('settings.open')
     : `${t('settings.open')}: ${t('song.chordsHidden')}`;
@@ -93,32 +90,50 @@ export function SettingsButton({ size = 'lg', song }: Props) {
               checked={prefs.showChords}
               onChange={(e) => prefs.setShowChords(e.currentTarget.checked)}
             />
-            {/* Columns only ever apply on a wide screen (D88); a phone has nothing to switch. */}
-            {wide && (
-              <Switch
-                label={t('song.columns')}
-                description={t('song.columnsHint')}
-                checked={prefs.showColumns}
-                onChange={(e) => prefs.setShowColumns(e.currentTarget.checked)}
+            {/* Columns are the text's to decide, on any screen (D129). */}
+            <Switch
+              label={t('song.columns')}
+              description={t('song.columnsHint')}
+              checked={prefs.showColumns}
+              onChange={(e) => prefs.setShowColumns(e.currentTarget.checked)}
+            />
+            <Switch
+              label={t('song.diagrams')}
+              checked={prefs.showChords && prefs.showDiagrams}
+              // Diagrams draw chords: hidden, there's nothing to draw. Transposed, the library
+              // has the new ones (D132).
+              disabled={!prefs.showChords}
+              description={!prefs.showChords ? t('song.diagramsNeedChords') : undefined}
+              onChange={(e) => prefs.setShowDiagrams(e.currentTarget.checked)}
+            />
+            {prefs.showChords && prefs.showDiagrams && (
+              <SegmentedControl
+                fullWidth
+                aria-label={t('settings.instrument')}
+                value={prefs.instrument}
+                onChange={(v) => prefs.setInstrument(v as Instrument)}
+                data={INSTRUMENTS.map((instrument) => ({
+                  value: instrument,
+                  label: t(`settings.instrument.${instrument}`),
+                }))}
               />
             )}
-            {/* Only the song's own diagrams exist; outside a song, the preference itself. */}
-            {(!song || song.hasDiagrams) && (
-              <Switch
-                label={t('song.diagrams')}
-                checked={prefs.showChords && prefs.showDiagrams && semitones === 0}
-                // Diagrams draw chords: hidden or transposed, there's nothing to draw.
-                disabled={!prefs.showChords || semitones !== 0}
-                description={
-                  !prefs.showChords
-                    ? t('song.diagramsNeedChords')
-                    : semitones !== 0
-                      ? t('song.diagramsNeedOriginalKey')
-                      : undefined
-                }
-                onChange={(e) => prefs.setShowDiagrams(e.currentTarget.checked)}
+            {/* H or B for B natural: Czech players read H (D132). */}
+            <Stack gap={4}>
+              <Text size="sm" fw={500}>
+                {t('settings.notation')}
+              </Text>
+              <SegmentedControl
+                fullWidth
+                aria-label={t('settings.notation')}
+                value={notation}
+                onChange={(v) => prefs.setNotation(v as NoteSystem)}
+                data={[
+                  { value: 'german', label: t('settings.notation.german') },
+                  { value: 'common', label: t('settings.notation.common') },
+                ]}
               />
-            )}
+            </Stack>
           </Part>
           <Part title={t('settings.app')}>
             <SegmentedControl

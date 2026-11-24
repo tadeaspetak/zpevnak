@@ -1,4 +1,4 @@
-import { type NoteSystem, transposeKey } from '#shared/chordpro/chord.ts';
+import { chordIn, type NoteSystem, transposeKey } from '#shared/chordpro/chord.ts';
 import { lyricsText, parseSong } from '#shared/chordpro/parse.ts';
 import { tagKey, tagsIn } from '#shared/chordpro/tags.ts';
 import { type KeyShift, semitonesFor, songPitch } from '#shared/chordpro/transpose.ts';
@@ -44,11 +44,17 @@ export function byline(artist: string | null, tags: string[]): string | null {
 }
 
 /**
- * The key a song is played in under `shift` (a playlist's, D131), spelled for the song: null
- * for a song that names no key, or no shift at all.
+ * The key a song is played in under `shift` (a playlist's, D131), as a reader of `notation`
+ * spells it (D132): null for a song that names no key, or no shift at all.
  */
-export function keyUnder(song: SongRecord, shift: KeyShift | undefined): string | null {
+export function keyUnder(
+  song: SongRecord,
+  shift: KeyShift | undefined,
+  notation: NoteSystem,
+): string | null {
   const { key, pitch, noteSystem } = songText(song);
   const semitones = semitonesFor(shift, pitch);
-  return key && semitones !== 0 ? transposeKey(key, semitones, noteSystem) : null;
+  return key && semitones !== 0
+    ? chordIn(transposeKey(key, semitones, noteSystem), noteSystem, notation)
+    : null;
 }

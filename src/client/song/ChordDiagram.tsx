@@ -108,3 +108,17 @@ export function ChordDiagram({ definition }: { definition: ChordDefinition }) {
     </figure>
   );
 }
+
+/**
+ * A chord the library has no shape for (D132): named in its place among the diagrams, said
+ * plainly, rather than left out or given a wrong one.
+ */
+export function NoDiagram({ name }: { name: string }) {
+  const { t } = useI18n();
+  return (
+    <figure className={classes.diagram}>
+      <figcaption className={classes.diagramName}>{name}</figcaption>
+      <span className={classes.noDiagram}>{t('song.noDiagram')}</span>
+    </figure>
+  );
+}

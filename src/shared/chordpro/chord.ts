@@ -152,3 +152,33 @@ export function transposeKey(key: string, semitones: number, system: NoteSystem)
   const target = transposeChord(key, semitones, system, MIXED_NAMES);
   return transposeChord(key, semitones, system, spellingForKey(target, system));
 }
+
+/**
+ * A note spelled for the other system, where they differ: B natural is H in german and B in
+ * common, B♭ is B in german and Bb in common. Every other name is the same in both.
+ */
+function noteIn(note: string, from: NoteSystem, to: NoteSystem): string {
+  const pitch = pitchOf(note, from);
+  if (from === to || (pitch !== 10 && pitch !== 11) || !/^[ABH]/.test(note)) {
+    return note;
+  }
+  if (pitch === 11) {
+    return to === 'german' ? 'H' : 'B';
+  }
+  // A♯ stays A♯; B♭ is renamed.
+  return note.startsWith('A') ? note : to === 'german' ? 'B' : 'Bb';
+}
+
+/**
+ * A chord as a reader of `to` notation reads it (D132): written in `from`, the song's own. So a
+ * Czech reader sees H7 where an English song writes B7, and B where a Czech one would; the song's
+ * text keeps its own. Anything that isn't a chord comes back unchanged.
+ */
+export function chordIn(name: string, from: NoteSystem, to: NoteSystem): string {
+  const parsed = from === to ? null : parseChord(name);
+  if (!parsed) {
+    return name;
+  }
+  const bass = parsed.bass ? `/${noteIn(parsed.bass, from, to)}` : '';
+  return `${noteIn(parsed.root, from, to)}${parsed.suffix}${bass}`;
+}

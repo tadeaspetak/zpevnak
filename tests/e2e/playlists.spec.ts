@@ -97,7 +97,7 @@ test('a listmate taken out while editing leaves the editor', async ({ browser })
   await listmate.request.post('/trpc/sharing.join', { data: { token } });
   await listmate.goto(`/playlist/${playlist.id}`);
   await listmate.getByRole('button', { name: 'Edit playlist' }).click();
-  await expect(listmate.getByLabel('Name')).toBeVisible();
+  await expect(listmate.getByRole('textbox', { name: 'Name' })).toBeVisible();
 
   const me = await (await listmate.request.get('/trpc/auth.me')).json();
   await owner.request.post('/trpc/sharing.removeMember', {
@@ -106,7 +106,7 @@ test('a listmate taken out while editing leaves the editor', async ({ browser })
   // From the settings, which also fetch the playlist on the page, not only the one being played.
   await listmate.getByRole('button', { name: 'Settings' }).click();
   await listmate.getByRole('button', { name: 'Get what’s new' }).click();
-  await expect(listmate.getByLabel('Name')).toBeHidden();
+  await expect(listmate.getByRole('textbox', { name: 'Name' })).toBeHidden();
   await expect(listmate.getByRole('button', { name: 'Done' })).toBeHidden();
 });
 

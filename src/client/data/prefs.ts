@@ -1,5 +1,7 @@
 /** How the player likes songs shown, per device. */
 import { useCallback, useEffect, useSyncExternalStore } from 'react';
+import type { NoteSystem } from '#shared/chordpro/chord.ts';
+import type { Instrument } from '#shared/chordpro/shapes.ts';
 import { type KeyShift } from '#shared/chordpro/transpose.ts';
 import { readLocalJson, writeLocalJson } from './local.ts';
 
@@ -10,6 +12,10 @@ type Prefs = {
   showDiagrams: boolean;
   /** Two columns for songs that ask for them. Off means a long song just scrolls down. */
   showColumns: boolean;
+  /** Whose chord diagrams (D132). */
+  instrument: Instrument;
+  /** How chords are spelled for this reader (D132); null: by the app's language. */
+  notation: NoteSystem | null;
   /** Song id → how far it's transposed, for the songs someone transposed. */
   transpose: Record<number, KeyShift>;
 };
@@ -33,6 +39,8 @@ let prefs: Prefs = {
   // Off by default: the song's own diagrams are for the few who need an unusual voicing (D84).
   showDiagrams: readLocalJson('showDiagrams', false),
   showColumns: readLocalJson('showColumns', true),
+  instrument: readLocalJson<Instrument>('instrument', 'guitar'),
+  notation: readLocalJson<NoteSystem | null>('notation', null),
   transpose: readLocalJson('transpose', {}),
 };
 const listeners = new Set<() => void>();
@@ -100,8 +108,20 @@ export function usePrefs() {
     [],
   );
 
+  const setInstrument = useCallback((instrument: Instrument) => {
+    writeLocalJson('instrument', instrument);
+    update({ instrument });
+  }, []);
+
+  const setNotation = useCallback((notation: NoteSystem) => {
+    writeLocalJson('notation', notation);
+    update({ notation });
+  }, []);
+
   return {
     ...state,
+    setInstrument,
+    setNotation,
     stepFont,
     setFontScale,
     setShowChords,

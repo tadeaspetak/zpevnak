@@ -1,16 +1,20 @@
 import {
+  createContext,
   Fragment,
+  useContext,
   useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
   type ReactNode,
 } from 'react';
+import { chordIn, type NoteSystem } from '#shared/chordpro/chord.ts';
+import { chordsOf, type Instrument, shapeFor } from '#shared/chordpro/shapes.ts';
 import type { Block, Line, Song } from '#shared/chordpro/types.ts';
 import { IconLock } from '@tabler/icons-react';
 import { byline } from '../data/songText.ts';
 import { useI18n } from '../i18n/index.tsx';
-import { ChordDiagram } from './ChordDiagram.tsx';
+import { ChordDiagram, NoDiagram } from './ChordDiagram.tsx';
 import { columnsFit, lineWraps, type TextLine } from './columnsFit.ts';
 import { hasChords, isChordOnly, layoutLine } from './layout.ts';
 import classes from './SongSheet.module.css';
@@ -29,11 +33,19 @@ type Props = {
    * false for one long column.
    */
   showColumns?: boolean;
+  /** How this reader spells chords (D132); the song's own spelling when not given. */
+  notation?: NoteSystem;
+  /** Whose diagrams (D132). */
+  instrument?: Instrument;
 };
 
-function chordLabel(chord: string) {
+/** A chord as the reader spells it (D132); the sheet's lines read it from here. */
+const SpellChord = createContext((chord: string) => chord);
+
+function ChordLabel({ chord }: { chord: string }) {
+  const spell = useContext(SpellChord);
   // `[*Riff]` is an annotation, shown without its star.
-  return chord.startsWith('*') ? chord.slice(1) : chord;
+  return chord.startsWith('*') ? chord.slice(1) : spell(chord);
 }
 
 function LineView({ line, showChords }: { line: Line; showChords: boolean }) {
@@ -64,7 +76,7 @@ function LineView({ line, showChords }: { line: Line; showChords: boolean }) {
             {word.map((col, c) => (
               <span key={c} className={classes.col} data-overhang={col.overhang}>
                 <span className={classes.chord}>
-                  {col.chord ? chordLabel(col.chord) : ' '}
+                  {col.chord ? <ChordLabel chord={col.chord} /> : ' '}
                 </span>
                 {/* Empty text under a chord holds the line's height, not a space's width: a
                     chord on a pause ("Svítá, [F] rozum") would stand in three spaces. */}
@@ -205,8 +217,12 @@ export function SongSheet({
   showColumns = true,
   showChords = true,
   isPrivate = false,
+  notation,
+  instrument = 'guitar',
 }: Props) {
   const { t } = useI18n();
+  const spell = (chord: string) =>
+    chordIn(chord, song.noteSystem, notation ?? song.noteSystem);
   const style = { '--song-scale': fontScale } as CSSProperties;
   // Any song on any screen, when the reader wants columns and the song fits in them (D108):
   // the text decides, at its size, not the screen's width.
@@ -239,45 +255,61 @@ export function SongSheet({
 
   const line = byline(song.artist, song.meta.tags);
   return (
-    <article className={classes.sheet} style={style} lang="und">
-      <header className={classes.header}>
-        <h1 className={classes.title}>
-          {song.meta.title}
-          {isPrivate && (
-            <IconLock
-              className={classes.private}
-              role="img"
-              aria-label={t('songs.privateMark')}
-            />
-          )}
-        </h1>
-        {line && <p className={classes.artist}>{line}</p>}
-        {meta.length > 0 && <p className={classes.meta}>{meta.join(' · ')}</p>}
-      </header>
-      {showChords && showDiagrams && song.definitions.length > 0 && (
-        <div className={classes.diagrams} aria-label={t('song.diagrams')}>
-          {song.definitions.map((d) => (
-            <ChordDiagram key={d.name} definition={d} />
-          ))}
-        </div>
-      )}
-      <div
-        className={columns.fits ? classes.bodyColumns : classes.body}
-        data-columns={columns.fits || undefined}
-      >
-        {blocks}
-      </div>
-      {showColumns && (
-        // The same song in columns, out of sight and out of reach: only measured.
+    <SpellChord.Provider value={spell}>
+      <article className={classes.sheet} style={style} lang="und">
+        <header className={classes.header}>
+          <h1 className={classes.title}>
+            {song.meta.title}
+            {isPrivate && (
+              <IconLock
+                className={classes.private}
+                role="img"
+                aria-label={t('songs.privateMark')}
+              />
+            )}
+          </h1>
+          {line && <p className={classes.artist}>{line}</p>}
+          {meta.length > 0 && <p className={classes.meta}>{meta.join(' · ')}</p>}
+        </header>
+        {showChords && showDiagrams && (
+          <div className={classes.diagrams} aria-label={t('song.diagrams')}>
+            {chordsOf(song).map((chord) => {
+              // The song's own fingering where it gives one (a guitar's, and in its own key: a
+              // transposed song carries none); else the library's (D132).
+              const own =
+                instrument === 'guitar'
+                  ? song.definitions.find((d) => d.name === chord)
+                  : undefined;
+              const shape = own ?? shapeFor(chord, song.noteSystem, instrument);
+              return shape ? (
+                <ChordDiagram
+                  key={chord}
+                  definition={{ ...shape, name: spell(shape.name) }}
+                />
+              ) : (
+                <NoDiagram key={chord} name={spell(chord)} />
+              );
+            })}
+          </div>
+        )}
         <div
-          ref={columns.copy}
-          className={`${classes.bodyColumns} ${classes.measure}`}
-          aria-hidden
-          inert
+          className={columns.fits ? classes.bodyColumns : classes.body}
+          data-columns={columns.fits || undefined}
         >
           {blocks}
         </div>
-      )}
-    </article>
+        {showColumns && (
+          // The same song in columns, out of sight and out of reach: only measured.
+          <div
+            ref={columns.copy}
+            className={`${classes.bodyColumns} ${classes.measure}`}
+            aria-hidden
+            inert
+          >
+            {blocks}
+          </div>
+        )}
+      </article>
+    </SpellChord.Provider>
   );
 }

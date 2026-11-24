@@ -27,22 +27,27 @@ describe('keyUnder (D131)', () => {
 
   it('names the key a playlist plays a song in, spelled the song’s way', () => {
     const inA = song(1, '{title: T}\n{key: A}\nla [A]la [E]la');
-    expect(keyUnder(inA, { semitones: -2, from: 9 })).toBe('G');
-    // A Czech song (it writes H): a tone up from A is H, not B.
+    expect(keyUnder(inA, { semitones: -2, from: 9 }, 'common')).toBe('G');
+    // A tone up from A is B natural: H to a Czech reader, B to an English one (D132).
     const czech = song(2, '{title: T}\n{key: A}\nla [A]la [H7]la');
-    expect(keyUnder(czech, { semitones: 2, from: 9 })).toBe('H');
+    expect(keyUnder(czech, { semitones: 2, from: 9 }, 'german')).toBe('H');
+    expect(keyUnder(czech, { semitones: 2, from: 9 }, 'common')).toBe('B');
+    const english = song(6, '{title: T}\n{key: A}\nla [A]la [E]la');
+    expect(keyUnder(english, { semitones: 2, from: 9 }, 'german')).toBe('H');
   });
 
   it('follows the song when its text has since moved key', () => {
     // Set as G from A; the text is in C now: still G.
     const nowInC = song(3, '{title: T}\n{key: C}\nla [C]la');
-    expect(keyUnder(nowInC, { semitones: -2, from: 9 })).toBe('G');
+    expect(keyUnder(nowInC, { semitones: -2, from: 9 }, 'common')).toBe('G');
   });
 
   it('names nothing for a song that names no key, or no shift', () => {
     expect(
-      keyUnder(song(4, '{title: T}\nla [C]la'), { semitones: 2, from: 0 }),
+      keyUnder(song(4, '{title: T}\nla [C]la'), { semitones: 2, from: 0 }, 'common'),
     ).toBeNull();
-    expect(keyUnder(song(5, '{title: T}\n{key: C}\nla [C]la'), undefined)).toBeNull();
+    expect(
+      keyUnder(song(5, '{title: T}\n{key: C}\nla [C]la'), undefined, 'common'),
+    ).toBeNull();
   });
 });

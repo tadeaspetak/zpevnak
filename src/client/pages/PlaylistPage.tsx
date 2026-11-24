@@ -35,6 +35,7 @@ import { useI18n } from '../i18n/index.tsx';
 import { trpc, trpcClient } from '../trpc.ts';
 import { idFromRef, url } from '#shared/urls.ts';
 import { useCanonicalPath } from '../hooks/useCanonicalPath.ts';
+import { useNotation } from '../hooks/useNotation.ts';
 import { useOnline } from '../hooks/useOnline.ts';
 import classes from './PlaylistPage.module.css';
 import { IconButton } from '../components/IconButton.tsx';
@@ -327,7 +328,8 @@ function SongInPlaylist({
   isPublic: boolean;
 }) {
   const { t } = useI18n();
-  const key = shift ? keyUnder(song, shift) : null;
+  const notation = useNotation();
+  const key = shift ? keyUnder(song, shift, notation) : null;
   const lines = [
     shift ? (key ? t('playlists.songKey', { key }) : t('playlists.songShifted')) : null,
     isPublic && song.status === 'private' ? t('songs.notForVisitors') : null,

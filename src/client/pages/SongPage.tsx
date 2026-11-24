@@ -6,7 +6,7 @@ import type { SongLinkState } from '../components/SongRow.tsx';
 import { parseSong } from '#shared/chordpro/parse.ts';
 import { PlaylistPill } from '../components/PlaylistPill.tsx';
 import { putPlaylist, useCatalog } from '../data/catalog.ts';
-import { transposeKey } from '#shared/chordpro/chord.ts';
+import { chordIn, transposeKey } from '#shared/chordpro/chord.ts';
 import {
   nearest,
   semitonesFor,
@@ -20,6 +20,7 @@ import type { PlaylistRecord, SongRecord } from '../data/store.ts';
 import { isPlainTap, useHideOnScroll } from '../hooks/useHideOnScroll.ts';
 import { useKeys } from '../hooks/useKeys.ts';
 import { useMe } from '../hooks/useMe.ts';
+import { useNotation } from '../hooks/useNotation.ts';
 import { useOnline } from '../hooks/useOnline.ts';
 import { usePinch } from '../hooks/usePinch.ts';
 import { useSwipe } from '../hooks/useSwipe.ts';
@@ -175,6 +176,10 @@ function SongPlayer({
       ? transposeKey(parsed.meta.key, base, parsed.noteSystem)
       : (parsed?.meta.key ?? null);
   const setSongKey = trpc.playlists.setSongKey.useMutation();
+  // Keys named as this reader spells them (D132): H for a Czech reader.
+  const notation = useNotation();
+  const spell = (key: string | null) =>
+    key && parsed ? chordIn(key, parsed.noteSystem, notation) : key;
   const shown = useMemo(
     () => (parsed ? transposeSong(parsed, semitones) : null),
     [parsed, semitones],
@@ -270,8 +275,8 @@ function SongPlayer({
         backTo={back.to}
         backLabel={back.label}
         song={song}
-        shownKey={shown.meta.key}
-        baseKey={baseKey}
+        shownKey={spell(shown.meta.key)}
+        baseKey={spell(baseKey)}
         semitones={semitones}
         own={own}
         pitch={pitch}
@@ -296,7 +301,7 @@ function SongPlayer({
                               : shown.meta.key
                                 ? t('song.playlistKeySet', {
                                     name: playlist.name,
-                                    key: shown.meta.key,
+                                    key: spell(shown.meta.key) ?? shown.meta.key,
                                   })
                                 : t('song.playlistShiftSet', { name: playlist.name }),
                         });
@@ -332,7 +337,9 @@ function SongPlayer({
         <SongSheet
           song={shown}
           fontScale={prefs.fontScale}
-          showDiagrams={prefs.showDiagrams && semitones === 0}
+          showDiagrams={prefs.showDiagrams}
+          notation={notation}
+          instrument={prefs.instrument}
           showColumns={prefs.showColumns}
           showChords={prefs.showChords}
           isPrivate={song.status === 'private'}

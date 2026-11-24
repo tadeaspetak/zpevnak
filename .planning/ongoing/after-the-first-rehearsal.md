@@ -77,8 +77,9 @@ Each ships on its own, gates green, committed locally; nothing is deployed witho
 3. **Key per playlist (shipped, D131).** As built: the shift arithmetic (`semitonesFor`,
    `KeyShift`, `nearest`) moved to `src/shared/chordpro/transpose.ts`, shared by a device's
    transposition and a playlist's key.
-4. **Chord library and notation:** the shapes table and its script, the instrument switch, the
-   notation setting, diagrams while transposed.
+4. **Chord library and notation (shipped, D132).** As built: 529 guitar and 552 ukulele shapes
+   (40 KB); of the 49 distinct chords in production, 46 have one, the rest (Aaddb9, F#m7+/F)
+   say so. The Columns switch is now on every screen (D129 had left it to wide ones).
 5. **A code review** of the night's work (`/code-review`), its fixes.
 6. **A UX walk** of the song view at the stand (phone, tablet upright and landscape, a
    playlist with its own key, diagrams on both instruments, both notations), its no-brainers.

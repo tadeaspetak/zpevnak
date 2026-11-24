@@ -91,3 +91,45 @@ describe('SongSheet: choruses', () => {
     expect(screen.getByText('Refrén 2')).toBeTruthy();
   });
 });
+
+describe('SongSheet: notation and diagrams (D132)', () => {
+  const english = parseSong('{title: T}\n{key: A}\nla [A]la [F#7]la [B7]la [Aaddb9]la');
+
+  it('spells the chords the reader’s way: a Czech reader sees H7 for an English B7', () => {
+    localStorage.setItem('zpevnak.locale', 'cs');
+    renderApp(
+      <SongSheet
+        song={english}
+        fontScale={1}
+        showDiagrams={false}
+        showColumns={false}
+        notation="german"
+      />,
+    );
+    expect(screen.getByText('H7')).toBeTruthy();
+    expect(screen.queryByText('B7')).toBeNull();
+  });
+
+  it('draws every chord from the library, on the chosen instrument, and names what it can’t', () => {
+    localStorage.setItem('zpevnak.locale', 'cs');
+    const { container } = renderApp(
+      <SongSheet
+        song={english}
+        fontScale={1}
+        showDiagrams
+        showColumns={false}
+        instrument="ukulele"
+      />,
+    );
+    const diagrams = [...container.querySelectorAll('figure')];
+    expect(diagrams.map((d) => d.querySelector('figcaption')?.textContent)).toEqual([
+      'A',
+      'F#7',
+      'B7',
+      'Aaddb9',
+    ]);
+    // Four strings on a ukulele.
+    expect(diagrams[0]?.querySelectorAll('line').length).toBe(6 + 4);
+    expect(diagrams[3]?.textContent).toContain('bez diagramu');
+  });
+});

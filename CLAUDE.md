@@ -121,8 +121,10 @@ Every change to behaviour ships with its tests in the same commit.
   in (prepositions and cases change with the noun; prefer neutral phrasings like `Zpět: {name}`).
 - **Braces on every `if`/`else`/loop**, on their own lines (ESLint `curly`).
 - **Comments say why, not what.**
-- **Musical notation:** keep H/B as the song writes it. Czech songs use german notation (H = B
-  natural, B = B♭); transposition keeps the song's system (`src/shared/chordpro/chord.ts`). A
+- **Musical notation:** the song's text keeps H/B as it writes them. Czech songs use german
+  notation (H = B natural, B = B♭); transposition keeps the song's system
+  (`src/shared/chordpro/chord.ts`). The reader sees chords in their own notation (D132,
+  `chordIn`, `useNotation`): H in Czech, B in English, unless they chose otherwise. A
   song is read as german only if it uses H somewhere; one with B♭ written `B` and no H needs
   `{+notes.system: german}`, or its B is taken for B natural. Flats are `Ab`, `Eb`: the parser
   doesn't know the Czech names `As`, `Es`.

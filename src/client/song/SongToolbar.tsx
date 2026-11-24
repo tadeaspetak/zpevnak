@@ -277,7 +277,7 @@ export function SongToolbar(props: Props) {
           {/* Song controls to the left, the whole app to the right: settings, then search,
               last on every page's header, so they are always in the same place. */}
           <Divider orientation="vertical" my={10} />
-          <SettingsButton size="xl" song={{ hasDiagrams, semitones }} />
+          <SettingsButton size="xl" />
           <SearchButton size="xl" />
         </Group>
       </header>

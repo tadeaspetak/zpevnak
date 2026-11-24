@@ -520,6 +520,18 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   playlistu"; "Uložit v tónině G pro všechny" (D119) now says for whom. The way back on the
   key goes to the playlist's key. The playlist's list says "Hraje se v G". No per-user key
   across devices: per device is enough for now. (2026-11-24)
+- **D132. Chord diagrams for every chord, on guitar or ukulele; chords in the reader's
+  notation.** Diagrams come from a chord library (chords-db, MIT, boiled down by
+  `scripts/chord-shapes.ts` into `chordShapes.ts`, one shape per chord), so every chord a song
+  plays gets one, transposed too, on the instrument chosen in Display (Kytara / Ukulele). A
+  song's own `{define}` still wins for guitar in its own key. A chord the library doesn't know
+  says "bez diagramu" in its place rather than going missing or getting a wrong shape. Narrows
+  D84: diagrams no longer need the original key. Chords are **shown** in the reader's
+  notation, "Značení akordů" in Display: H and B (Czech, the default in Czech) or B and Bb
+  (English, the default in English); each song's text keeps its own, and transposition,
+  diagrams and the keys named everywhere follow the reader's. The owner's call was "go with H
+  for Czech players"; showing rather than rewriting every song also gets a transposed song
+  right (C up a tone is H). (2026-11-24)
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed
