@@ -516,9 +516,12 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   Kept per playlist and song (`playlist_song_keys`), not per place, as semitones from the
   pitch the song started from, so a key later saved for everyone (D119) keeps the playlist
   sounding the same; it leaves with the song. Whoever may edit the playlist sets it, from the
-  song: "Hrát v G v tomhle playlistu", or back with "Hrát v tónině písničky v tomhle
+  song: "Hrát v tónině G v tomhle playlistu", or back with "Hrát v tónině písničky v tomhle
   playlistu"; "Uložit v tónině G pro všechny" (D119) now says for whom. The way back on the
-  key goes to the playlist's key. The playlist's list says "Hraje se v G". No per-user key
+  key goes to the playlist's key. Setting the playlist's key from a song takes up the
+  player's own transposition of it, which is one per song on a device, in the playlist and out
+  of it (open for the owner: a separate own shift per playlist). The playlist's list says
+  "Hraje se v tónině G". No per-user key
   across devices: per device is enough for now. (2026-11-24)
 - **D132. Chord diagrams for every chord, on guitar or ukulele; chords in the reader's
   notation.** Diagrams come from a chord library (chords-db, MIT, boiled down by

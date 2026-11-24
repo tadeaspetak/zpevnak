@@ -1,4 +1,5 @@
 import { fireEvent, renderHook } from '@testing-library/react';
+import { afterEach, beforeEach } from 'vitest';
 import { describe, expect, it, vi } from 'vitest';
 import { FONT_SCALES, pinchedScale } from '../../data/prefs.ts';
 import { usePinch } from '../usePinch.ts';
@@ -20,34 +21,52 @@ describe('pinchedScale', () => {
 });
 
 describe('usePinch', () => {
+  // The song: pinches on it are ours; elsewhere the browser's.
+  const song = document.createElement('div');
+  const within = { current: song };
+  beforeEach(() => {
+    document.body.append(song);
+  });
+  afterEach(() => {
+    song.remove();
+  });
+
   it('changes the text size as two fingers spread, live', () => {
     const setScale = vi.fn();
-    renderHook(() => usePinch(1, setScale));
-    fireEvent.touchStart(window, { touches: fingers(100, 200) });
-    fireEvent.touchMove(window, { touches: fingers(85, 215) });
-    fireEvent.touchMove(window, { touches: fingers(50, 250) });
+    renderHook(() => usePinch(within, 1, setScale));
+    fireEvent.touchStart(song, { touches: fingers(100, 200) });
+    fireEvent.touchMove(song, { touches: fingers(85, 215) });
+    fireEvent.touchMove(song, { touches: fingers(50, 250) });
     expect(setScale.mock.calls.map(([scale]) => scale)).toEqual([1.3, 2]);
   });
 
   it('leaves one finger alone: it scrolls, or swipes to the next song', () => {
     const setScale = vi.fn();
-    renderHook(() => usePinch(1, setScale));
-    fireEvent.touchStart(window, { touches: fingers(100) });
-    fireEvent.touchMove(window, { touches: fingers(300) });
+    renderHook(() => usePinch(within, 1, setScale));
+    fireEvent.touchStart(song, { touches: fingers(100) });
+    fireEvent.touchMove(song, { touches: fingers(300) });
     expect(setScale).not.toHaveBeenCalled();
   });
 
   it('starts each pinch from the size it found', () => {
     const setScale = vi.fn();
-    const { rerender } = renderHook(({ scale }) => usePinch(scale, setScale), {
+    const { rerender } = renderHook(({ scale }) => usePinch(within, scale, setScale), {
       initialProps: { scale: 1 },
     });
-    fireEvent.touchStart(window, { touches: fingers(100, 200) });
-    fireEvent.touchMove(window, { touches: fingers(75, 225) });
-    fireEvent.touchEnd(window, { touches: fingers(225) });
+    fireEvent.touchStart(song, { touches: fingers(100, 200) });
+    fireEvent.touchMove(song, { touches: fingers(75, 225) });
+    fireEvent.touchEnd(song, { touches: fingers(225) });
     rerender({ scale: 1.5 });
-    fireEvent.touchStart(window, { touches: fingers(100, 200) });
-    fireEvent.touchMove(window, { touches: fingers(125, 175) });
+    fireEvent.touchStart(song, { touches: fingers(100, 200) });
+    fireEvent.touchMove(song, { touches: fingers(125, 175) });
     expect(setScale.mock.calls.map(([scale]) => scale)).toEqual([1.5, 0.8]);
+  });
+
+  it('leaves a pinch elsewhere (the toolbar) to the browser’s own zoom', () => {
+    const setScale = vi.fn();
+    renderHook(() => usePinch(within, 1, setScale));
+    fireEvent.touchStart(document.body, { touches: fingers(100, 200) });
+    fireEvent.touchMove(document.body, { touches: fingers(50, 250) });
+    expect(setScale).not.toHaveBeenCalled();
   });
 });

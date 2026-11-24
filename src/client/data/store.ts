@@ -35,6 +35,15 @@ function database() {
   return dbPromise;
 }
 
+/**
+ * A playlist as an older version of the app kept it: fields added since are missing, and
+ * get their empty value here rather than crashing the page that reads them (offline, at a gig,
+ * before the next sync). `songKeys`: D131.
+ */
+export function fromDevice(playlist: PlaylistRecord): PlaylistRecord {
+  return { ...playlist, songKeys: playlist.songKeys ?? {} };
+}
+
 export async function loadStored() {
   try {
     const db = await database();
@@ -43,7 +52,11 @@ export async function loadStored() {
       db.getAll('playlists'),
       db.get('meta', 'sync'),
     ]);
-    return { songs, playlists, sync: sync ?? { cursor: null, viewerId: null } };
+    return {
+      songs,
+      playlists: playlists.map(fromDevice),
+      sync: sync ?? { cursor: null, viewerId: null },
+    };
   } catch {
     // No IndexedDB (some private windows): the app still works online, from memory.
     return { songs: [], playlists: [], sync: { cursor: null, viewerId: null } };

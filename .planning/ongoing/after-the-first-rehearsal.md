@@ -45,7 +45,7 @@ The first rehearsal with the app on music stands showed four things:
   The player's own shift is one per song and device, the same in and out of playlists
   (relative to the song's own text), so a capo player's "−2" holds everywhere. The way back
   (tapping the transposed key) goes to the playlist's key. The menu offers, to those who may:
-  "Uložit v tónině G pro všechny" (D119, unchanged) and "Hrát v G v tomhle playlistu"; and,
+  "Uložit v tónině G pro všechny" (D119, unchanged) and "Hrát v tónině G v tomhle playlistu"; and,
   with a playlist key set, "Hrát v tónině písničky" to clear it. Saving either resets the
   player's own shift. In the playlist's list, a song with its own key shows it.
 - **Columns:** the width gate goes; the hidden measuring copy (D88) also checks that no line

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { chordIn } from '../chord.ts';
 import { parseSong } from '../parse.ts';
-import { chordsOf, shapeFor } from '../shapes.ts';
+import { chordsOf, diagramsOf, shapeFor } from '../shapes.ts';
 
 describe('chordIn (D132)', () => {
   it('shows B natural and B flat in the reader’s notation, either way', () => {
@@ -18,6 +18,8 @@ describe('chordIn (D132)', () => {
     expect(chordIn('F#7', 'german', 'common')).toBe('F#7');
     expect(chordIn('Ami', 'german', 'common')).toBe('Ami');
     expect(chordIn('N.C.', 'common', 'german')).toBe('N.C.');
+    // In brackets too.
+    expect(chordIn('(B7)', 'common', 'german')).toBe('(H7)');
     expect(chordIn('B7', 'common', 'common')).toBe('B7');
   });
 });
@@ -48,6 +50,7 @@ describe('shapeFor (D132)', () => {
   it('finds a slash chord, or else the chord without its bass, named so', () => {
     expect(shapeFor('C/E', 'common', 'guitar')?.name).toBe('C/E');
     expect(shapeFor('C/E', 'common', 'ukulele')?.name).toBe('C');
+    expect(shapeFor('(C/E)', 'common', 'ukulele')?.name).toBe('C');
   });
 
   it('reads an augmented seventh, and a chord in brackets', () => {
@@ -77,5 +80,34 @@ describe('chordsOf', () => {
       ].join('\n'),
     );
     expect(chordsOf(song)).toEqual(['Am', 'C', 'G']);
+  });
+});
+
+describe('diagramsOf (D132)', () => {
+  const song = parseSong(
+    [
+      '{title: T}',
+      '{define: F#m base-fret 2 frets 1 3 3 1 1 1}',
+      '{define: Hsus4 base-fret 2 frets x 1 3 3 4 1}',
+      '{sov}',
+      'la [Am]la [(F#m)]la [Qq]la',
+      '{eov}',
+    ].join('\n'),
+  );
+
+  it('uses the song’s own fingering for guitar, the library’s otherwise, and none if neither', () => {
+    const diagrams = diagramsOf(song, 'guitar');
+    expect(diagrams.map(({ chord }) => chord)).toEqual(['Am', '(F#m)', 'Qq', 'Hsus4']);
+    expect(diagrams[0]?.shape?.frets).toEqual(shapeFor('Am', 'common', 'guitar')?.frets);
+    // In brackets in the text, defined without: the song's own.
+    expect(diagrams[1]?.shape?.baseFret).toBe(2);
+    expect(diagrams[2]?.shape).toBeNull();
+    // Defined, played only in a tab: still shown.
+    expect(diagrams[3]?.shape?.name).toBe('Hsus4');
+  });
+
+  it('takes the library’s ukulele shapes: a song’s own fingering is a guitar’s', () => {
+    const diagrams = diagramsOf(song, 'ukulele');
+    expect(diagrams[1]?.shape?.frets).toHaveLength(4);
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SongRecord } from '../store.ts';
-import { byline, keyUnder } from '../songText.ts';
+import { byline, keyUnder, shiftUnder } from '../songText.ts';
 
 describe('byline (D120)', () => {
   it('shows the artist, then the tags after a pipe', () => {
@@ -49,5 +49,17 @@ describe('keyUnder (D131)', () => {
     expect(
       keyUnder(song(5, '{title: T}\n{key: C}\nla [C]la'), undefined, 'common'),
     ).toBeNull();
+  });
+});
+
+describe('shiftUnder (D131)', () => {
+  it('is 0 once the song has been saved in the playlist’s key for everyone', () => {
+    // Two versions of one song: the cache tells them apart by when they were saved.
+    const song = (source: string, updatedAt: string) =>
+      ({ id: 9, source, updatedAt }) as SongRecord;
+    // The playlist plays it in G, set when the text was in A.
+    const shift = { semitones: -2, from: 9 };
+    expect(shiftUnder(song('{title: T}\n{key: A}\nla [A]la', 'before'), shift)).toBe(-2);
+    expect(shiftUnder(song('{title: T}\n{key: G}\nla [G]la', 'after'), shift)).toBe(0);
   });
 });

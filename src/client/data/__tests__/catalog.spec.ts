@@ -6,7 +6,7 @@ import {
   privateSongsNotSent,
   type Catalog,
 } from '../catalog.ts';
-import type { PlaylistRecord, SongRecord } from '../store.ts';
+import { fromDevice, type PlaylistRecord, type SongRecord } from '../store.ts';
 
 const song = (id: number, title = `Song ${id}`) => ({ id, title }) as SongRecord;
 const playlist = (
@@ -17,6 +17,16 @@ const playlist = (
 const songs = (...list: SongRecord[]) => new Map(list.map((s) => [s.id, s]));
 
 describe('mergeSongs', () => {
+  it('starts over for a new viewer, keeping what they put here meanwhile (a song joined)', () => {
+    const merged = mergeSongs(
+      songs(song(1), song(2)),
+      { songs: [song(3)], removedIds: [] },
+      true,
+      new Set([2]),
+    );
+    expect([...merged.keys()].sort()).toEqual([2, 3]);
+  });
+
   it('applies what changed and drops what was deleted', () => {
     const merged = mergeSongs(
       songs(song(1), song(2)),
@@ -94,5 +104,14 @@ describe('playable', () => {
       playlists: new Map([[7, playlist(7, [1, 2, 3])]]),
     } as Catalog;
     expect(playable(raw).playlists.get(7)?.songIds).toEqual([1, 3]);
+  });
+});
+
+describe('fromDevice', () => {
+  it('gives a playlist kept by an older version the fields it lacks (D131), not a crash', () => {
+    const old = { id: 1, name: 'Vršek', songIds: [1] } as unknown as PlaylistRecord;
+    expect(fromDevice(old).songKeys).toEqual({});
+    const current = { ...old, songKeys: { 1: { semitones: 2, from: 0 } } };
+    expect(fromDevice(current).songKeys).toEqual({ 1: { semitones: 2, from: 0 } });
   });
 });

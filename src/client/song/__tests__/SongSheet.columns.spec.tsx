@@ -9,10 +9,13 @@ const song = parseSong(
   ['{title: Test}', '{sov}', 'la [Am]la [D]lo', '{eov}'].join('\n'),
 );
 
-/** The song body, on a screen `wide` or not (it no longer matters); the fit is `columnsFit`'s. */
-function body(wide: boolean, showColumns: boolean) {
+/**
+ * The song body, on a screen with `room` for two columns at its text size or not; whether the
+ * song fits them is `columnsFit`'s, tested there.
+ */
+function body(room: boolean, showColumns: boolean) {
   vi.stubGlobal('matchMedia', (query: string) => ({
-    matches: wide,
+    matches: room,
     media: query,
     addEventListener: () => {},
     removeEventListener: () => {},
@@ -36,16 +39,15 @@ describe('SongSheet columns (D88, D108)', () => {
     vi.unstubAllGlobals();
   });
 
-  it('tries columns on a narrow screen too: the text decides whether they fit', () => {
-    // A tablet held upright, or big enough a phone: a song of short lines may fit two.
-    expect(body(false, true).measured).not.toBeNull();
+  it('measures nothing where two columns can’t fit at this text size (a phone upright)', () => {
+    expect(body(false, true)).toEqual({ columns: null, measured: null });
   });
 
   it('keeps one column when the reader turned columns off', () => {
     expect(body(true, false)).toEqual({ columns: null, measured: null });
   });
 
-  it('tries any song in columns on a wide screen, whether or not it asks', () => {
+  it('tries any song in columns where two could fit, a tablet upright too (D129)', () => {
     expect(body(true, true).measured).not.toBeNull();
   });
 

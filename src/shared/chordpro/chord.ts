@@ -175,6 +175,11 @@ function noteIn(note: string, from: NoteSystem, to: NoteSystem): string {
  * text keeps its own. Anything that isn't a chord comes back unchanged.
  */
 export function chordIn(name: string, from: NoteSystem, to: NoteSystem): string {
+  // "(B7)": a chord played if at all, in brackets, spelled like any other.
+  const bracketed = /^\((.+)\)$/.exec(name);
+  if (bracketed) {
+    return `(${chordIn(bracketed[1] as string, from, to)})`;
+  }
   const parsed = from === to ? null : parseChord(name);
   if (!parsed) {
     return name;

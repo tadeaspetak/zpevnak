@@ -1,6 +1,6 @@
 import { Alert, Button, Center, Group, Stack, Text } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router';
 import type { SongLinkState } from '../components/SongRow.tsx';
 import { parseSong } from '#shared/chordpro/parse.ts';
@@ -225,7 +225,8 @@ function SongPlayer({
   }, [navigate, playlistId, playlistName, prevPosition, nextPosition]);
 
   useSwipe(useMemo(() => ({ onLeft: next, onRight: prev }), [next, prev]));
-  usePinch(prefs.fontScale, prefs.setFontScale);
+  const sheet = useRef<HTMLDivElement>(null);
+  usePinch(sheet, prefs.fontScale, prefs.setFontScale);
   useKeys(
     useMemo(
       () => ({
@@ -328,6 +329,8 @@ function SongPlayer({
           things get tight (D93, D109).
           A pointer convenience on top of scrolling, which does the same, so no key of its own. */}
       <div
+        ref={sheet}
+        className={classes.sheet}
         onClick={(e) => {
           if (isPlainTap(e.target)) {
             toolbar.toggle();

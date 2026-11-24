@@ -96,13 +96,17 @@ const putDuringSync = new Set<number>();
 /** Playlists put into the catalog, or taken out, since the running sync started. */
 const playlistsPutDuringSync = new Set<number>();
 
-/** The songs after a sync: the delta applied, or, for a new viewer, the delta alone. */
+/**
+ * The songs after a sync: the delta applied, or, for a new viewer, the delta alone, with what
+ * was put here while it ran (`putMeanwhile`: a song just joined).
+ */
 export function mergeSongs(
   songs: Map<number, SongRecord>,
   delta: { songs: SongRecord[]; removedIds: number[] },
   replaceAll: boolean,
+  putMeanwhile: ReadonlySet<number> = new Set(),
 ): Map<number, SongRecord> {
-  const merged = replaceAll ? new Map<number, SongRecord>() : new Map(songs);
+  const merged = replaceAll ? only(songs, putMeanwhile) : new Map(songs);
   delta.songs.forEach((s) => merged.set(s.id, s));
   delta.removedIds.forEach((id) => merged.delete(id));
   return merged;
@@ -138,7 +142,16 @@ function newer(
   return local && local.updatedAt > incoming.updatedAt ? local : incoming;
 }
 
+/** The entries of `map` whose ids are in `ids`. */
+function only<T>(map: Map<number, T>, ids: ReadonlySet<number>): Map<number, T> {
+  return new Map([...map].filter(([id]) => ids.has(id)));
+}
+
 async function runSync(viewer: number | null) {
+  // From here on, what this device puts (a join, an edit) is newer than the answer coming:
+  // counted before anything waits, so nothing slips in between.
+  putDuringSync.clear();
+  playlistsPutDuringSync.clear();
   update({ syncing: true });
   try {
     await loadFromDevice();
@@ -146,16 +159,21 @@ async function runSync(viewer: number | null) {
     if (viewer !== viewerId) {
       // Someone else now: what the last person could see leaves the device before anything
       // is fetched, so a fetch that fails can't leave their private songs and playlists here.
+      // Only what the new person put here meanwhile stays (a playlist they just joined).
       cursor = null;
       viewerId = viewer;
-      update({ songs: new Map(), playlists: new Map() });
+      update({
+        songs: only(state.songs, putDuringSync),
+        playlists: only(state.playlists, playlistsPutDuringSync),
+      });
       await Promise.all([
-        storeSongs({ songs: [], removedIds: [], replaceAll: true }, { cursor, viewerId }),
-        storePlaylists([]),
+        storeSongs(
+          { songs: [...state.songs.values()], removedIds: [], replaceAll: true },
+          { cursor, viewerId },
+        ),
+        storePlaylists([...state.playlists.values()]),
       ]);
     }
-    putDuringSync.clear();
-    playlistsPutDuringSync.clear();
     const [songDelta, playlists] = await Promise.all([
       trpcClient.songs.sync.query({ since: replaceAll ? null : cursor }),
       trpcClient.playlists.all.query(),
@@ -169,7 +187,7 @@ async function runSync(viewer: number | null) {
       ],
     };
     update({
-      songs: mergeSongs(state.songs, changes, replaceAll),
+      songs: mergeSongs(state.songs, changes, replaceAll, putDuringSync),
       playlists: mergePlaylists(state.playlists, playlists, playlistsPutDuringSync),
       synced: true,
     });

@@ -58,3 +58,8 @@ export function keyUnder(
     ? chordIn(transposeKey(key, semitones, noteSystem), noteSystem, notation)
     : null;
 }
+
+/** How far a playlist's key (D131) moves a song as its text is now: 0 once it's its own key. */
+export function shiftUnder(song: SongRecord, shift: KeyShift | undefined): number {
+  return semitonesFor(shift, songText(song).pitch);
+}

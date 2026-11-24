@@ -29,7 +29,7 @@ import { usePlaylistEdits } from '../data/playlistEdits.ts';
 import { playlistFacts } from '../data/playlistFacts.ts';
 import { leavePlaylist, usePlayer } from '../data/session.ts';
 import type { PlaylistRecord, SongRecord } from '../data/store.ts';
-import { keyUnder } from '../data/songText.ts';
+import { keyUnder, shiftUnder } from '../data/songText.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc, trpcClient } from '../trpc.ts';
@@ -329,9 +329,11 @@ function SongInPlaylist({
 }) {
   const { t } = useI18n();
   const notation = useNotation();
-  const key = shift ? keyUnder(song, shift, notation) : null;
+  // Saved in that key for everyone since, it plays in its own: nothing to say.
+  const moved = shiftUnder(song, shift) !== 0;
+  const key = moved ? keyUnder(song, shift, notation) : null;
   const lines = [
-    shift ? (key ? t('playlists.songKey', { key }) : t('playlists.songShifted')) : null,
+    moved ? (key ? t('playlists.songKey', { key }) : t('playlists.songShifted')) : null,
     isPublic && song.status === 'private' ? t('songs.notForVisitors') : null,
   ].filter(Boolean);
   return lines.length > 0 ? (

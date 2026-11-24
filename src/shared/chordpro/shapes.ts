@@ -99,7 +99,8 @@ export function shapeFor(
   }
   const [baseFret, frets] = found;
   return {
-    name: slash || !parsed.bass ? chord : chord.slice(0, chord.indexOf('/')),
+    // A slash chord without its own shape is named as what it shows: the chord without its bass.
+    name: slash || !parsed.bass ? chord : `${parsed.root}${parsed.suffix}`,
     baseFret,
     frets: frets.map((fret) => (fret < 0 ? null : fret)),
     fingers: null,
@@ -128,4 +129,32 @@ export function chordsOf(song: Song): string[] {
     }
   }
   return [...chords];
+}
+
+/** "(F#)" → "F#": a chord in brackets is the chord. */
+const unbracketed = (chord: string) => chord.replace(/^\((.*)\)$/, '$1');
+
+/**
+ * The diagrams a song shows on `instrument` (D132), in the order its chords first come: each
+ * chord with the song's own fingering where it gives one (a guitar's, `{define}`), else the
+ * library's, else none. Every chord the song defines is among them, played in its text or not
+ * (a chord only in a tab).
+ */
+export function diagramsOf(
+  song: Song,
+  instrument: Instrument,
+): { chord: string; shape: ChordDefinition | null }[] {
+  const chords = chordsOf(song);
+  for (const own of song.definitions) {
+    if (!chords.some((chord) => unbracketed(chord) === own.name)) {
+      chords.push(own.name);
+    }
+  }
+  return chords.map((chord) => {
+    const own =
+      instrument === 'guitar'
+        ? song.definitions.find((d) => d.name === unbracketed(chord))
+        : undefined;
+    return { chord, shape: own ?? shapeFor(chord, song.noteSystem, instrument) };
+  });
 }

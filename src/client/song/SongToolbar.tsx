@@ -223,8 +223,9 @@ export function SongToolbar(props: Props) {
                   {t('song.reportMistake')}
                 </Menu.Item>
               )}
-              {/* Who may edit the song may make the key they picked its own (D119). */}
-              {canEdit && semitones !== 0 && (
+              {/* Who may edit the song may make the key they picked its own (D119): one they came to
+                  themselves, not a playlist's (D131), which that playlist already plays in. */}
+              {canEdit && own !== 0 && (
                 <Menu.Item
                   leftSection={<IconDeviceFloppy size={16} />}
                   onClick={openSaveKey}
@@ -288,7 +289,7 @@ export function SongToolbar(props: Props) {
       {canOpenSharing && (
         <SongShareModal song={song} opened={sharing} onClose={closeShare} />
       )}
-      {canEdit && semitones !== 0 && (
+      {canEdit && own !== 0 && (
         <SaveKeyModal
           song={song}
           semitones={semitones}

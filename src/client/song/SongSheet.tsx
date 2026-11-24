@@ -9,8 +9,9 @@ import {
   type ReactNode,
 } from 'react';
 import { chordIn, type NoteSystem } from '#shared/chordpro/chord.ts';
-import { chordsOf, type Instrument, shapeFor } from '#shared/chordpro/shapes.ts';
+import { diagramsOf, type Instrument } from '#shared/chordpro/shapes.ts';
 import type { Block, Line, Song } from '#shared/chordpro/types.ts';
+import { useMediaQuery } from '@mantine/hooks';
 import { IconLock } from '@tabler/icons-react';
 import { byline } from '../data/songText.ts';
 import { useI18n } from '../i18n/index.tsx';
@@ -38,6 +39,12 @@ type Props = {
   /** Whose diagrams (D132). */
   instrument?: Instrument;
 };
+
+/**
+ * Two columns of 12 song-sized ems (a short line), at 1.125rem each: the narrowest screen, in
+ * rems and at the default text size, where they could fit at all. Plus the gap and the edges.
+ */
+const MIN_COLUMNS_EM = 2 * 12 * 1.125;
 
 /** A chord as the reader spells it (D132); the sheet's lines read it from here. */
 const SpellChord = createContext((chord: string) => chord);
@@ -225,8 +232,13 @@ export function SongSheet({
     chordIn(chord, song.noteSystem, notation ?? song.noteSystem);
   const style = { '--song-scale': fontScale } as CSSProperties;
   // Any song on any screen, when the reader wants columns and the song fits in them (D108):
-  // the text decides, at its size, not the screen's width.
-  const columns = useColumnsFit(showColumns);
+  // the text decides, at its size, not the screen's width (D129). Where two columns of even
+  // short lines can't fit at this size (a phone held upright), it isn't measured at all: a
+  // second copy of the song, laid out on every change, costs a slow phone for nothing.
+  const roomForColumns = useMediaQuery(
+    `(min-width: ${MIN_COLUMNS_EM * fontScale + 5}em)`,
+  );
+  const columns = useColumnsFit(showColumns && (roomForColumns ?? false));
   // The key isn't repeated here: the toolbar shows it, and changes it (D59). A capo is not
   // in the toolbar, so it stays.
   const meta = [song.meta.capo ? t('song.capo', { fret: song.meta.capo }) : null].filter(
@@ -273,23 +285,16 @@ export function SongSheet({
         </header>
         {showChords && showDiagrams && (
           <div className={classes.diagrams} aria-label={t('song.diagrams')}>
-            {chordsOf(song).map((chord) => {
-              // The song's own fingering where it gives one (a guitar's, and in its own key: a
-              // transposed song carries none); else the library's (D132).
-              const own =
-                instrument === 'guitar'
-                  ? song.definitions.find((d) => d.name === chord)
-                  : undefined;
-              const shape = own ?? shapeFor(chord, song.noteSystem, instrument);
-              return shape ? (
+            {diagramsOf(song, instrument).map(({ chord, shape }) =>
+              shape ? (
                 <ChordDiagram
                   key={chord}
                   definition={{ ...shape, name: spell(shape.name) }}
                 />
               ) : (
                 <NoDiagram key={chord} name={spell(chord)} />
-              );
-            })}
+              ),
+            )}
           </div>
         )}
         <div
@@ -298,7 +303,7 @@ export function SongSheet({
         >
           {blocks}
         </div>
-        {showColumns && (
+        {showColumns && roomForColumns && (
           // The same song in columns, out of sight and out of reach: only measured.
           <div
             ref={columns.copy}
