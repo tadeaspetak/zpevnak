@@ -506,6 +506,10 @@ From the first UX walk of the song view and a playlist session (2026-11-10): _In
   gets them for a song that fits, a phone almost never does, and bigger text turns them off by
   itself. From the first rehearsal (`.planning/ongoing/after-the-first-rehearsal.md`).
   (2026-11-24)
+- **D130. A pinch changes the text size** on the song, live, along the same steps as the size
+  buttons (snapping), and keeps it. The page itself doesn't zoom there (`touch-action: pan-x
+pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling sideways. One
+  finger still scrolls and swipes between songs. (2026-11-24)
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed

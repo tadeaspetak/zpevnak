@@ -13,6 +13,7 @@ import { isPlainTap, useHideOnScroll } from '../hooks/useHideOnScroll.ts';
 import { useKeys } from '../hooks/useKeys.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useOnline } from '../hooks/useOnline.ts';
+import { usePinch } from '../hooks/usePinch.ts';
 import { useSwipe } from '../hooks/useSwipe.ts';
 import { useWakeLock } from '../hooks/useWakeLock.ts';
 import { useI18n } from '../i18n/index.tsx';
@@ -197,6 +198,7 @@ function SongPlayer({
   }, [navigate, playlistId, playlistName, prevPosition, nextPosition]);
 
   useSwipe(useMemo(() => ({ onLeft: next, onRight: prev }), [next, prev]));
+  usePinch(prefs.fontScale, prefs.setFontScale);
   useKeys(
     useMemo(
       () => ({

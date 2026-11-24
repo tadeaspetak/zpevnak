@@ -43,6 +43,17 @@ export function semitonesFor(
 
 export const FONT_SCALES = [0.8, 0.9, 1, 1.15, 1.3, 1.5, 1.75, 2];
 
+/**
+ * The text size a pinch comes to: the size it started from, times how far the fingers spread
+ * (`ratio`), snapped to the nearest of `FONT_SCALES` and kept within them.
+ */
+export function pinchedScale(start: number, ratio: number): number {
+  const wanted = start * ratio;
+  return FONT_SCALES.reduce((best, scale) =>
+    Math.abs(scale - wanted) < Math.abs(best - wanted) ? scale : best,
+  );
+}
+
 let prefs: Prefs = {
   fontScale: readLocalJson('fontScale', 1),
   showChords: readLocalJson('showChords', true),
@@ -74,6 +85,14 @@ export function usePrefs() {
       ] ?? 1;
     writeLocalJson('fontScale', next);
     update({ fontScale: next });
+  }, []);
+
+  /** One of `FONT_SCALES`, as a pinch arrives at it. */
+  const setFontScale = useCallback((fontScale: number) => {
+    if (fontScale !== prefs.fontScale) {
+      writeLocalJson('fontScale', fontScale);
+      update({ fontScale });
+    }
   }, []);
 
   const setShowChords = useCallback((showChords: boolean) => {
@@ -111,6 +130,7 @@ export function usePrefs() {
   return {
     ...state,
     stepFont,
+    setFontScale,
     setShowChords,
     setShowDiagrams,
     setShowColumns,
