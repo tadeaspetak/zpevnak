@@ -500,6 +500,12 @@ From the first UX walk of the song view and a playlist session (2026-11-10): _In
   who is in each, under the rule in one sentence (read, not change; later joiners too; while
   the song and its owner are in it); the line under a playlist names later joiners, so it
   shows even in a playlist with nobody else in it yet._
+- **D129. Columns are decided by the text, not the screen** (replaces D25's "≥ 62em"). Two
+  columns whenever no line has to wrap in its column at the current text size and the whole
+  song fits on screen (D88), measured on the hidden copy; on any screen, so a tablet held upright
+  gets them for a song that fits, a phone almost never does, and bigger text turns them off by
+  itself. From the first rehearsal (`.planning/ongoing/after-the-first-rehearsal.md`).
+  (2026-11-24)
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed

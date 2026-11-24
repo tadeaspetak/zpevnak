@@ -9,10 +9,9 @@ import {
 import type { Block, Line, Song } from '#shared/chordpro/types.ts';
 import { IconLock } from '@tabler/icons-react';
 import { byline } from '../data/songText.ts';
-import { useWide } from '../hooks/useBreakpoints.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { ChordDiagram } from './ChordDiagram.tsx';
-import { columnsFit, type Box } from './columnsFit.ts';
+import { columnsFit, lineWraps, type TextLine } from './columnsFit.ts';
 import { hasChords, isChordOnly, layoutLine } from './layout.ts';
 import classes from './SongSheet.module.css';
 
@@ -26,7 +25,7 @@ type Props = {
   /** Kept to a few people (D127): a small lock after the title, as in the lists. */
   isPrivate?: boolean;
   /**
-   * Lay the song in its columns where they fit (a wide screen, and the whole song on it);
+   * Lay the song in its columns where they fit (no line wraps, and the whole song on screen);
    * false for one long column.
    */
   showColumns?: boolean;
@@ -112,25 +111,43 @@ function SectionView({
   );
 }
 
-/** The text boxes of a song laid out in `copy`, measured from its top. */
-function textBoxes(copy: HTMLElement): Box[] {
+/**
+ * Whether a line had to wrap in its column. A line with chords is words side by side, each a
+ * box: wrapped, they sit on different rows. Plain text has a line box per row. A tab doesn't
+ * wrap: it runs past its column instead.
+ */
+function wrapped(el: Element, range: Range): boolean {
+  if (el instanceof HTMLPreElement) {
+    return el.scrollWidth > el.clientWidth + 1;
+  }
+  const words = el.querySelectorAll(`.${classes.word}`);
+  const tops =
+    words.length > 0
+      ? [...words].map((word) => word.getBoundingClientRect().top)
+      : [...range.getClientRects()].map((r) => r.top);
+  return lineWraps(tops);
+}
+
+/** The text of a song laid out in `copy`, measured from its top. */
+function textLines(copy: HTMLElement): TextLine[] {
   const top = copy.getBoundingClientRect().top;
   const range = document.createRange();
-  const boxes: Box[] = [];
+  const lines: TextLine[] = [];
   for (const el of copy.querySelectorAll('section > *')) {
     // The text's own extent, not its block's: a short line ends where its words end.
     range.selectNodeContents(el);
     const r = range.getBoundingClientRect();
     if (r.height > 0) {
-      boxes.push({
+      lines.push({
         top: r.top - top,
         bottom: r.bottom - top,
         left: r.left,
         right: r.right,
+        wrapped: wrapped(el, range),
       });
     }
   }
-  return boxes;
+  return lines;
 }
 
 /**
@@ -158,7 +175,7 @@ function useColumnsFit(enabled: boolean) {
       const bars = [...document.querySelectorAll('[data-bottom-overlay]')].map((el) =>
         el.getBoundingClientRect(),
       );
-      setFits(columnsFit(textBoxes(copyEl), bars, window.innerHeight));
+      setFits(columnsFit(textLines(copyEl), bars, window.innerHeight));
     };
     measure();
     const observer = new ResizeObserver(measure);
@@ -191,9 +208,9 @@ export function SongSheet({
 }: Props) {
   const { t } = useI18n();
   const style = { '--song-scale': fontScale } as CSSProperties;
-  const wide = useWide();
-  // Any song, when the reader wants columns and the song fits in them (D108).
-  const columns = useColumnsFit(showColumns && wide);
+  // Any song on any screen, when the reader wants columns and the song fits in them (D108):
+  // the text decides, at its size, not the screen's width.
+  const columns = useColumnsFit(showColumns);
   // The key isn't repeated here: the toolbar shows it, and changes it (D59). A capo is not
   // in the toolbar, so it stays.
   const meta = [song.meta.capo ? t('song.capo', { fret: song.meta.capo }) : null].filter(
@@ -250,7 +267,7 @@ export function SongSheet({
       >
         {blocks}
       </div>
-      {wide && showColumns && (
+      {showColumns && (
         // The same song in columns, out of sight and out of reach: only measured.
         <div
           ref={columns.copy}

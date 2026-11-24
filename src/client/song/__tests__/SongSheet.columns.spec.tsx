@@ -9,7 +9,7 @@ const song = parseSong(
   ['{title: Test}', '{sov}', 'la [Am]la [D]lo', '{eov}'].join('\n'),
 );
 
-/** The song body, on a screen `wide` or not; whether it fits is `columnsFit`'s, tested there. */
+/** The song body, on a screen `wide` or not (it no longer matters); the fit is `columnsFit`'s. */
 function body(wide: boolean, showColumns: boolean) {
   vi.stubGlobal('matchMedia', (query: string) => ({
     matches: wide,
@@ -36,8 +36,9 @@ describe('SongSheet columns (D88, D108)', () => {
     vi.unstubAllGlobals();
   });
 
-  it('keeps one column on a narrow screen, and measures nothing', () => {
-    expect(body(false, true)).toEqual({ columns: null, measured: null });
+  it('tries columns on a narrow screen too: the text decides whether they fit', () => {
+    // A tablet held upright, or big enough a phone: a song of short lines may fit two.
+    expect(body(false, true).measured).not.toBeNull();
   });
 
   it('keeps one column when the reader turned columns off', () => {

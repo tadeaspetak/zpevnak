@@ -19,7 +19,14 @@ const song = parseSong(
 
 function sheet(showChords: boolean) {
   return renderApp(
-    <SongSheet song={song} fontScale={1} showDiagrams showChords={showChords} />,
+    // One column: the hidden copy measured for columns would hold the same text twice.
+    <SongSheet
+      song={song}
+      fontScale={1}
+      showDiagrams
+      showChords={showChords}
+      showColumns={false}
+    />,
   );
 }
 
@@ -49,6 +56,7 @@ describe('SongSheet: a chord on a pause', () => {
         fontScale={1}
         showDiagrams={false}
         showChords
+        showColumns={false}
       />,
     );
     const pause = container.querySelector('[data-overhang]');
@@ -76,6 +84,7 @@ describe('SongSheet: choruses', () => {
         fontScale={1}
         showDiagrams={false}
         showChords
+        showColumns={false}
       />,
     );
     expect(screen.getAllByText('Refrén')).toHaveLength(2);

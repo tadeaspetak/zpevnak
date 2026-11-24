@@ -79,21 +79,16 @@
   display: block;
 }
 
-/* Two columns only where they fit: a tablet in landscape or a laptop, and only when the whole
-   song fits the screen that way (SongSheet measures it on a hidden copy). */
+/* Two columns only where they fit: no line wraps in its column at this text size, and the whole
+   song fits the screen that way, whatever the screen (SongSheet measures it on a hidden copy). */
 .bodyColumns {
   display: block;
+  column-count: 2;
+  column-gap: 3rem;
 }
 
-@media (min-width: $mantine-breakpoint-md) {
-  .bodyColumns {
-    column-count: 2;
-    column-gap: 3rem;
-  }
-
-  .columnBreak {
-    break-after: column;
-  }
+.columnBreak {
+  break-after: column;
 }
 
 .measure {
