@@ -59,6 +59,16 @@ describe('privateSongsNotSent (D127)', () => {
 });
 
 describe('mergePlaylists', () => {
+  it('keeps a playlist joined while the fetch ran, and one left stays gone', () => {
+    // Signing up from an invite: the sync starts, the join lands first, the answer predates it.
+    const local = new Map([[5, playlist(5, [])]]);
+    expect([...mergePlaylists(local, [], new Set([5])).keys()]).toEqual([5]);
+    // Left meanwhile: the answer still has it, the device doesn't.
+    expect([
+      ...mergePlaylists(new Map(), [playlist(6, [])], new Set([6])).keys(),
+    ]).toEqual([]);
+  });
+
   it('takes the fetched playlists, and drops ones that are gone', () => {
     const local = new Map([
       [1, playlist(1, [1])],

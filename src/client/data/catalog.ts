@@ -93,6 +93,8 @@ export function privateSongsNotSent(
 
 /** Songs put into the catalog since the running sync started (`privateSongsNotSent`). */
 const putDuringSync = new Set<number>();
+/** Playlists put into the catalog, or taken out, since the running sync started. */
+const playlistsPutDuringSync = new Set<number>();
 
 /** The songs after a sync: the delta applied, or, for a new viewer, the delta alone. */
 export function mergeSongs(
@@ -109,12 +111,24 @@ export function mergeSongs(
 /**
  * The playlists after a fetch of them all. One this device changed since the fetch left (its
  * own edit came back first) keeps the newer copy: an answer that was on its way doesn't undo it.
+ * One put here or taken away while the fetch ran (`putMeanwhile`: joined by an invite, left)
+ * stays as it is here: the answer may predate it.
  */
 export function mergePlaylists(
   local: Map<number, PlaylistRecord>,
   fetched: PlaylistRecord[],
+  putMeanwhile: ReadonlySet<number> = new Set(),
 ): Map<number, PlaylistRecord> {
-  return new Map(fetched.map((p) => [p.id, newer(local.get(p.id), p)]));
+  const merged = new Map(fetched.map((p) => [p.id, newer(local.get(p.id), p)]));
+  for (const id of putMeanwhile) {
+    const mine = local.get(id);
+    if (mine) {
+      merged.set(id, newer(mine, merged.get(id) ?? mine));
+    } else {
+      merged.delete(id);
+    }
+  }
+  return merged;
 }
 
 function newer(
@@ -141,6 +155,7 @@ async function runSync(viewer: number | null) {
       ]);
     }
     putDuringSync.clear();
+    playlistsPutDuringSync.clear();
     const [songDelta, playlists] = await Promise.all([
       trpcClient.songs.sync.query({ since: replaceAll ? null : cursor }),
       trpcClient.playlists.all.query(),
@@ -155,7 +170,7 @@ async function runSync(viewer: number | null) {
     };
     update({
       songs: mergeSongs(state.songs, changes, replaceAll),
-      playlists: mergePlaylists(state.playlists, playlists),
+      playlists: mergePlaylists(state.playlists, playlists, playlistsPutDuringSync),
       synced: true,
     });
     await Promise.all([
@@ -220,6 +235,7 @@ export function dropSong(id: number) {
  * the copy here (a page's fetch overtaken by an edit) is ignored.
  */
 export function putPlaylist(id: number, playlist: PlaylistRecord | null) {
+  playlistsPutDuringSync.add(id);
   const playlists = new Map(state.playlists);
   if (playlist) {
     playlists.set(id, newer(playlists.get(id), playlist));
