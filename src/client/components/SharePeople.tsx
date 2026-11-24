@@ -100,11 +100,14 @@ export function SharePeople({
   const people = useRef<HTMLDivElement>(null);
   // Where the keyboard goes once a row has changed under it: never to the next person's ×,
   // where a second Enter would take them out too.
-  const focusOn = (selector: string) =>
+  // The row may not be redrawn yet on the next frame (a slow phone): wait a few for it.
+  const focusOn = (selector: string, framesLeft = 10) =>
     requestAnimationFrame(() => {
       const target = people.current?.querySelector<HTMLElement>(selector);
       if (target) {
         target.focus();
+      } else if (framesLeft > 0) {
+        focusOn(selector, framesLeft - 1);
       } else {
         refocusWithin(people.current);
       }
