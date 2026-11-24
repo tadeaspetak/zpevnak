@@ -129,6 +129,7 @@ describe('playlists', () => {
         'ownerName',
         'role',
         'songIds',
+        'songKeys',
         'updatedAt',
       ].sort(),
     );
@@ -743,5 +744,87 @@ describe('a rejected song in a playlist', () => {
     expect(await callerFor(null).songs.byId({ id: c.id })).toMatchObject({
       status: 'rejected',
     });
+  });
+});
+
+describe('a key per playlist (D131)', () => {
+  /** A playlist of the owner's with songs a and b, a collaborator and a reader in it. */
+  async function band() {
+    const s = await shared();
+    const reader = await createUser();
+    const { token } = await callerFor(s.owner).sharing.invite({
+      kind: 'playlist',
+      id: s.playlist.id,
+      role: 'viewer',
+    });
+    await callerFor(reader).sharing.join({ token });
+    return { ...s, reader };
+  }
+
+  it('is set by whoever may edit the playlist, and everyone in it gets it', async () => {
+    const { collaborator, reader, playlist, a } = await band();
+    await expect(
+      callerFor(collaborator).playlists.setSongKey({
+        id: playlist.id,
+        songId: a.id,
+        semitones: -2,
+        from: 9,
+      }),
+    ).resolves.toMatchObject({ songKeys: { [a.id]: { semitones: -2, from: 9 } } });
+    for (const who of [reader, collaborator]) {
+      expect((await callerFor(who).playlists.byId({ id: playlist.id })).songKeys).toEqual(
+        {
+          [a.id]: { semitones: -2, from: 9 },
+        },
+      );
+    }
+    // And in the sync of all playlists, as the device gets it.
+    const all = await callerFor(reader).playlists.all();
+    expect(all.find((p) => p.id === playlist.id)?.songKeys).toEqual({
+      [a.id]: { semitones: -2, from: 9 },
+    });
+  });
+
+  it('not by a reader, nor by anyone outside', async () => {
+    const { reader, stranger, playlist, a } = await band();
+    const key = { id: playlist.id, songId: a.id, semitones: 2, from: 9 };
+    await expect(callerFor(reader).playlists.setSongKey(key)).rejects.toThrow(
+      'FORBIDDEN',
+    );
+    await expect(callerFor(stranger).playlists.setSongKey(key)).rejects.toThrow(
+      'NOT_FOUND',
+    );
+  });
+
+  it('only for a song in the playlist', async () => {
+    const { owner, playlist, c } = await band();
+    await expect(
+      callerFor(owner).playlists.setSongKey({
+        id: playlist.id,
+        songId: c.id,
+        semitones: 2,
+        from: null,
+      }),
+    ).rejects.toThrow('NOT_FOUND');
+  });
+
+  it('stays through a reorder, goes back to the song’s own at 0, and leaves with the song', async () => {
+    const { owner, playlist, a, b } = await band();
+    const api = callerFor(owner).playlists;
+    await api.setSongKey({ id: playlist.id, songId: a.id, semitones: 3, from: 0 });
+    await api.edit({
+      id: playlist.id,
+      op: { type: 'move', songId: a.id, from: 0, to: 1 },
+    });
+    expect((await api.byId({ id: playlist.id })).songKeys).toEqual({
+      [a.id]: { semitones: 3, from: 0 },
+    });
+    await api.setSongKey({ id: playlist.id, songId: b.id, semitones: 5, from: null });
+    await api.setSongKey({ id: playlist.id, songId: b.id, semitones: 0, from: null });
+    expect(Object.keys((await api.byId({ id: playlist.id })).songKeys)).toEqual([
+      String(a.id),
+    ]);
+    await api.edit({ id: playlist.id, op: { type: 'remove', songId: a.id, index: 1 } });
+    expect((await api.byId({ id: playlist.id })).songKeys).toEqual({});
   });
 });

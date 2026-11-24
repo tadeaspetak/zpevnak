@@ -107,6 +107,38 @@ export function transposeSource(source: string, semitones: number): string {
 }
 
 /**
+ * A transposition kept apart from the song's text (a device's, D24; a playlist's, D131):
+ * semitones, and the pitch the song started from when they were set (`songPitch`), so it can
+ * follow the song when its text changes key (D119). Semitones alone: set on a song that names
+ * no key, or on a device before the pitch was kept.
+ */
+export type KeyShift = number | { semitones: number; from: number | null };
+
+/**
+ * How far to transpose a song that now starts from `from`, for `shift`. Saved in another key
+ * since (D119), the song keeps sounding where it was put: "+3 from A" is "±0" once the text is
+ * in C.
+ */
+export function semitonesFor(shift: KeyShift | undefined, from: number | null): number {
+  if (shift === undefined) {
+    return 0;
+  }
+  if (typeof shift === 'number') {
+    return shift;
+  }
+  if (from === null || shift.from === null || from === shift.from) {
+    return shift.semitones;
+  }
+  return nearest(shift.semitones + shift.from - from);
+}
+
+/** A shift the nearer way round, within ±6: −5 rather than +7. */
+export function nearest(semitones: number): number {
+  const moved = ((semitones % 12) + 12) % 12;
+  return moved > 6 ? moved - 12 : moved;
+}
+
+/**
  * The pitch class a song starts from: its key, or else its first chord. A transposition kept on
  * a device is relative to it, so it can follow the song when the song's text changes key.
  */

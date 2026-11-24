@@ -28,7 +28,8 @@ import { useFreshPlaylist } from '../data/freshPlaylist.ts';
 import { usePlaylistEdits } from '../data/playlistEdits.ts';
 import { playlistFacts } from '../data/playlistFacts.ts';
 import { leavePlaylist, usePlayer } from '../data/session.ts';
-import type { PlaylistRecord } from '../data/store.ts';
+import type { PlaylistRecord, SongRecord } from '../data/store.ts';
+import { keyUnder } from '../data/songText.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc, trpcClient } from '../trpc.ts';
@@ -214,12 +215,11 @@ export function PlaylistPage() {
                     to={url.playlistSong(playlist, position)}
                     active={currentPosition === position}
                     detail={
-                      // Its people read it; a public playlist's visitors don't (D128).
-                      playlist.isPublic && song.status === 'private' ? (
-                        <Text size="xs" c="dimmed">
-                          {t('songs.notForVisitors')}
-                        </Text>
-                      ) : undefined
+                      <SongInPlaylist
+                        song={song}
+                        shift={playlist.songKeys[songId]}
+                        isPublic={playlist.isPublic}
+                      />
                     }
                     leading={
                       <Position n={position} active={currentPosition === position} />
@@ -311,4 +311,30 @@ function PlaylistSettings({
       </form>
     </Stack>
   );
+}
+
+/**
+ * What a song is in this playlist apart from itself: the key the playlist plays it in (D131),
+ * and, private in a public playlist, that its visitors don't see it (D128).
+ */
+function SongInPlaylist({
+  song,
+  shift,
+  isPublic,
+}: {
+  song: SongRecord;
+  shift: PlaylistRecord['songKeys'][number] | undefined;
+  isPublic: boolean;
+}) {
+  const { t } = useI18n();
+  const key = shift ? keyUnder(song, shift) : null;
+  const lines = [
+    shift ? (key ? t('playlists.songKey', { key }) : t('playlists.songShifted')) : null,
+    isPublic && song.status === 'private' ? t('songs.notForVisitors') : null,
+  ].filter(Boolean);
+  return lines.length > 0 ? (
+    <Text size="xs" c="dimmed">
+      {lines.join(' · ')}
+    </Text>
+  ) : null;
 }

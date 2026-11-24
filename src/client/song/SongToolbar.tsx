@@ -16,6 +16,7 @@ import {
   IconEdit,
   IconMessageReport,
   IconMinus,
+  IconPlaylist,
   IconPlaylistAdd,
   IconPlus,
   IconTag,
@@ -42,9 +43,13 @@ type Props = {
   backTo: string;
   backLabel: string;
   song: SongRecord;
-  originalKey: string | null;
   shownKey: string | null;
+  /** The key it starts from: a playlist's (D131), else the song's own; the way back goes there. */
+  baseKey: string | null;
+  /** How far it is transposed in all, from the song's text. */
   semitones: number;
+  /** The player's own share of that, kept on this device; the rest is the playlist's. */
+  own: number;
   /** The pitch the song starts from (`songPitch`), which a transposition is kept against. */
   pitch: number | null;
   hasDiagrams: boolean;
@@ -55,6 +60,14 @@ type Props = {
   canAddToPlaylist: boolean;
   /** Out of the way: scrolled away, or the reader tapped the song (`useHideOnScroll`). */
   hidden: boolean;
+  /** Played inside a playlist: its key for the song can be set there, by whoever edits it. */
+  playlist: {
+    name: string;
+    hasKey: boolean;
+    canSetKey: boolean;
+    /** Plays the song `semitones` from its text in this playlist; 0 in its own key. */
+    setKey: (semitones: number) => void;
+  } | null;
 };
 
 /**
@@ -66,15 +79,17 @@ export function SongToolbar(props: Props) {
     backTo,
     backLabel,
     song,
-    originalKey,
     shownKey,
+    baseKey,
     semitones,
+    own,
     pitch,
     hasDiagrams,
     canEdit,
     canDelete,
     canAddToPlaylist,
     hidden,
+    playlist,
   } = props;
   const { t } = useI18n();
   const prefs = usePrefs();
@@ -92,8 +107,9 @@ export function SongToolbar(props: Props) {
   const keyLabel =
     shownKey ??
     (semitones === 0 ? '±0' : semitones > 0 ? `+${semitones}` : `−${-semitones}`);
-  const resetLabel = originalKey
-    ? t('song.backToKey', { key: originalKey })
+  // Back to where it starts: the playlist's key there, else the song's own.
+  const resetLabel = baseKey
+    ? t('song.backToKey', { key: baseKey })
     : t('song.transposeReset');
 
   return (
@@ -115,15 +131,16 @@ export function SongToolbar(props: Props) {
           >
             <ActionIcon
               size="lg"
-              onClick={() => prefs.setTranspose(song.id, semitones - 1, pitch)}
+              onClick={() => prefs.setTranspose(song.id, own - 1, pitch)}
               aria-label={t('song.transposeDown')}
             >
               <IconMinus size={18} />
             </ActionIcon>
-            {/* In the song's own key, the key only shows. Transposed (from last time too,
-                D24), it turns into an orange button that takes the song back: it can't go
-                unnoticed, and the way back is where the eye already is. */}
-            {semitones === 0 ? (
+            {/* In the key it starts from (its own, or its playlist's), the key only shows.
+                Transposed by the player (from last time too, D24), it turns into an orange
+                button that takes the song back: it can't go unnoticed, and the way back is
+                where the eye already is. */}
+            {own === 0 ? (
               <span className={classes.key}>
                 <IconClef size={18} aria-hidden />
                 <Text fw={700} size="sm" span>
@@ -147,7 +164,7 @@ export function SongToolbar(props: Props) {
             )}
             <ActionIcon
               size="lg"
-              onClick={() => prefs.setTranspose(song.id, semitones + 1, pitch)}
+              onClick={() => prefs.setTranspose(song.id, own + 1, pitch)}
               aria-label={t('song.transposeUp')}
             >
               <IconPlus size={18} />
@@ -215,6 +232,26 @@ export function SongToolbar(props: Props) {
                   {shownKey
                     ? t('song.saveKey', { key: shownKey })
                     : t('song.saveTransposed')}
+                </Menu.Item>
+              )}
+              {/* In a playlist, its own key for the song (D131), by whoever edits it: the key
+                  the player came to, or back to the song's own. */}
+              {playlist?.canSetKey && own !== 0 && (
+                <Menu.Item
+                  leftSection={<IconPlaylist size={16} />}
+                  onClick={() => playlist.setKey(semitones)}
+                >
+                  {shownKey
+                    ? t('song.playKeyInPlaylist', { key: shownKey })
+                    : t('song.playShiftInPlaylist')}
+                </Menu.Item>
+              )}
+              {playlist?.canSetKey && playlist.hasKey && (
+                <Menu.Item
+                  leftSection={<IconPlaylist size={16} />}
+                  onClick={() => playlist.setKey(0)}
+                >
+                  {t('song.playOwnKeyInPlaylist')}
                 </Menu.Item>
               )}
               {canEdit && (

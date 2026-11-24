@@ -510,6 +510,16 @@ From the first UX walk of the song view and a playlist session (2026-11-10): _In
   buttons (snapping), and keeps it. The page itself doesn't zoom there (`touch-action: pan-x
 pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling sideways. One
   finger still scrolls and swipes between songs. (2026-11-24)
+- **D131. A playlist can play a song in its own key.** The playlist's key is everyone's
+  starting point there (its people's and a public one's visitors'); a player's own
+  transposition shifts from it, on their device only, the same shift in and out of playlists.
+  Kept per playlist and song (`playlist_song_keys`), not per place, as semitones from the
+  pitch the song started from, so a key later saved for everyone (D119) keeps the playlist
+  sounding the same; it leaves with the song. Whoever may edit the playlist sets it, from the
+  song: "Hrát v G v tomhle playlistu", or back with "Hrát v tónině písničky v tomhle
+  playlistu"; "Uložit v tónině G pro všechny" (D119) now says for whom. The way back on the
+  key goes to the playlist's key. The playlist's list says "Hraje se v G". No per-user key
+  across devices: per device is enough for now. (2026-11-24)
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed

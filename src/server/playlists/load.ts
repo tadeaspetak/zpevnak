@@ -15,6 +15,7 @@ type PlaylistRow = {
   listmate_count: number;
   /** The viewer's role if they joined; null if they didn't (or own it). */
   joined_role: JoinRole | null;
+  song_keys: Record<string, { semitones: number; from: number | null }>;
 };
 
 const PLAYLIST_SELECT = /* sql */ `
@@ -31,7 +32,19 @@ const PLAYLIST_SELECT = /* sql */ `
          (
            SELECT c.role FROM playlist_collaborators c
            WHERE c.playlist_id = p.id AND c.user_id = :viewerId
-         ) AS joined_role
+         ) AS joined_role,
+         -- The keys it plays its songs in (D131), for the songs the viewer may read only.
+         (
+           SELECT coalesce(
+             json_object_agg(
+               k.song_id,
+               json_build_object('semitones', k.semitones, 'from', k.from_pitch)
+             ),
+             '{}'
+           )
+           FROM playlist_song_keys k JOIN songs s ON s.id = k.song_id
+           WHERE k.playlist_id = p.id AND ${SONG_READABLE}
+         ) AS song_keys
   FROM playlists p
   JOIN users u ON u.id = p.owner_id
   LEFT JOIN playlist_songs ps ON ps.playlist_id = p.id
@@ -62,6 +75,13 @@ function toPlaylistRecord(row: PlaylistRow, viewer: SessionUser | null) {
     // it is shared with, readers too.
     listmateCount: role ? row.listmate_count : null,
     songIds: row.song_ids.map(Number),
+    /** Song id → the key this playlist plays it in, where not the song's own (D131). */
+    songKeys: Object.fromEntries(
+      Object.entries(row.song_keys).map(([songId, key]) => [
+        Number(songId),
+        { semitones: key.semitones, from: key.from },
+      ]),
+    ) as Record<number, { semitones: number; from: number | null }>,
     updatedAt: row.updated_at.toISOString(),
   };
 }

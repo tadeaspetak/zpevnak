@@ -84,8 +84,14 @@ export const en: Record<keyof typeof cs, string> = {
   'song.deleteConfirm': "Do you really want to delete “{title}”? It can't be taken back.",
   'song.deleteImpact': 'It also leaves the playlists it is in ({count}).',
   'song.deleted': 'The song is deleted.',
-  'song.saveKey': 'Save in {key}',
-  'song.saveTransposed': 'Save transposed',
+  'song.saveKey': 'Save in {key} for everyone',
+  'song.saveTransposed': 'Save transposed for everyone',
+  'song.playlistKeyCleared': '“{name}” now plays it in the song’s own key.',
+  'song.playlistShiftSet': '“{name}” now plays it like this.',
+  'song.playlistKeySet': '“{name}” now plays it in {key}.',
+  'song.playOwnKeyInPlaylist': 'Play in the song’s own key in this playlist',
+  'song.playShiftInPlaylist': 'Play it like this in this playlist',
+  'song.playKeyInPlaylist': 'Play in {key} in this playlist',
   'song.saveKeyBody':
     'The song’s chords are rewritten for good, for everyone. The previous text stays in the song’s history.',
   'song.saveKeyDiagrams':
@@ -152,6 +158,8 @@ export const en: Record<keyof typeof cs, string> = {
   'playlists.notFound': "This playlist isn't here, or it's private.",
   'playlists.notOnDevice':
     'This playlist isn’t on this device. It will show once you’re online.',
+  'playlists.songKey': 'Played in {key}',
+  'playlists.songShifted': 'Played in another key',
   'playlists.signInToCreate': 'Log in to make your own playlists.',
   'sharing.role.owner': 'Owner',
   'sharing.role.collaborator': 'Can edit',

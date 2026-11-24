@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { FONT_SCALES, semitonesFor, usePinnedTranspose, usePrefs } from '../prefs.ts';
+import { semitonesFor } from '#shared/chordpro/transpose.ts';
+import { FONT_SCALES, usePinnedTranspose, usePrefs } from '../prefs.ts';
 
 describe('usePrefs', () => {
   it('keeps a transposition within an octave, and forgets it back in the key', () => {

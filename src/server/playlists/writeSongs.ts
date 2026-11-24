@@ -55,7 +55,10 @@ export async function assertSongsUsable(
   }
 }
 
-/** Replaces the playlist's songs with `songIds`, in that order. */
+/**
+ * Replaces the playlist's songs with `songIds`, in that order. A song that left the playlist
+ * takes its key there with it (D131).
+ */
 export async function writeSongs(
   trx: Knex.Transaction,
   playlistId: number,
@@ -74,4 +77,11 @@ export async function writeSongs(
       { playlistId, songIds },
     );
   }
+  await trx.raw(
+    /* sql */ `
+      DELETE FROM playlist_song_keys
+      WHERE playlist_id = :playlistId AND NOT (song_id = ANY(:songIds::bigint[]))
+    `,
+    { playlistId, songIds },
+  );
 }

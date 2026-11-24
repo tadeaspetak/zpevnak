@@ -1,8 +1,16 @@
+import { type NoteSystem, transposeKey } from '#shared/chordpro/chord.ts';
 import { lyricsText, parseSong } from '#shared/chordpro/parse.ts';
 import { tagKey, tagsIn } from '#shared/chordpro/tags.ts';
+import { type KeyShift, semitonesFor, songPitch } from '#shared/chordpro/transpose.ts';
 import type { SongRecord } from './store.ts';
 
-type SongText = { lyrics: string; tags: string[] };
+type SongText = {
+  lyrics: string;
+  tags: string[];
+  key: string | null;
+  pitch: number | null;
+  noteSystem: NoteSystem;
+};
 
 const cache = new Map<string, SongText>();
 
@@ -11,7 +19,14 @@ export function songText(song: SongRecord): SongText {
   const key = `${song.id}:${song.updatedAt}`;
   let text = cache.get(key);
   if (text === undefined) {
-    text = { lyrics: lyricsText(parseSong(song.source)), tags: tagsIn(song.source) };
+    const parsed = parseSong(song.source);
+    text = {
+      lyrics: lyricsText(parsed),
+      tags: tagsIn(song.source),
+      key: parsed.meta.key,
+      pitch: songPitch(parsed),
+      noteSystem: parsed.noteSystem,
+    };
     cache.set(key, text);
   }
   return text;
@@ -26,4 +41,14 @@ export function byline(artist: string | null, tags: string[]): string | null {
   const unique = tags.filter((tag) => !seen.has(tagKey(tag)) && seen.add(tagKey(tag)));
   const parts = [artist, unique.join(', ')].filter(Boolean);
   return parts.length > 0 ? parts.join(' | ') : null;
+}
+
+/**
+ * The key a song is played in under `shift` (a playlist's, D131), spelled for the song: null
+ * for a song that names no key, or no shift at all.
+ */
+export function keyUnder(song: SongRecord, shift: KeyShift | undefined): string | null {
+  const { key, pitch, noteSystem } = songText(song);
+  const semitones = semitonesFor(shift, pitch);
+  return key && semitones !== 0 ? transposeKey(key, semitones, noteSystem) : null;
 }

@@ -273,3 +273,41 @@ test('a bandmate in a playlist plays the owner’s private song in it (D128)', a
   await bandmate.getByRole('link', { name: new RegExp(title) }).click();
   await expect(bandmate.getByRole('heading', { level: 1, name: title })).toBeVisible();
 });
+
+test('a band plays a song in its own key in a playlist, and a reader sees it there (D131)', async ({
+  browser,
+}) => {
+  const owner = await signedIn(browser, 'user@zpevnak.test');
+  const title = `Tónina ${Date.now()}`;
+  const created = await owner.request.post('/trpc/songs.create', {
+    data: { source: `{title: ${title}}\n{key: A}\n\nla [A]la [E]la` },
+  });
+  const song = (await created.json()).result.data as { id: number };
+  const { playlist } = await playlistWithInvite(owner, `Kapela ${Date.now()}`);
+  await owner.request.post('/trpc/playlists.edit', {
+    data: { id: playlist.id, op: { type: 'add', songId: song.id } },
+  });
+  const invite = await owner.request.post('/trpc/sharing.invite', {
+    data: { kind: 'playlist', id: playlist.id, role: 'viewer' },
+  });
+  const { token } = (await invite.json()).result.data as { token: string };
+
+  // In the playlist, two semitones up, and kept there for the band.
+  await owner.goto(url.playlistSong(playlist, 1));
+  await owner.getByRole('button', { name: 'Up a semitone' }).click();
+  await owner.getByRole('button', { name: 'Up a semitone' }).click();
+  await owner.getByRole('button', { name: 'More options' }).click();
+  await owner.getByRole('menuitem', { name: 'Play in B in this playlist' }).click();
+  await expect(owner.getByText(/now plays it in B/)).toBeVisible();
+  // The playlist's key now: shown plainly, not as the player's own transposition.
+  await expect(owner.getByRole('button', { name: /Back to/ })).toHaveCount(0);
+
+  const reader = await signedIn(browser, 'editor@zpevnak.test');
+  await reader.goto(url.join(token));
+  await expect(reader.getByText('Played in B')).toBeVisible();
+  await reader.goto(url.playlistSong(playlist, 1));
+  await expect(reader.getByRole('group', { name: 'Transpose' })).toContainText('B');
+  // Outside the playlist, the song is in its own key.
+  await reader.goto(url.song({ id: song.id, title, artist: null }));
+  await expect(reader.getByRole('group', { name: 'Transpose' })).toContainText('A');
+});

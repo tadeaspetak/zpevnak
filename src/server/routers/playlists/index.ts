@@ -6,6 +6,7 @@ import { deletePlaylist } from './playlists.delete.ts';
 import { edit } from './playlists.edit.ts';
 import { rename } from './playlists.rename.ts';
 import { setPublic } from './playlists.setPublic.ts';
+import { setSongKey } from './playlists.setSongKey.ts';
 
 // Sharing (invites, people, roles) is the sharing router's, for songs too.
 export const playlistsRouter = router({
@@ -15,5 +16,6 @@ export const playlistsRouter = router({
   edit,
   rename,
   setPublic,
+  setSongKey,
   delete: deletePlaylist,
 });

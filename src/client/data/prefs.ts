@@ -1,5 +1,6 @@
 /** How the player likes songs shown, per device. */
 import { useCallback, useEffect, useSyncExternalStore } from 'react';
+import { type KeyShift } from '#shared/chordpro/transpose.ts';
 import { readLocalJson, writeLocalJson } from './local.ts';
 
 type Prefs = {
@@ -10,36 +11,8 @@ type Prefs = {
   /** Two columns for songs that ask for them. Off means a long song just scrolls down. */
   showColumns: boolean;
   /** Song id → how far it's transposed, for the songs someone transposed. */
-  transpose: Record<number, StoredTranspose>;
+  transpose: Record<number, KeyShift>;
 };
-
-/**
- * Semitones, and the pitch the song started from when they were set (`songPitch`). Saved from
- * before that pitch was kept: semitones alone.
- */
-type StoredTranspose = number | { semitones: number; from: number };
-
-/**
- * How far to transpose a song that now starts from `from`. Saved in another key since (D119),
- * the song keeps sounding where the player put it: "+3 from A" is "±0" once the text is in C.
- */
-export function semitonesFor(
-  stored: StoredTranspose | undefined,
-  from: number | null,
-): number {
-  if (stored === undefined) {
-    return 0;
-  }
-  if (typeof stored === 'number') {
-    return stored;
-  }
-  if (from === null || from === stored.from) {
-    return stored.semitones;
-  }
-  // The nearer way round: −5 rather than +7.
-  const moved = (((stored.semitones + stored.from - from) % 12) + 12) % 12;
-  return moved > 6 ? moved - 12 : moved;
-}
 
 export const FONT_SCALES = [0.8, 0.9, 1, 1.15, 1.3, 1.5, 1.75, 2];
 

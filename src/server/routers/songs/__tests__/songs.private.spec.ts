@@ -422,11 +422,18 @@ describe('a playlist shares its private songs with its people (D128)', () => {
         id: playlist.id,
         op: { type: 'add', songId },
       });
+      // Its key in the playlist (D131) is no way round it either.
+      await callerFor(owner).playlists.setSongKey({
+        id: playlist.id,
+        songId,
+        semitones: 2,
+        from: 0,
+      });
     }
     for (const user of [null, stranger, editor]) {
-      expect((await callerFor(user).playlists.byId({ id: playlist.id })).songIds).toEqual(
-        [other.id],
-      );
+      const seen = await callerFor(user).playlists.byId({ id: playlist.id });
+      expect(seen.songIds).toEqual([other.id]);
+      expect(Object.keys(seen.songKeys)).toEqual([String(other.id)]);
       await expect(callerFor(user).songs.byId({ id: song.id })).rejects.toThrow(
         'NOT_FOUND',
       );

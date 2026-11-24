@@ -1,14 +1,22 @@
 import { Alert, Button, Center, Group, Stack, Text } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router';
 import type { SongLinkState } from '../components/SongRow.tsx';
 import { parseSong } from '#shared/chordpro/parse.ts';
-import { songPitch, transposeSong } from '#shared/chordpro/transpose.ts';
 import { PlaylistPill } from '../components/PlaylistPill.tsx';
-import { useCatalog } from '../data/catalog.ts';
-import { semitonesFor, usePinnedTranspose, usePrefs } from '../data/prefs.ts';
+import { putPlaylist, useCatalog } from '../data/catalog.ts';
+import { transposeKey } from '#shared/chordpro/chord.ts';
+import {
+  nearest,
+  semitonesFor,
+  songPitch,
+  transposeSong,
+} from '#shared/chordpro/transpose.ts';
+import { editsAsMember } from '#shared/roles.ts';
+import { usePinnedTranspose, usePrefs } from '../data/prefs.ts';
 import { playPlaylist, songPlayed, usePlayer } from '../data/session.ts';
-import type { SongRecord } from '../data/store.ts';
+import type { PlaylistRecord, SongRecord } from '../data/store.ts';
 import { isPlainTap, useHideOnScroll } from '../hooks/useHideOnScroll.ts';
 import { useKeys } from '../hooks/useKeys.ts';
 import { useMe } from '../hooks/useMe.ts';
@@ -98,6 +106,8 @@ export function PlaylistSongPage() {
         id: playlist.id,
         name: playlist.name,
         songIds: playlist.songIds,
+        songKeys: playlist.songKeys,
+        role: playlist.role,
         position,
         removed: followed?.removed ?? false,
       }}
@@ -109,6 +119,9 @@ type PlaylistContext = {
   id: number;
   name: string;
   songIds: number[];
+  /** The keys the playlist plays its songs in, where not their own (D131). */
+  songKeys: PlaylistRecord['songKeys'];
+  role: PlaylistRecord['role'];
   position: number;
   /** Someone took the song out while it played: it stays, and next is the song after it. */
   removed: boolean;
@@ -138,7 +151,7 @@ function SongPlayer({
   songId: number | null;
   playlist: PlaylistContext | null;
 }) {
-  const { t } = useI18n();
+  const { t, tError } = useI18n();
   const navigate = useNavigate();
   const { song, pending, offline } = useSong(songId);
   const { session } = usePlayer();
@@ -152,7 +165,16 @@ function SongPlayer({
   const parsed = useMemo(() => (song ? parseSong(song.source) : null), [song]);
   const pitch = parsed ? songPitch(parsed) : null;
   usePinnedTranspose(song?.id ?? null, pitch);
-  const semitones = song ? semitonesFor(prefs.transpose[song.id], pitch) : 0;
+  // Where it starts: the playlist's key (D131), else the song's own. The player's own shift,
+  // kept on this device, goes on top of either, relative to the song's text.
+  const base = playlist && song ? semitonesFor(playlist.songKeys[song.id], pitch) : 0;
+  const own = song ? semitonesFor(prefs.transpose[song.id], pitch) : 0;
+  const semitones = nearest(base + own);
+  const baseKey =
+    parsed?.meta.key && base !== 0
+      ? transposeKey(parsed.meta.key, base, parsed.noteSystem)
+      : (parsed?.meta.key ?? null);
+  const setSongKey = trpc.playlists.setSongKey.useMutation();
   const shown = useMemo(
     () => (parsed ? transposeSong(parsed, semitones) : null),
     [parsed, semitones],
@@ -248,10 +270,44 @@ function SongPlayer({
         backTo={back.to}
         backLabel={back.label}
         song={song}
-        originalKey={parsed?.meta.key ?? null}
         shownKey={shown.meta.key}
+        baseKey={baseKey}
         semitones={semitones}
+        own={own}
         pitch={pitch}
+        playlist={
+          playlist
+            ? {
+                name: playlist.name,
+                hasKey: base !== 0,
+                canSetKey: editsAsMember(playlist.role) && Boolean(me?.emailVerified),
+                setKey: (shift: number) =>
+                  setSongKey.mutate(
+                    { id: playlist.id, songId: song.id, semitones: shift, from: pitch },
+                    {
+                      onSuccess: (record) => {
+                        putPlaylist(record.id, record);
+                        // It plays there from the playlist's key now: nothing left of one's own.
+                        prefs.setTranspose(song.id, 0, pitch);
+                        notifications.show({
+                          message:
+                            shift === 0
+                              ? t('song.playlistKeyCleared', { name: playlist.name })
+                              : shown.meta.key
+                                ? t('song.playlistKeySet', {
+                                    name: playlist.name,
+                                    key: shown.meta.key,
+                                  })
+                                : t('song.playlistShiftSet', { name: playlist.name }),
+                        });
+                      },
+                      onError: (error) =>
+                        notifications.show({ color: 'red', message: tError(error) }),
+                    },
+                  ),
+              }
+            : null
+        }
         hasDiagrams={(parsed?.definitions.length ?? 0) > 0}
         canEdit={canEdit}
         canDelete={canDeleteSong(me, song)}

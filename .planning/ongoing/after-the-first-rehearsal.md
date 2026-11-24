@@ -71,10 +71,12 @@ The first rehearsal with the app on music stands showed four things:
 
 Each ships on its own, gates green, committed locally; nothing is deployed without the owner.
 
-1. **Columns by the text** (smallest; started 2026-11-24).
-2. **Pinch for text size.**
-3. **Key per playlist:** migration, procedure, sync in the playlist record, the song view's
-   key, the menu, the playlist list.
+1. **Columns by the text (shipped, D129).**
+2. **Pinch for text size (shipped, D130).** As built: touch events on the window, as swiping
+   already uses (it ignores two fingers); checked with a real two-finger touch in Chromium.
+3. **Key per playlist (shipped, D131).** As built: the shift arithmetic (`semitonesFor`,
+   `KeyShift`, `nearest`) moved to `src/shared/chordpro/transpose.ts`, shared by a device's
+   transposition and a playlist's key.
 4. **Chord library and notation:** the shapes table and its script, the instrument switch, the
    notation setting, diagrams while transposed.
 5. **A code review** of the night's work (`/code-review`), its fixes.
