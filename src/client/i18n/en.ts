@@ -381,8 +381,8 @@ export const en: Record<keyof typeof cs, string> = {
   'songs.shareTitle': 'Sharing “{name}”',
   'songs.whoSees': 'Visibility',
   'songs.visibilityPrivate': 'Private',
-  'songs.privateWhat': 'Only you and your listmates see it',
-  'songs.privateWhatOthers': 'Only its owner and listmates see it',
+  'songs.privateWhat': 'You, your listmates and the people of its playlists',
+  'songs.privateWhatOthers': 'Its owner, listmates and the people of its playlists',
   'songs.visibilityPublic': 'Public',
   'songs.publicWhat': 'In the songbook for everyone, once approved',
   'songs.publishConfirm':
@@ -391,14 +391,20 @@ export const en: Record<keyof typeof cs, string> = {
   'songs.published': 'Published, waiting for approval.',
   'songs.madePrivate': 'The song is private again.',
   'songs.linkTitle': 'Link to the song',
-  'songs.linkPrivate': 'Opens it only for listmates.',
+  'songs.linkPrivate': 'Opens it only for listmates and the people of its playlists.',
   'songs.linkPublic': 'Anyone can look through it, no account needed.',
+  'songs.inPlaylists': 'In playlists',
+  'songs.playlistsRule':
+    'Whoever is in a playlist with this song can read it, not change it, those who join later too. It lasts while the song is in it, and you are too.',
+  'songs.inNoPlaylist': 'In none of your playlists yet.',
+  'songs.onlyYou': 'only you',
   'songs.cantGoPrivateEdited':
     'It can’t be private any more: someone else has worked on it.',
   'songs.cantGoPrivateUsed':
     'It can’t be private any more: it is in someone else’s playlist.',
   'songs.privateMark': 'Private',
-  'songs.seenByListmates': '{listmates} will see it too',
+  'songs.seenByListmates': '{listmates} will see it too, and whoever joins later',
+  'songs.seenByJoiners': 'Whoever joins the playlist will see it',
   'songs.notForVisitors': 'Visitors don’t see it',
   'songs.leave': 'Leave the song',
   'songs.leaveConfirm': 'Leave “{name}”? You can come back through the owner’s link.',

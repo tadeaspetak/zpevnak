@@ -1,10 +1,10 @@
-import { Button, Divider, Group, Modal, Paper, Stack, Text } from '@mantine/core';
+import { Anchor, Button, Divider, Group, Modal, Paper, Stack, Text } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconEye } from '@tabler/icons-react';
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { url } from '#shared/urls.ts';
-import { dropSong, putSong } from '../data/catalog.ts';
+import { dropSong, putSong, useCatalog } from '../data/catalog.ts';
 import type { SongRecord } from '../data/store.ts';
 import { useOnline } from '../hooks/useOnline.ts';
 import { useI18n } from '../i18n/index.tsx';
@@ -129,6 +129,8 @@ export function SongShareModal({ song, opened, onClose }: Props) {
           />
         </ShareSection>
 
+        {isPrivate && isOwner && <SongPlaylists song={song} />}
+
         {/* Mounted while the dialog is open: closing it hands any undo to a toast. */}
         {isPrivate && <SharePeople kind="song" id={song.id} isOwner={isOwner} />}
 
@@ -163,5 +165,43 @@ function LeaveSong({ song }: { song: SongRecord }) {
         }
       }}
     />
+  );
+}
+
+/**
+ * The other way a private song reaches people: the playlists it is in. Everyone in one reads it,
+ * those who join later too, for as long as the song is in it and its owner is (D128). The owner
+ * is in every one that counts, so this device knows them all.
+ */
+function SongPlaylists({ song }: { song: SongRecord }) {
+  const { t, tn, compare } = useI18n();
+  const { playlists } = useCatalog();
+  const holding = [...playlists.values()]
+    .filter((p) => p.songIds.includes(song.id))
+    .sort((a, b) => compare(a.name, b.name));
+  return (
+    <ShareSection title={t('songs.inPlaylists')} intro={t('songs.playlistsRule')}>
+      {holding.length === 0 ? (
+        <Text size="sm" c="dimmed">
+          {t('songs.inNoPlaylist')}
+        </Text>
+      ) : (
+        <Stack gap={4}>
+          {holding.map((p) => (
+            <Text key={p.id} size="sm">
+              <Anchor component={Link} to={url.playlist(p)} fw={600}>
+                {p.name}
+              </Anchor>
+              <Text span c="dimmed">
+                {' · '}
+                {p.listmateCount
+                  ? tn('playlists.collaborators', p.listmateCount)
+                  : t('songs.onlyYou')}
+              </Text>
+            </Text>
+          ))}
+        </Stack>
+      )}
+    </ShareSection>
   );
 }

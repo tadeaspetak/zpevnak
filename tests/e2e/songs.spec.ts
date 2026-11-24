@@ -141,7 +141,9 @@ test('an author keeps a song private, and shares it by the reading link (D127)',
   await author.getByRole('button', { name: 'More options' }).click();
   await author.getByRole('menuitem', { name: 'Sharing' }).click();
   await expect(
-    author.getByRole('radio', { name: /^Private\s*Only you and your listmates/ }),
+    author.getByRole('radio', {
+      name: /^Private\s*You, your listmates and the people of its playlists/,
+    }),
   ).toBeChecked();
   const readLink = author.getByRole('textbox', { name: 'Link to read' });
   await expect(readLink).toHaveValue(/\/join\/\S+$/);

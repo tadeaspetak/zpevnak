@@ -14,17 +14,25 @@ describe('PrivateSongReach (D128)', () => {
 
   it('tells a private song’s owner who else will read it, in Czech plural', () => {
     renderApp(<PrivateSongReach song={song('private', 'owner')} listmates={2} />);
-    expect(screen.getByText(/^Uvidí ji i 2.parťáci$/)).toBeTruthy();
+    expect(
+      screen.getByText(/^Uvidí ji i 2.parťáci, i kdo se přidá později$/),
+    ).toBeTruthy();
     cleanup();
     renderApp(<PrivateSongReach song={song('private', 'owner')} listmates={5} />);
-    expect(screen.getByText(/^Uvidí ji i 5.parťáků$/)).toBeTruthy();
+    expect(
+      screen.getByText(/^Uvidí ji i 5.parťáků, i kdo se přidá později$/),
+    ).toBeTruthy();
   });
 
-  it('says nothing where it reaches nobody new: a public song, someone else’s, nobody else', () => {
+  it('tells of those who join later, with nobody else in the playlist yet', () => {
+    renderApp(<PrivateSongReach song={song('private', 'owner')} listmates={0} />);
+    expect(screen.getByText('Uvidí ji každý, kdo se k playlistu přidá')).toBeTruthy();
+  });
+
+  it('says nothing to whom it isn’t news: a public song, someone else’s', () => {
     const quiet = [
       <PrivateSongReach key="a" song={song('verified', 'owner')} listmates={2} />,
       <PrivateSongReach key="b" song={song('private', 'viewer')} listmates={2} />,
-      <PrivateSongReach key="c" song={song('private', 'owner')} listmates={0} />,
     ];
     for (const ui of quiet) {
       const { container } = renderApp(ui);

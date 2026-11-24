@@ -496,7 +496,10 @@ From the first UX walk of the song view and a playlist session (2026-11-10): _In
   its owner is told who else will read it ("Uvidí ji i 2 parťáci"); on a public playlist its
   people see "Návštěvníci ji nevidí" under it. Each link in Sdílení says what it does: the
   link to read finds the playlist among one's own with its private songs, the plain link
-  doesn't (D126)._
+  doesn't (D126)._ _Explained 2026-11-24: the song's Sdílení lists the playlists it is in, with
+  who is in each, under the rule in one sentence (read, not change; later joiners too; while
+  the song and its owner are in it); the line under a playlist names later joiners, so it
+  shows even in a playlist with nobody else in it yet._
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed
