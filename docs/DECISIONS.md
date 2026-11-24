@@ -509,7 +509,9 @@ From the first UX walk of the song view and a playlist session (2026-11-10): _In
 - **D130. A pinch changes the text size** on the song, live, along the same steps as the size
   buttons (snapping), and keeps it. The page itself doesn't zoom there (`touch-action: pan-x
 pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling sideways. One
-  finger still scrolls and swipes between songs. (2026-11-24)
+  finger still scrolls and swipes between songs. (2026-11-24) _And the reader keeps their place: through a pinch the line under the fingers,
+  through the size buttons the line at the top, stays where it was, columns coming or going
+  included; that scroll doesn't hide the toolbar._
 - **D131. A playlist can play a song in its own key.** The playlist's key is everyone's
   starting point there (its people's and a public one's visitors'); a player's own
   transposition shifts from it, on their device only, the same shift in and out of playlists.

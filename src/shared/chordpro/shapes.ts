@@ -150,11 +150,17 @@ export function diagramsOf(
       chords.push(own.name);
     }
   }
-  return chords.map((chord) => {
+  const diagrams = chords.map((chord) => {
     const own =
       instrument === 'guitar'
         ? song.definitions.find((d) => d.name === unbracketed(chord))
         : undefined;
     return { chord, shape: own ?? shapeFor(chord, song.noteSystem, instrument) };
+  });
+  // A slash chord without a shape of its own shows its chord: once, where that chord comes.
+  const shown = new Set<string>();
+  return diagrams.filter(({ chord, shape }) => {
+    const name = shape?.name ?? chord;
+    return shown.has(name) ? false : Boolean(shown.add(name));
   });
 }

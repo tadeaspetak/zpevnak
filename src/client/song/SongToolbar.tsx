@@ -70,6 +70,11 @@ type Props = {
   } | null;
 };
 
+/** A shift for a song that names no key: "+2", "−3" (a real minus: a hyphen reads as a dash). */
+function shiftLabel(semitones: number): string {
+  return semitones === 0 ? '±0' : semitones > 0 ? `+${semitones}` : `−${-semitones}`;
+}
+
 /**
  * The only chrome over a song. It slides away while the reader scrolls into the song and
  * comes back on scrolling up, so the song gets the whole screen.
@@ -102,15 +107,16 @@ export function SongToolbar(props: Props) {
   const canOpenSharing = song.role !== null && (isPrivate || song.role === 'owner');
   const tags = songText(song).tags;
 
-  // A song without a {key} shows how far it's transposed instead. A real minus sign: a
-  // hyphen reads as a dash.
-  const keyLabel =
-    shownKey ??
-    (semitones === 0 ? '±0' : semitones > 0 ? `+${semitones}` : `−${-semitones}`);
-  // Back to where it starts: the playlist's key there, else the song's own.
+  // A song without a {key} shows how far it's transposed instead.
+  const keyLabel = shownKey ?? shiftLabel(semitones);
+  // Back to where it starts: the playlist's key there, else the song's own. A song that names
+  // no key goes back by its shift: to the playlist's ("+2"), else the original.
+  const base = semitones - own;
   const resetLabel = baseKey
     ? t('song.backToKey', { key: baseKey })
-    : t('song.transposeReset');
+    : base !== 0
+      ? t('song.backToKey', { key: shiftLabel(base) })
+      : t('song.transposeReset');
 
   return (
     <>

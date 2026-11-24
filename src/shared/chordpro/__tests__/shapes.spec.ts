@@ -110,4 +110,11 @@ describe('diagramsOf (D132)', () => {
     const diagrams = diagramsOf(song, 'ukulele');
     expect(diagrams[1]?.shape?.frets).toHaveLength(4);
   });
+
+  it('draws a chord once, though a slash chord without its own shape falls back to it', () => {
+    const both = parseSong('{title: T}\nla [Dmaj7/A]la [Dmaj7]la');
+    expect(diagramsOf(both, 'ukulele').map(({ shape }) => shape?.name)).toEqual([
+      'Dmaj7',
+    ]);
+  });
 });

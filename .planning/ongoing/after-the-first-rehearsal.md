@@ -99,6 +99,20 @@ Each ships on its own, gates green, committed locally; nothing is deployed witho
 
 ## Open questions
 
-- The notation approach (above): display setting, or rewrite the songs.
-- Whether a song's own `{define}` should also show for ukulele (it is a guitar shape): proposed
-  no, the library's then.
+For the owner, after the night's build (2026-11-25):
+
+- **Notation (D132):** built as display in the reader's notation. Or rewrite the songs?
+- **A playlist key uses up the player's own transposition** of the song everywhere on the device
+  (D131): keep, or a separate own shift per playlist?
+- From the UX walk (`.ux-walk/handover-song-stand-2026-11-24.md`, report
+  https://claude.ai/artifact/WNsYrAwz1AbQjdTVQ1WJqU):
+  - **F2** toasts cover the toolbar and the key they talk about on a phone: (a) below the
+    header everywhere (pick), (b) at the bottom, colliding with the playlist bar, (c) leave.
+  - **F6** setting a playlist key offline is queued silently: (a) a toast "uloží se, až budeš
+    online" (pick), (b) the items disabled offline.
+  - **F7** three key items in ⋯ with a playlist key, wrapping on a phone: (a) leave, (b) grouped
+    under a "Tónina Gb" label with shorter items (pick), (c) on the key button (changes D89).
+  - **F8** a reader isn't told a playlist moved the key: (a) leave (the list says it), (b) a
+    playlist icon in place of the clef in the key control (pick), (c) a line under the artist.
+  - **D-1** "fit the text to the screen" on an upright tablet: wait for the owner's tablet test.
+- A song's own `{define}` shows only for guitar (proposed: the library's for ukulele). Kept.

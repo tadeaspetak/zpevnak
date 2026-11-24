@@ -17,6 +17,7 @@ import { byline } from '../data/songText.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { ChordDiagram, NoDiagram } from './ChordDiagram.tsx';
 import { columnsFit, lineWraps, type TextLine } from './columnsFit.ts';
+import { restorePlace } from './keepPlace.ts';
 import { hasChords, isChordOnly, layoutLine } from './layout.ts';
 import classes from './SongSheet.module.css';
 
@@ -239,6 +240,10 @@ export function SongSheet({
     `(min-width: ${MIN_COLUMNS_EM * fontScale + 5}em)`,
   );
   const columns = useColumnsFit(showColumns && (roomForColumns ?? false));
+  // A new text size, or columns coming or going with it: the reader's line stays put.
+  useLayoutEffect(() => {
+    restorePlace();
+  }, [fontScale, columns.fits]);
   // The key isn't repeated here: the toolbar shows it, and changes it (D59). A capo is not
   // in the toolbar, so it stays.
   const meta = [song.meta.capo ? t('song.capo', { fret: song.meta.capo }) : null].filter(

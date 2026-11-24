@@ -1,3 +1,4 @@
+import { isKeepingPlace } from '../song/keepPlace.ts';
 import { useCallback, useEffect, useState } from 'react';
 
 /**
@@ -11,6 +12,12 @@ export function useHideOnScroll(threshold = 8) {
     let last = window.scrollY;
     const onScroll = () => {
       const y = window.scrollY;
+      // The page kept the reader's place as the text size changed (a settings panel may be
+      // open on the toolbar): nobody scrolled.
+      if (isKeepingPlace()) {
+        last = y;
+        return;
+      }
       if (y < 40) {
         setHidden(false);
       } else if (y - last > threshold) {

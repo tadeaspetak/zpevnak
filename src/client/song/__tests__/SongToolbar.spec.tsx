@@ -197,4 +197,27 @@ describe('SongToolbar: a key per playlist (D131)', () => {
     toolbar(-2, song, true, true, band(true), 0);
     expect((await menu()).some((item) => item?.endsWith('pro všechny'))).toBe(false);
   });
+
+  it('goes back to the playlist’s shift for a song that names no key, and says so', () => {
+    // The playlist plays it 2 up, the player 1 more: the way back is to +2.
+    renderApp(
+      <SongToolbar
+        backTo="/"
+        backLabel="Zpět"
+        song={song}
+        shownKey={null}
+        baseKey={null}
+        semitones={3}
+        own={1}
+        pitch={null}
+        hasDiagrams={false}
+        canEdit={false}
+        canDelete={false}
+        canAddToPlaylist={false}
+        hidden={false}
+        playlist={band(true)}
+      />,
+    );
+    expect(screen.getByRole('button', { name: '+3: Zpět na +2' })).toBeTruthy();
+  });
 });

@@ -1,5 +1,6 @@
 import { type RefObject, useEffect, useRef } from 'react';
 import { pinchedScale } from '../data/prefs.ts';
+import { extendHold, holdPlace } from '../song/keepPlace.ts';
 
 type Touches = { length: number; [index: number]: { clientX: number; clientY: number } };
 
@@ -31,12 +32,18 @@ export function usePinch(
     const onStart = (e: TouchEvent) => {
       const distance = e.touches.length === 2 && onSong(e) ? spread(e.touches) : 0;
       start = distance > 0 ? { distance, scale: current.current } : null;
+      const [a, b] = [e.touches[0], e.touches[1]];
+      if (start && a && b) {
+        // The line between the fingers stays under them as the text grows or shrinks.
+        holdPlace((a.clientX + b.clientX) / 2, (a.clientY + b.clientY) / 2);
+      }
     };
     const onMove = (e: TouchEvent) => {
       if (!start || e.touches.length !== 2) {
         return;
       }
       const next = pinchedScale(start.scale, spread(e.touches) / start.distance);
+      extendHold();
       if (next !== current.current) {
         setScale(next);
       }

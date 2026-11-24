@@ -22,8 +22,12 @@ import { usePlayer } from '../data/session.ts';
 import type { NoteSystem } from '#shared/chordpro/chord.ts';
 import { INSTRUMENTS, type Instrument } from '#shared/chordpro/shapes.ts';
 import { useNotation } from '../hooks/useNotation.ts';
+import { holdPlace } from '../song/keepPlace.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { RefreshAction } from './RefreshAction.tsx';
+
+/** On a song, the line at the top of the screen stays there as the size changes (D130). */
+const keepTopLine = () => holdPlace(window.innerWidth / 4, 72);
 
 type Props = { size?: 'lg' | 'xl' };
 
@@ -64,7 +68,10 @@ export function SettingsButton({ size = 'lg' }: Props) {
               <Group gap={0} wrap="nowrap" role="group" aria-label={t('song.textSize')}>
                 <ActionIcon
                   size="lg"
-                  onClick={() => prefs.stepFont(-1)}
+                  onClick={() => {
+                    keepTopLine();
+                    prefs.stepFont(-1);
+                  }}
                   disabled={prefs.fontScale <= (FONT_SCALES[0] ?? 0)}
                   aria-label={t('song.smaller')}
                 >
@@ -77,7 +84,10 @@ export function SettingsButton({ size = 'lg' }: Props) {
                 </Text>
                 <ActionIcon
                   size="lg"
-                  onClick={() => prefs.stepFont(1)}
+                  onClick={() => {
+                    keepTopLine();
+                    prefs.stepFont(1);
+                  }}
                   disabled={prefs.fontScale >= (FONT_SCALES.at(-1) ?? 0)}
                   aria-label={t('song.larger')}
                 >

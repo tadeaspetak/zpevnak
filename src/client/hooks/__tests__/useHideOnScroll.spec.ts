@@ -1,5 +1,8 @@
 import { act, renderHook } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { isKeepingPlace } from '../../song/keepPlace.ts';
+
+vi.mock('../../song/keepPlace.ts', () => ({ isKeepingPlace: vi.fn(() => false) }));
 import { isPlainTap, useHideOnScroll } from '../useHideOnScroll.ts';
 
 function scrollTo(y: number) {
@@ -20,6 +23,17 @@ describe('useHideOnScroll', () => {
     scrollTo(300);
     expect(result.current.hidden).toBe(true);
     scrollTo(200);
+    expect(result.current.hidden).toBe(false);
+  });
+
+  it('stays as it was when the page scrolled to keep the reader’s place (a text size step)', () => {
+    // A settings panel open on the toolbar would go with it.
+    const { result } = renderHook(() => useHideOnScroll());
+    // Mid-song, the toolbar brought back by scrolling up a little.
+    scrollTo(300);
+    scrollTo(200);
+    vi.mocked(isKeepingPlace).mockReturnValueOnce(true);
+    scrollTo(400);
     expect(result.current.hidden).toBe(false);
   });
 

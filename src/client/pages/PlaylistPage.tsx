@@ -327,13 +327,20 @@ function SongInPlaylist({
   shift: PlaylistRecord['songKeys'][number] | undefined;
   isPublic: boolean;
 }) {
-  const { t } = useI18n();
+  const { t, tn } = useI18n();
   const notation = useNotation();
   // Saved in that key for everyone since, it plays in its own: nothing to say.
-  const moved = shiftUnder(song, shift) !== 0;
-  const key = moved ? keyUnder(song, shift, notation) : null;
+  const semitones = shiftUnder(song, shift);
+  const key = semitones !== 0 ? keyUnder(song, shift, notation) : null;
+  // A song that names no key says how far: "o 2 půltóny výš".
   const lines = [
-    moved ? (key ? t('playlists.songKey', { key }) : t('playlists.songShifted')) : null,
+    key
+      ? t('playlists.songKey', { key })
+      : semitones > 0
+        ? tn('playlists.songUp', semitones)
+        : semitones < 0
+          ? tn('playlists.songDown', -semitones)
+          : null,
     isPublic && song.status === 'private' ? t('songs.notForVisitors') : null,
   ].filter(Boolean);
   return lines.length > 0 ? (
