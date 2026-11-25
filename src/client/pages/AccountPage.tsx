@@ -1,4 +1,6 @@
 import { Badge, Button, Group, Stack, Tabs, Text, Title } from '@mantine/core';
+import { IconNotes } from '@tabler/icons-react';
+import { Link } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router';
@@ -13,6 +15,7 @@ import { writeLocalJson } from '../data/local.ts';
 import { sortByTitle } from '../data/search.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
+import { inFilter } from '../data/notes.ts';
 import { trpc } from '../trpc.ts';
 import { url } from '#shared/urls.ts';
 
@@ -26,7 +29,13 @@ export function AccountPage() {
   const tab = params.get('tab') === 'users' ? 'users' : 'songs';
   const setTab = (next: 'songs' | 'users') =>
     setParams(next === 'users' ? { tab: 'users' } : {}, { replace: true });
-  const { songs } = useCatalog();
+  const { songs, notes } = useCatalog();
+  const openTodos = useMemo(
+    () =>
+      [...notes.values()].filter((n) => n.authorId === me?.id && inFilter(n, 'todo'))
+        .length,
+    [notes, me?.id],
+  );
   const mySongs = useMemo(
     () =>
       me
@@ -106,6 +115,23 @@ export function AccountPage() {
               onClick={() => logOut.mutate()}
             >
               {t('account.logOut')}
+            </Button>
+          </Group>
+
+          <Group>
+            <Button
+              component={Link}
+              to={url.notes()}
+              variant="default"
+              size="sm"
+              leftSection={<IconNotes size={16} />}
+              rightSection={
+                openTodos > 0 && (
+                  <Badge size="sm">{t('notes.openTodos', { count: openTodos })}</Badge>
+                )
+              }
+            >
+              {t('notes.title')}
             </Button>
           </Group>
 

@@ -59,8 +59,9 @@ function Played({
 async function play(
   playlist: Parameters<typeof Played>[0]['playlist'],
   notes: NoteRecord[],
+  state?: unknown,
 ) {
-  const { container } = renderApp(<Played playlist={playlist} />);
+  const { container } = renderApp(<Played playlist={playlist} />, { state });
   // The device's copy (none here) is read first; the notes come after, as from a sync.
   await vi.waitFor(() => expect(container.querySelector('[data-loaded]')).toBeTruthy());
   act(() => notes.forEach((n) => putNote(n.id, n)));
@@ -138,6 +139,18 @@ describe('notes on the song view (D135)', () => {
     expect(screen.queryByText('poznámka 1')).toBeNull();
     act(() => prefs.current.setShowNotes(true));
     expect(screen.getByText('poznámka 1')).toBeTruthy();
+  });
+
+  it('scrolls to the note it was sent to, from one’s notes', async () => {
+    const scrolled = vi.fn();
+    Element.prototype.scrollIntoView = scrolled;
+    await play(null, [note(1, {}), note(2, { line: null })], {
+      backTo: '/notes',
+      note: 1,
+    });
+    expect(scrolled.mock.contexts).toEqual([
+      screen.getByText('poznámka 1').closest('button'),
+    ]);
   });
 
   it('picks a line from the ⋯ menu’s way in, and asks for the note there', async () => {

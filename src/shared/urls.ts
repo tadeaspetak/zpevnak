@@ -45,6 +45,8 @@ export const url = {
   join: (token: string) => `/join/${token}`,
   queue: () => '/queue',
   review: (id: number) => `/queue/${id}`,
+  /** One's notes on songs (D135), all, or the TODOs open or done. */
+  notes: (filter?: 'todo' | 'done') => (filter ? `/notes?filter=${filter}` : '/notes'),
   /** `users`: the admin's tab of everyone's accounts. */
   account: (tab?: 'users') => (tab ? `/account?tab=${tab}` : '/account'),
   logIn: (next?: string) => (next ? `/login?next=${encodeURIComponent(next)}` : '/login'),
@@ -71,6 +73,7 @@ export const routes = {
   queue: '/queue',
   review: '/queue/:id',
   account: '/account',
+  notes: '/notes',
   adminUsers: '/admin/users',
   logIn: '/login',
   signUp: '/signup',

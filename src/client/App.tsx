@@ -15,6 +15,7 @@ import {
 } from './pages/AuthPages.tsx';
 import { HomePage } from './pages/HomePage.tsx';
 import { JoinPage } from './pages/JoinPage.tsx';
+import { NotesPage } from './pages/NotesPage.tsx';
 import { NotFoundPage } from './pages/NotFoundPage.tsx';
 import { PlaylistPage } from './pages/PlaylistPage.tsx';
 import { PlaylistsPage } from './pages/PlaylistsPage.tsx';
@@ -63,6 +64,7 @@ export function App() {
         <Route path={routes.queue} element={<QueuePage />} />
         <Route path={routes.review} element={<ReviewPage />} />
         <Route path={routes.account} element={<AccountPage />} />
+        <Route path={routes.notes} element={<NotesPage />} />
         {/* Users became a tab of the account page (D113); old links still land there. */}
         <Route
           path={routes.adminUsers}

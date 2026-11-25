@@ -9,7 +9,9 @@ import {
   IconSquare,
   IconSquareCheck,
 } from '@tabler/icons-react';
-import { useEffect, useMemo, useState, type RefObject } from 'react';
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { useLocation } from 'react-router';
+import type { SongLinkState } from '../components/SongRow.tsx';
 import type { Song } from '#shared/chordpro/types.ts';
 import { notePlaces, placeOf, type NotePlace } from '#shared/notes.ts';
 import { editsAsMember } from '#shared/roles.ts';
@@ -95,7 +97,9 @@ export function useSongNotes({
   const lineAt = (place: number) => lines.find((l) => l.place === place) ?? null;
   const addAt = (place: NotePlace | null) => {
     setPicking(false);
-    setTarget({ kind: 'new', place });
+    if (songId !== null) {
+      setTarget({ kind: 'new', songId, place });
+    }
   };
 
   useLinePress(container, (press) => {
@@ -183,6 +187,21 @@ export function useSongNotes({
     };
   }, [container, canWrite, coarse]);
 
+  // Come from one's notes to read one (D135): it is scrolled into sight once it's on the page,
+  // the device's notes being read just after the song.
+  const goTo = (useLocation().state as SongLinkState | null)?.note;
+  const wentTo = useRef<number | null>(null);
+  useEffect(() => {
+    if (goTo === undefined || wentTo.current === goTo) {
+      return;
+    }
+    const el = container.current?.querySelector(`[data-note-id="${goTo}"]`);
+    if (el) {
+      wentTo.current = goTo;
+      el.scrollIntoView({ block: 'center' });
+    }
+  });
+
   const open = (note: NoteRecord) => setTarget({ kind: 'edit', note });
   const shown = prefs.showNotes;
   const copy = (words: string) => {
@@ -261,20 +280,17 @@ export function useSongNotes({
           </Group>
         </Paper>
       )}
-      {songId !== null && (
-        <NoteModal
-          songId={songId}
-          target={target}
-          playlist={writesForPlaylist && playlist ? playlist : null}
-          wordsOf={(note) => note.line?.text ?? null}
-          onClose={() => setTarget(null)}
-          onSaved={() => {
-            if (!prefs.showNotes) {
-              prefs.setShowNotes(true);
-            }
-          }}
-        />
-      )}
+      <NoteModal
+        target={target}
+        playlist={writesForPlaylist && playlist ? playlist : null}
+        onClose={() => setTarget(null)}
+        // Notes switched off come back into sight, to show the one just saved.
+        onSaved={() => {
+          if (!prefs.showNotes) {
+            prefs.setShowNotes(true);
+          }
+        }}
+      />
     </>
   );
 
@@ -350,6 +366,7 @@ function NoteList({
         return canChange(note) ? (
           <button
             key={note.id}
+            data-note-id={note.id}
             type="button"
             className={classes.note}
             data-done={note.doneAt !== null || undefined}
@@ -358,7 +375,7 @@ function NoteList({
             {content}
           </button>
         ) : (
-          <p key={note.id} className={classes.note}>
+          <p key={note.id} className={classes.note} data-note-id={note.id}>
             {content}
           </p>
         );

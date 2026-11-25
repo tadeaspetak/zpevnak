@@ -19,18 +19,16 @@ import { trpc } from '../trpc.ts';
 
 /** What the dialog is about: a new note at a line (null: the whole song), or one to change. */
 export type NoteTarget =
-  { kind: 'new'; place: NotePlace | null } | { kind: 'edit'; note: NoteRecord };
+  | { kind: 'new'; songId: number; place: NotePlace | null }
+  | { kind: 'edit'; note: NoteRecord };
 
 type Props = {
-  songId: number;
   target: NoteTarget | null;
   /** The playlist being played from, where the reader may write its notes (D135). */
   playlist: { id: number; name: string } | null;
-  /** The note's line's words where it is shown, for the heading. */
-  wordsOf: (note: NoteRecord) => string | null;
   onClose: () => void;
-  /** After a note is saved: notes hidden come back into sight, to show it. */
-  onSaved: () => void;
+  /** After a note is saved. */
+  onSaved?: () => void;
 };
 
 /**
@@ -59,10 +57,8 @@ export function NoteModal({ target, ...props }: Props) {
 }
 
 function NoteForm({
-  songId,
   target,
   playlist,
-  wordsOf,
   onClose,
   onSaved,
 }: Props & { target: NoteTarget }) {
@@ -79,11 +75,7 @@ function NoteForm({
   const update = trpc.notes.update.useMutation();
   const remove = trpc.notes.delete.useMutation();
 
-  const words = existing
-    ? wordsOf(existing)
-    : target.kind === 'new'
-      ? target.place?.words
-      : null;
+  const words = target.kind === 'edit' ? target.note.line?.text : target.place?.words;
   const isPrivate = existing ? existing.playlistId === null : !forPlaylist;
   const onError = (error: unknown) =>
     notifications.show({ color: 'red', message: tError(error) });
@@ -96,7 +88,7 @@ function NoteForm({
   };
   const saved = (note: NoteRecord) => {
     putNote(note.id, note);
-    onSaved();
+    onSaved?.();
     onClose();
   };
 
@@ -114,7 +106,7 @@ function NoteForm({
     } else if (target.kind === 'new') {
       create.mutate(
         {
-          songId,
+          songId: target.songId,
           playlistId: forPlaylist && playlist ? playlist.id : null,
           text,
           todo: isPrivate && todo,

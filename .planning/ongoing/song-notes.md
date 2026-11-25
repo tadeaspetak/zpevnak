@@ -100,7 +100,10 @@ Each ships on its own, gates green.
    0.85 em, grey-ruled, a playlist's with its mark; a note whose line is gone sits under the
    title, naming the line. Who a note is for is chosen when it's written, not changed later.
    Saving a note with notes switched off switches them back on. Delete asks a second tap.
-3. **Moje poznámky:** the page and its filters.
+3. **Moje poznámky (shipped).** As built: `/notes`, linked from the account page with the
+   count of open TODOs; filters Vše / TODO / Hotové in the address (`?filter=`); a note leads
+   to its song (a playlist's, in that playlist) scrolled to the note, the back arrow returning
+   to the list; each opens to be changed right there. The empty page teaches the long-press.
 4. **A review and a UX walk,** their no-brainers.
 
 ## Tests that matter most

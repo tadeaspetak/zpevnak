@@ -12,7 +12,12 @@ import classes from './SongRow.module.css';
  * `backName`) or a tag's songs (the tag's name); into a review from the song itself (its title,
  * D123).
  */
-export type SongLinkState = { backTo: string; backName?: string };
+export type SongLinkState = {
+  backTo: string;
+  backName?: string;
+  /** A note to scroll to, from one's notes (D135). */
+  note?: number;
+};
 
 /** The link state for a song opened from here: only search results on the overview carry one. */
 export function songLinkState(location: {
