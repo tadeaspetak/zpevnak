@@ -137,6 +137,7 @@ export const cs = {
   'notes.copyFailed': 'Řádek se nepodařilo zkopírovat.',
   'notes.show': 'Poznámky',
   'notes.add': 'Přidat poznámku',
+  'notes.lineMenu': 'Možnosti řádku',
   'notes.addAtLine': 'Přidat poznámku k řádku',
   'notes.copyLine': 'Kopírovat řádek',
   'notes.copied': 'Řádek je zkopírovaný.',
@@ -147,7 +148,10 @@ export const cs = {
   'notes.wholeSong': 'K celé písničce',
   'notes.audience': 'Pro koho',
   'notes.forMe': 'Jen pro mě',
-  'notes.forPlaylist': 'Pro playlist {name}',
+  'notes.forPlaylist': 'Pro playlist „{name}“',
+  'notes.forPlaylistHint': 'Uvidí ji každý, kdo playlist vidí.',
+  'notes.forPublicPlaylistHint': 'Playlist je veřejný: uvidí ji každý, kdo ho otevře.',
+  'notes.noneUnverified': 'Poznámky si můžeš psát, až potvrdíš e-mail.',
   'notes.byAuthor': 'Autor: {name}',
   'notes.todo': 'TODO',
   'notes.done': 'Hotovo',
@@ -356,7 +360,7 @@ export const cs = {
   'account.role.editor': 'Editor',
   'account.role.admin': 'Admin',
   'account.verifyBanner':
-    'Potvrď svůj e-mail. Do té doby nemůžeš přidávat písničky ani playlisty.',
+    'Potvrď svůj e-mail. Do té doby nemůžeš přidávat písničky, playlisty ani poznámky.',
   'account.resend': 'Poslat e-mail znovu',
   'account.resent': 'E-mail je na cestě.',
 

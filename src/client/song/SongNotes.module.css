@@ -35,6 +35,16 @@
   &[data-done] {
     text-decoration: line-through;
   }
+
+  /* The note one came to from Moje poznámky, among others at its line. */
+  &[data-flash] {
+    background: var(--mantine-color-default-hover);
+    transition: background 1.2s ease-out;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 }
 
 button.note {
@@ -60,6 +70,9 @@ button.note {
 /* Where a long-press or a right-click happened: the menu opens from here. */
 .menuAnchor {
   position: fixed;
+  padding: 0;
+  border: 0;
+  opacity: 0;
   width: 1px;
   height: 1px;
   pointer-events: none;
@@ -77,8 +90,9 @@ button.note {
   left: 0;
   right: 0;
   bottom: 0;
-  /* Over the playlist's bar, which it stands in for while a line is picked. */
-  z-index: 20;
+  /* Over the playlist's bar and the pill (20), which it stands in for while a line is picked;
+     under a dialog. */
+  z-index: 30;
   display: flex;
   flex-wrap: wrap;
   align-items: center;

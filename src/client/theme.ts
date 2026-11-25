@@ -81,6 +81,9 @@ export const theme = createTheme({
   },
 });
 
+/** Secondary text on dark: between Mantine's dark.2 (too faint) and dark.1 (nearly the text). */
+export const DARK_DIMMED = '#9a9a9a';
+
 /**
  * The brand colour as text, chords included: the filled shade on light, a lighter one on dark
  * (see BRAND). Secondary text one step darker than Mantine's default, whose gray.6 is 3.3:1 on
@@ -93,5 +96,10 @@ export const cssVariablesResolver: CSSVariablesResolver = (t) => ({
     '--mantine-color-dimmed': t.colors.gray[7],
     '--modal-header-bg': t.colors.gray[0],
   },
-  dark: { '--brand-text': t.colors.orange[4], '--modal-header-bg': t.colors.dark[6] },
+  dark: {
+    '--brand-text': t.colors.orange[4],
+    // Mantine's dark.2 is 4.0:1 on the dark body; this passes on cards and modals too.
+    '--mantine-color-dimmed': DARK_DIMMED,
+    '--modal-header-bg': t.colors.dark[6],
+  },
 });

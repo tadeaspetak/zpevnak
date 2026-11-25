@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { parseSong } from '#shared/chordpro/parse.ts';
 import { renderApp } from '#tests/client/render.tsx';
-import { putNote, useCatalog } from '../../data/catalog.ts';
+import { putNote, putPlaylist, useCatalog } from '../../data/catalog.ts';
 import { usePrefs } from '../../data/prefs.ts';
 import type { NoteRecord, PlaylistRecord } from '../../data/store.ts';
 import { useKeys } from '../../hooks/useKeys.ts';
@@ -42,7 +42,7 @@ function Played({
   playlist,
   showChords = true,
 }: {
-  playlist: { id: number; name: string; role: PlaylistRecord['role'] } | null;
+  playlist: Pick<PlaylistRecord, 'id' | 'name' | 'role' | 'isPublic'> | null;
   showChords?: boolean;
 }) {
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
@@ -93,7 +93,12 @@ async function play(
   return container;
 }
 
-const vrsek = (role: PlaylistRecord['role']) => ({ id: 1, name: 'Vršek', role });
+const vrsek = (role: PlaylistRecord['role'], name = 'Vršek', isPublic = false) => ({
+  id: 1,
+  name,
+  role,
+  isPublic,
+});
 
 describe('notes on the song view (D135)', () => {
   beforeEach(() => {
@@ -142,7 +147,7 @@ describe('notes on the song view (D135)', () => {
       note(2, { playlistId: 1, authorId: 9, authorName: 'Bára', text: 'refrén třikrát' }),
     ]);
     fireEvent.click(screen.getByRole('button', { name: /refrén třikrát/ }));
-    expect(await screen.findByText('Autor: Bára')).toBeTruthy();
+    expect(await screen.findByText(/Autor: Bára/)).toBeTruthy();
     expect(screen.getByRole('textbox', { name: 'Poznámka' })).toHaveProperty(
       'value',
       'refrén třikrát',
@@ -258,6 +263,38 @@ describe('notes on the song view (D135)', () => {
     fireEvent.click(line);
     expect(await screen.findByText('U řádku „lu lu lu“')).toBeTruthy();
     // Playing from a playlist they edit, they choose who it's for.
-    expect(screen.getByText('Pro playlist Vršek')).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'Pro playlist „Vršek“' })).toBeTruthy();
+  });
+
+  it('says who will read a band note, a public playlist’s anyone, and names it whole', async () => {
+    const long = 'Vánoční koncert na náměstí Míru 2026 sbor';
+    const sheet = await play(vrsek('owner', long, true), []);
+    fireEvent.contextMenu(sheet.querySelector('[data-place="1"]') as HTMLElement);
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Přidat poznámku' }));
+    expect(
+      await screen.findByRole('radio', { name: `Pro playlist „${long}“` }),
+    ).toBeTruthy();
+    expect(
+      screen.getByText('Playlist je veřejný: uvidí ji každý, kdo ho otevře.'),
+    ).toBeTruthy();
+  });
+
+  it('says whose a band note is when it’s opened to change', async () => {
+    act(() =>
+      putPlaylist(1, {
+        id: 1,
+        name: 'Vršek',
+        role: 'collaborator',
+        songIds: [SONG_ID],
+        songKeys: {},
+        updatedAt: '2026-11-25T00:00:00.000Z',
+      } as unknown as PlaylistRecord),
+    );
+    await play(vrsek('collaborator'), [
+      note(2, { playlistId: 1, authorId: 9, authorName: 'Bára', text: 'refrén třikrát' }),
+    ]);
+    fireEvent.click(screen.getByRole('button', { name: /refrén třikrát/ }));
+    expect(await screen.findByText('Pro playlist „Vršek“ · Autor: Bára')).toBeTruthy();
+    act(() => putPlaylist(1, null));
   });
 });

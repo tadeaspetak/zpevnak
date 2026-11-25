@@ -3,7 +3,7 @@ import {
   Checkbox,
   Group,
   Modal,
-  SegmentedControl,
+  Radio,
   Stack,
   Text,
   Textarea,
@@ -11,7 +11,7 @@ import {
 import { notifications } from '@mantine/notifications';
 import { useState } from 'react';
 import type { NotePlace } from '#shared/notes.ts';
-import { putNote } from '../data/catalog.ts';
+import { putNote, useCatalog } from '../data/catalog.ts';
 import { notifyIfQueued } from '../data/offline.ts';
 import type { NoteRecord } from '../data/store.ts';
 import { ConfirmModal } from '../components/ConfirmModal.tsx';
@@ -26,7 +26,9 @@ export type NoteTarget =
 type Props = {
   target: NoteTarget | null;
   /** The playlist being played from, where the reader may write its notes (D135). */
-  playlist: { id: number; name: string } | null;
+  playlist: { id: number; name: string; isPublic: boolean } | null;
+  /** Name the note's song too: the dialog is opened away from it (Moje poznámky). */
+  showSong?: boolean;
   onClose: () => void;
   /** After a note is saved. */
   onSaved?: () => void;
@@ -119,6 +121,7 @@ type Requests = {
 function NoteForm({
   target,
   playlist,
+  showSong = false,
   onClose,
   onSaved,
   requests: { create, update },
@@ -129,7 +132,13 @@ function NoteForm({
   onDelete: (note: NoteRecord) => void;
 }) {
   const { t } = useI18n();
+  const { songs, playlists } = useCatalog();
   const existing = target.kind === 'edit' ? target.note : null;
+  const songTitle = showSong && existing ? songs.get(existing.songId)?.title : undefined;
+  const ownPlaylist =
+    existing && existing.playlistId !== null
+      ? playlists.get(existing.playlistId)
+      : undefined;
   const [text, setText] = useState(existing?.text ?? '');
   const [forPlaylist, setForPlaylist] = useState(
     existing !== null && existing.playlistId !== null,
@@ -186,7 +195,9 @@ function NoteForm({
     >
       <Stack>
         <Text size="sm" c="dimmed" lineClamp={2}>
-          {words ? t('notes.atLine', { words }) : t('notes.wholeSong')}
+          {[songTitle, words ? t('notes.atLine', { words }) : t('notes.wholeSong')]
+            .filter(Boolean)
+            .join(' · ')}
         </Text>
         <Textarea
           label={t('notes.text')}
@@ -200,24 +211,36 @@ function NoteForm({
         />
         {/* Who it's for is chosen once: a private note made the band's, or back, would
             change who has seen it. */}
+        {/* The whole name, and who will see it: the one place a private thought could be
+            published by mistake. */}
         {!existing && playlist && (
-          <SegmentedControl
-            fullWidth
-            aria-label={t('notes.audience')}
+          <Radio.Group
+            label={t('notes.audience')}
             value={forPlaylist ? 'playlist' : 'me'}
             onChange={(v) => setForPlaylist(v === 'playlist')}
-            data={[
-              { value: 'me', label: t('notes.forMe') },
-              {
-                value: 'playlist',
-                label: t('notes.forPlaylist', { name: playlist.name }),
-              },
-            ]}
-          />
+          >
+            <Stack gap="xs" mt={4}>
+              <Radio value="me" label={t('notes.forMe')} />
+              <Radio
+                value="playlist"
+                label={t('notes.forPlaylist', { name: playlist.name })}
+                description={
+                  playlist.isPublic
+                    ? t('notes.forPublicPlaylistHint')
+                    : t('notes.forPlaylistHint')
+                }
+              />
+            </Stack>
+          </Radio.Group>
         )}
         {existing && existing.playlistId !== null && (
           <Text size="sm" c="dimmed">
-            {t('notes.byAuthor', { name: existing.authorName })}
+            {[
+              ownPlaylist ? t('notes.forPlaylist', { name: ownPlaylist.name }) : null,
+              t('notes.byAuthor', { name: existing.authorName }),
+            ]
+              .filter(Boolean)
+              .join(' · ')}
           </Text>
         )}
         {isPrivate && (

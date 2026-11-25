@@ -97,7 +97,7 @@ describe('NotesPage (D135)', () => {
       note(3, { playlistId: 1, authorId: 9 }),
     ]);
     expect(texts()).toEqual(['poznámka 2', 'poznámka 1']);
-    expect(screen.getByText('Pro playlist Vršek')).toBeTruthy();
+    expect(screen.getByText('Pro playlist „Vršek“')).toBeTruthy();
   });
 
   it('filters to the TODOs still to do, or done, and keeps the filter in the address', async () => {
@@ -153,5 +153,22 @@ describe('NotesPage (D135)', () => {
       }),
     );
     expect(screen.queryByRole('button', { name: 'Upravit poznámku' })).toBeNull();
+  });
+
+  it('tells an account yet to confirm its email when it can write notes, not how', async () => {
+    localStorage.setItem(
+      'zpevnak.me',
+      JSON.stringify({
+        id: ME,
+        email: 'ja@example.com',
+        displayName: 'Já',
+        role: 'user',
+        locale: 'cs',
+        emailVerified: false,
+      }),
+    );
+    await open([]);
+    expect(screen.getByText('Poznámky si můžeš psát, až potvrdíš e-mail.')).toBeTruthy();
+    expect(screen.queryByText(/podrž prst/)).toBeNull();
   });
 });

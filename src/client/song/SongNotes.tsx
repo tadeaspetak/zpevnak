@@ -26,7 +26,7 @@ import { useI18n } from '../i18n/index.tsx';
 import { NoteModal, type NoteTarget } from './NoteModal.tsx';
 import classes from './SongNotes.module.css';
 
-type Playing = { id: number; name: string; role: PlaylistRecord['role'] };
+type Playing = Pick<PlaylistRecord, 'id' | 'name' | 'role' | 'isPublic'>;
 
 /** Oldest first: a note answering another comes after it. */
 const byAge = (a: NoteRecord, b: NoteRecord) =>
@@ -214,6 +214,9 @@ export function useSongNotes({
     if (el) {
       wentTo.current = goTo;
       el.scrollIntoView({ block: 'center' });
+      // Which of the notes there it was: lit up for a moment.
+      el.setAttribute('data-flash', '');
+      setTimeout(() => el.removeAttribute('data-flash'), 1600);
     }
   });
 
@@ -255,10 +258,17 @@ export function useSongNotes({
             setMenu(null);
           }
         }}
-        position="bottom-start"
+        // Above a finger, not under it; below a mouse pointer, as menus open.
+        position={coarse ? 'top-start' : 'bottom-start'}
+        offset={coarse ? 12 : 4}
       >
         <Menu.Target>
-          <div
+          {/* A button, as a menu's target must be (its attributes say what it opens); out of
+              reach, the line itself having opened it. */}
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-label={menu?.words ?? t('notes.lineMenu')}
             className={classes.menuAnchor}
             style={{ left: menu?.x ?? 0, top: menu?.y ?? 0 }}
           />

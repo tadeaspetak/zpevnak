@@ -134,6 +134,7 @@ export const en: Record<keyof typeof cs, string> = {
   'notes.copyFailed': 'Couldn’t copy the line.',
   'notes.show': 'Notes',
   'notes.add': 'Add a note',
+  'notes.lineMenu': 'Line options',
   'notes.addAtLine': 'Add a note to this line',
   'notes.copyLine': 'Copy the line',
   'notes.copied': 'Line copied.',
@@ -144,7 +145,11 @@ export const en: Record<keyof typeof cs, string> = {
   'notes.wholeSong': 'For the whole song',
   'notes.audience': 'Who it’s for',
   'notes.forMe': 'Just for me',
-  'notes.forPlaylist': 'For playlist {name}',
+  'notes.forPlaylist': 'For playlist “{name}”',
+  'notes.forPlaylistHint': 'Everyone who sees the playlist will see it.',
+  'notes.forPublicPlaylistHint':
+    'The playlist is public: anyone who opens it will see it.',
+  'notes.noneUnverified': 'You can write notes once you’ve confirmed your email.',
   'notes.byAuthor': 'By {name}',
   'notes.todo': 'TODO',
   'notes.done': 'Done',
@@ -359,7 +364,7 @@ export const en: Record<keyof typeof cs, string> = {
   'account.role.editor': 'Editor',
   'account.role.admin': 'Admin',
   'account.verifyBanner':
-    "Confirm your email. Until then you can't add songs or playlists.",
+    "Confirm your email. Until then you can't add songs, playlists or notes.",
   'account.resend': 'Send the email again',
   'account.resent': 'The email is on its way.',
 

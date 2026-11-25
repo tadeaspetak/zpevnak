@@ -81,7 +81,13 @@ type Placed = { place?: NotePlace | null; picking?: boolean };
 
 /** A line's place for notes, on its element: where a long-press or a right-click finds it. */
 function placeProps({ place, picking }: Placed) {
-  return place ? { 'data-place': place.place, ...(picking ? pickable : {}) } : {};
+  // Picking, a line is a button named by its words, not its chords read in between.
+  return place
+    ? {
+        'data-place': place.place,
+        ...(picking ? { ...pickable, 'aria-label': place.words } : {}),
+      }
+    : {};
 }
 
 function LineView({

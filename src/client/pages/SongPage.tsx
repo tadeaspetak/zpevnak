@@ -111,6 +111,7 @@ export function PlaylistSongPage() {
         songIds: playlist.songIds,
         songKeys: playlist.songKeys,
         role: playlist.role,
+        isPublic: playlist.isPublic,
         position,
         removed: followed?.removed ?? false,
       }}
@@ -125,6 +126,8 @@ type PlaylistContext = {
   /** The keys the playlist plays its songs in, where not their own (D131). */
   songKeys: PlaylistRecord['songKeys'];
   role: PlaylistRecord['role'];
+  /** Who a note for it reaches (D135): everyone who opens a public one. */
+  isPublic: boolean;
   position: number;
   /** Someone took the song out while it played: it stays, and next is the song after it. */
   removed: boolean;
@@ -239,7 +242,12 @@ function SongPlayer({
   const notes = useSongNotes({
     songId: song?.id ?? null,
     song: parsed,
-    playlist: playlist && { id: playlist.id, name: playlist.name, role: playlist.role },
+    playlist: playlist && {
+      id: playlist.id,
+      name: playlist.name,
+      role: playlist.role,
+      isPublic: playlist.isPublic,
+    },
     container: sheetEl,
   });
   useKeys(

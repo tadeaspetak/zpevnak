@@ -64,7 +64,11 @@ export function NotesPage() {
       <Page>
         <Stack gap="md">
           {mine.length === 0 ? (
-            <Text c="dimmed">{t('notes.none')}</Text>
+            // Only those who may write notes are taught how (D135): a new account confirms
+            // its email first.
+            <Text c="dimmed">
+              {me.emailVerified ? t('notes.none') : t('notes.noneUnverified')}
+            </Text>
           ) : (
             <>
               <SegmentedControl
@@ -131,6 +135,7 @@ export function NotesPage() {
       <NoteModal
         target={editing && { kind: 'edit', note: editing }}
         playlist={null}
+        showSong
         onClose={() => setEditing(null)}
       />
     </>

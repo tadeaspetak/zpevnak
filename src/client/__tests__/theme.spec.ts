@@ -1,6 +1,6 @@
 import { DEFAULT_THEME, type MantineTheme, mergeMantineTheme } from '@mantine/core';
 import { describe, expect, it } from 'vitest';
-import { theme } from '../theme.ts';
+import { DARK_DIMMED, theme } from '../theme.ts';
 
 const full = mergeMantineTheme(DEFAULT_THEME, theme) as MantineTheme;
 const brand = full.colors.orange;
@@ -31,6 +31,17 @@ describe('the brand colour passes WCAG AA (D103)', () => {
   it('as text (--brand-text, chords) on each background', () => {
     expect(contrast(light.text, light.body)).toBeGreaterThanOrEqual(4.5);
     expect(contrast(dark.text, dark.body)).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+describe('secondary text (dimmed) passes WCAG AA', () => {
+  it('on the page and on cards and modals, in both schemes', () => {
+    const gray = full.colors.gray;
+    const dark = full.colors.dark;
+    expect(contrast(gray[7] as string, '#ffffff')).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(gray[7] as string, gray[0] as string)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(DARK_DIMMED, dark[7] as string)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(DARK_DIMMED, dark[6] as string)).toBeGreaterThanOrEqual(4.5);
   });
 });
 

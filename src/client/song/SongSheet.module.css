@@ -235,6 +235,9 @@
   cursor: pointer;
   border-radius: var(--mantine-radius-sm);
   background: var(--mantine-color-default-hover);
+  /* The tint alone is nearly white on white: a dashed edge shows the lines in daylight too. */
+  outline: 1px dashed var(--mantine-color-default-border);
+  outline-offset: 1px;
 
   &:hover,
   &:focus-visible {
