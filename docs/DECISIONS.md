@@ -588,7 +588,9 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   tap on its text: Enter or leaving the field saves, Shift+Enter is a new line, Escape and an
   emptied field leave it as it was) and deleted with the bin at once, "Beru zpátky" in the
   toast (D87). The delete is sent only when the toast closes without an undo, so the app
-  closed meanwhile keeps the note rather than losing it. (2026-11-25)
+  closed meanwhile keeps the note rather than losing it. The song's note dialog deletes the
+  same way, without asking first. A confirm stays where a delete is rare, heavy and reaches
+  others (a song, a playlist) or can't be undone (leaving a shared one). (2026-11-25)
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed

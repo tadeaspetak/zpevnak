@@ -161,7 +161,6 @@ export const cs = {
   'notes.byAuthor': 'Autor: {name}',
   'notes.todo': 'TODO',
   'notes.done': 'Hotovo',
-  'notes.deleteTitle': 'Smazat poznámku?',
   'notes.deleted': 'Poznámka je smazaná.',
   'notes.mark': 'Poznámka',
   'notes.playlistMark': 'Poznámka pro playlist',

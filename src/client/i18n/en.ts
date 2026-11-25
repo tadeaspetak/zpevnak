@@ -159,7 +159,6 @@ export const en: Record<keyof typeof cs, string> = {
   'notes.byAuthor': 'By {name}',
   'notes.todo': 'TODO',
   'notes.done': 'Done',
-  'notes.deleteTitle': 'Delete the note?',
   'notes.deleted': 'Note deleted.',
   'notes.mark': 'Note',
   'notes.playlistMark': 'Playlist note',

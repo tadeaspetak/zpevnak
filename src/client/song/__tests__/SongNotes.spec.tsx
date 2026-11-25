@@ -1,9 +1,10 @@
 import { act, fireEvent, renderHook, screen } from '@testing-library/react';
+import { notifications } from '@mantine/notifications';
 import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { parseSong } from '#shared/chordpro/parse.ts';
 import { renderApp } from '#tests/client/render.tsx';
-import { putNote, putPlaylist, useCatalog } from '../../data/catalog.ts';
+import { putNote, putPlaylist, settleNote, useCatalog } from '../../data/catalog.ts';
 import { usePrefs } from '../../data/prefs.ts';
 import type { NoteRecord, PlaylistRecord } from '../../data/store.ts';
 import { useKeys } from '../../hooks/useKeys.ts';
@@ -121,7 +122,14 @@ describe('notes on the song view (D135)', () => {
     );
   });
   afterEach(() => {
-    act(() => [1, 2, 3, 4].forEach((id) => putNote(id, null)));
+    act(() =>
+      [1, 2, 3, 4].forEach((id) => {
+        putNote(id, null);
+        // A delete that never got its answer here mustn't hide a note in the next test.
+        settleNote(id);
+      }),
+    );
+    notifications.clean();
     localStorage.clear();
     vi.unstubAllGlobals();
   });
@@ -305,6 +313,30 @@ describe('notes on the song view (D135)', () => {
     ]);
     expect(screen.getByText('poznámka 1')).toBeTruthy();
     expect(screen.queryByText('poznámka 2')).toBeNull();
+  });
+
+  it('deletes a note from its dialog at once, an undo in the toast, sent when it goes (D139)', async () => {
+    await play(null, [note(1, {})]);
+    const deleteIt = async () => {
+      fireEvent.click(screen.getByRole('button', { name: /poznámka 1/ }));
+      fireEvent.click(await screen.findByRole('button', { name: 'Smazat' }));
+    };
+    const sent = () =>
+      vi
+        .mocked(fetch)
+        .mock.calls.filter(([input]) => String(input).includes('notes.delete'));
+    await deleteIt();
+    // No question first, and the dialog is gone with the note.
+    await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(screen.queryByText('poznámka 1')).toBeNull();
+    fireEvent.click(await screen.findByRole('button', { name: 'Beru zpátky' }));
+    await vi.waitFor(() => expect(screen.getByText('poznámka 1')).toBeTruthy());
+    expect(sent()).toEqual([]);
+
+    await deleteIt();
+    await screen.findByText('Poznámka je smazaná.');
+    act(() => notifications.hide('note-deleted-1'));
+    await vi.waitFor(() => expect(sent()).toHaveLength(1));
   });
 
   it('shows a note written offline at once, waiting, not to be opened until it’s saved', async () => {

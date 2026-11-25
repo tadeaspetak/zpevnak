@@ -16,7 +16,6 @@ import { putNote, settleNote, useCatalog, waitNote } from '../data/catalog.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { notifyIfQueued } from '../data/offline.ts';
 import type { NoteRecord } from '../data/store.ts';
-import { ConfirmModal } from '../components/ConfirmModal.tsx';
 import { showUndoToast } from '../components/UndoToast.tsx';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc } from '../trpc.ts';
@@ -114,7 +113,6 @@ export function useNoteRequests() {
       onError: (error) => onError(error),
       onSettled: (_note, _error, input) => settleNote(input.id),
     }),
-    remove,
     /**
      * Deleted at once, taken back by one tap (D139): the note goes from sight while the toast
      * says so, and the request is sent only when the toast closes without an undo. Closed with
@@ -140,60 +138,34 @@ type NoteRequests = ReturnType<typeof useNoteRequests>;
 export function NoteModal({ target, ...props }: Props) {
   const { t } = useI18n();
   const requests = useNoteRequests();
-  const [deleting, setDeleting] = useState<NoteRecord | null>(null);
   const key =
     target === null
       ? 'closed'
       : target.kind === 'edit'
         ? `note-${target.note.id}`
         : `new-${target.place?.place ?? 'song'}`;
+  // Deleted at once, as in Moje poznámky, taken back from the toast (D139): the dialog closes.
   const deleteNote = (note: NoteRecord) => {
-    requests.remove.mutate(
-      { id: note.id },
-      {
-        onSuccess: () => {
-          notifications.show({ message: t('notes.deleted') });
-          setDeleting(null);
-          props.onClose();
-        },
-      },
-    );
-    notifyIfQueued(t('common.savesWhenOnline'));
-    if (!navigator.onLine) {
-      setDeleting(null);
-      props.onClose();
-    }
+    requests.deleteWithUndo(note);
+    props.onClose();
   };
   return (
-    <>
-      <Modal
-        opened={target !== null}
-        onClose={props.onClose}
-        title={target?.kind === 'edit' ? t('notes.edit') : t('notes.new')}
-      >
-        {/* A fresh form for each note: nothing typed for one carries over to the next. */}
-        {target && (
-          <NoteForm
-            key={key}
-            target={target}
-            requests={requests}
-            onDelete={setDeleting}
-            {...props}
-          />
-        )}
-      </Modal>
-      <ConfirmModal
-        opened={deleting !== null}
-        onClose={() => setDeleting(null)}
-        title={t('notes.deleteTitle')}
-        confirmLabel={t('common.delete')}
-        onConfirm={() => deleting && deleteNote(deleting)}
-        loading={requests.remove.isPending}
-        error={null}
-      >
-        <Text>{deleting?.text}</Text>
-      </ConfirmModal>
-    </>
+    <Modal
+      opened={target !== null}
+      onClose={props.onClose}
+      title={target?.kind === 'edit' ? t('notes.edit') : t('notes.new')}
+    >
+      {/* A fresh form for each note: nothing typed for one carries over to the next. */}
+      {target && (
+        <NoteForm
+          key={key}
+          target={target}
+          requests={requests}
+          onDelete={deleteNote}
+          {...props}
+        />
+      )}
+    </Modal>
   );
 }
 
