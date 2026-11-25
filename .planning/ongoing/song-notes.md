@@ -104,7 +104,9 @@ Each ships on its own, gates green.
    count of open TODOs; filters Vše / TODO / Hotové in the address (`?filter=`); a note leads
    to its song (a playlist's, in that playlist) scrolled to the note, the back arrow returning
    to the list; each opens to be changed right there. The empty page teaches the long-press.
-4. **A review and a UX walk,** their no-brainers.
+4. **A review and a UX walk (shipped, but for the open questions).** The review's ten
+   findings fixed (3e1cb90); the walk's clear fixes (da2eaa5); columns decided with the bars in
+   place along the way (D136).
 
 ## Tests that matter most
 
@@ -120,4 +122,9 @@ Each ships on its own, gates green.
 
 ## Open questions
 
-None open (2026-11-25).
+From the UX walk (2026-11-25), for the owner:
+
+- **F5** Moje poznámky grouped by song, with a checkbox to mark a TODO done in one tap?
+- **F4** A note written offline shown at once, marked waiting, rather than only the toast?
+- **F6** Done TODOs off the song (kept under Hotové), rather than struck through on it?
+- **F10** A note kept on its line when the line's words change a little (a typo fixed)?
