@@ -1,7 +1,7 @@
 # Notes on songs
 
-**State:** next. Agreed in conversation on 2026-11-25, from the owner's notes after the first
-rehearsal. Not started.
+**State:** ongoing. Agreed in conversation on 2026-11-25, from the owner's notes after the first
+rehearsal. Phase 1 started 2026-11-25.
 
 ## Why
 
@@ -22,11 +22,21 @@ the song's text, which is everyone's:
    band, D131's sibling). A note for everyone everywhere isn't a note: it's a `{comment}` in
    the song, by whoever may edit it.
 3. **On a concrete place in the song:** a line, shown right under it as you play past it.
-4. **A note can be a TODO** ("k opravě"), and **all one's notes can be found in one place,**
+4. **A note can be a TODO**, and **all one's notes can be found in one place,**
    filtered to the TODOs, to fix, prune, or look back at.
 5. **No mark in the playlist's list** for a song with a playlist note: showing it on the song,
    in the playlist, is enough.
-6. **Adding a note at a line** (settled 2026-11-25): a tap stays the toolbar's (D93), so:
+6. **A playlist note is for everyone who sees the playlist** (settled 2026-11-25), its
+   visitors without an account too: some of the band have none and never must, and the
+   playlist is the one source of truth. A note on a private song is never seen by anyone who
+   can't read the song (D127, D128): a public playlist's visitors don't see the song, nor its
+   notes. So a note is **private** (its author's) or **the playlist's** (whoever sees it).
+7. **"TODO"**, the same word in both languages, and **only on private notes**: a band-wide
+   to-do has no one to do it.
+8. **Any playlist editor** may change or delete the playlist's notes: shared work, as its
+   songs are.
+
+9. **Adding a note at a line** (settled 2026-11-25): a tap stays the toolbar's (D93), so:
    - **touch: a long-press on a line** (about half a second; moving the finger cancels it, so
      scrolling and swiping between songs stay as they are) opens a small menu at the line,
      "Přidat poznámku" first. Android's long-press `contextmenu` and a timer for iOS, one
@@ -39,7 +49,7 @@ the song's text, which is everyone's:
      písničce", "Zrušit"). The way in for the keyboard and screen readers too. The empty
      "Moje poznámky" says the same.
    - The menu then opens the note: its text, who it's for (Jen pro mě / Pro playlist „X“, the
-     latter only playing from a playlist one may edit), and "k opravě".
+     latter only playing from a playlist one may edit), and "TODO" (private only).
 
 ## Proposed, settle while building
 
@@ -50,16 +60,17 @@ the song's text, which is everyone's:
   lines) and its words (the lyrics without chords). Shown where both still match; else where
   the words are now (a verse added above moved it); else at the top, marked "řádek se změnil",
   never lost. A pure function, unit-tested on the cases.
-- **Who:** a private note, its author alone. A playlist note: seen by the playlist's people
-  (any role), not by a public one's visitors (it is the band's); added, edited and deleted by
-  whoever may edit the playlist. A reader of a playlist adds private notes only. A note on a
+- **Who:** a private note, its author alone. A playlist note: seen by whoever sees the playlist
+  (7); added, edited and deleted by whoever may edit it (9). A reader of a playlist adds private notes only. A note on a
   song the viewer can no longer read (gone private, D127) isn't shown, and comes back if they
   can again; a song deleted takes its notes with it.
-- **TODO** is for private notes only (a band instruction isn't a to-do). Done keeps the note,
-  marked done, until deleted: what was fixed can still be looked back at.
+- **A TODO done** keeps the note, marked done, until deleted: what was fixed can still be looked
+  back at.
+- **A song taken out of a playlist** keeps the playlist's notes on it, out of sight, and they come
+  back with the song (a removal can be undone, D87): notes are someone's work, not a setting.
 - **"Moje poznámky"** (`/notes`, from the account page): every note one wrote, private and in
   playlists, newest first, each with its song, its line's words and a link to that place;
-  filters Vše / K opravě / Hotové. Plain list, searchable later if it grows.
+  filters Vše / TODO / Hotové. Plain list, searchable later if it grows.
 - **Offline:** notes come whole with every sync (`notes.mine`: one's own, and the playlist
   notes of one's playlists), like playlists: few per person. Stored on the device (IndexedDB
   version 2, a `notes` store). A note written offline waits and says so (`notifyIfQueued`,
@@ -87,9 +98,10 @@ Each ships on its own, gates green.
 
 ## Tests that matter most
 
-- Who sees what: a private note to its author only; a playlist note to its people, not to a
-  public playlist's visitors, an outsider or the songbook's editors; with the false rejects
-  (a collaborator adds a playlist note, a reader a private one).
+- Who sees what: a private note to its author only; a playlist note to whoever sees the
+  playlist, a public one's visitors too, but never on a private song they can't read, nor on a
+  private playlist to outsiders or the songbook's editors; with the false rejects (a
+  collaborator adds a playlist note, a reader a private one).
 - Anchoring: the same line; a line moved by a verse added above; a line changed or deleted
   (to the top, marked); a whole-song note.
 - A song deleted, a playlist deleted, someone leaving a playlist: notes go, or go out of sight.
@@ -98,7 +110,4 @@ Each ships on its own, gates green.
 
 ## Open questions
 
-- Should a public playlist's visitors see its notes? Proposed no (the band's).
-- TODO on playlist notes too? Proposed no.
-- May any playlist editor change another's playlist note? Proposed yes (shared work, as the
-  playlist's songs are).
+None open (2026-11-25).
