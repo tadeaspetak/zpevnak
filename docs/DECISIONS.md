@@ -553,6 +553,13 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   "Značení akordů" setting goes; it comes back if someone needs it). Two columns are no longer
   a switch (replaces D108's "the reader has them on"): wherever they fit (D129), a song is in
   them, and where they don't, it isn't. (2026-11-25)
+- **D135. Notes on songs, one's own or a playlist's.** A note is separate from the song's text,
+  at a line (its place and words) or on the whole song. One's own note is its author's alone
+  and may be a TODO (the same word in both languages), marked done and kept until deleted. A
+  playlist's note is for everyone who sees the playlist (its people, and a public one's
+  visitors), never a TODO, added, changed and deleted by whoever may edit the playlist. A note
+  goes with its song; a playlist's notes go with the playlist, and hide while their song is out
+  of it. Nobody sees a note on a song they can't read (a private song's, D126). (2026-11-25)
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed

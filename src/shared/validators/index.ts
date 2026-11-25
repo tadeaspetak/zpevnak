@@ -61,6 +61,11 @@ export const sharedKindSchema = z.enum(SHARED_KINDS);
 /** The most songs a playlist holds: a long evening, with room to spare. */
 export const PLAYLIST_MAX_SONGS = 500;
 
+/** A note on a song: a line or a paragraph, not an essay. */
+export const noteTextSchema = z.string().trim().min(1).max(2000);
+/** The words of the line a note is at, to find it again after an edit. */
+export const noteLineTextSchema = z.string().max(500);
+
 /**
  * A path inside the app to return to after signing in or confirming an email. Only a local
  * path: "/" first, never "//" (another host) or a backslash (which browsers read as "/").

@@ -18,6 +18,17 @@ type PlaylistRow = {
   song_keys: Record<string, { semitones: number; from: number | null }>;
 };
 
+/**
+ * Whether the viewer may open playlist `p`: a public one anyone, else its owner and the people
+ * it is shared with. Binds `:viewerId` (null: signed out).
+ */
+export const PLAYLIST_VISIBLE = /* sql */ `
+  (p.is_public OR p.owner_id = :viewerId OR EXISTS (
+    SELECT 1 FROM playlist_collaborators c
+    WHERE c.playlist_id = p.id AND c.user_id = :viewerId
+  ))
+`;
+
 const PLAYLIST_SELECT = /* sql */ `
   SELECT p.id, p.owner_id, u.display_name AS owner_name, p.name, p.is_public, p.updated_at,
          -- Only the songs the viewer may read: someone outside the playlist doesn't learn of a
@@ -92,10 +103,7 @@ export async function loadVisiblePlaylists(db: Knex, viewer: SessionUser | null)
   const { rows } = await db.raw<{ rows: PlaylistRow[] }>(
     /* sql */ `
       ${PLAYLIST_SELECT}
-      WHERE p.is_public OR p.owner_id = :viewerId OR EXISTS (
-        SELECT 1 FROM playlist_collaborators c
-        WHERE c.playlist_id = p.id AND c.user_id = :viewerId
-      )
+      WHERE ${PLAYLIST_VISIBLE}
       GROUP BY p.id, u.display_name
       ORDER BY p.updated_at DESC
     `,

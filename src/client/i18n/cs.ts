@@ -378,6 +378,8 @@ export const cs = {
     'Písnička je v playlistu někoho dalšího, soukromá být nemůže.',
   'error.SONG_NOT_PRIVATE':
     'Sdílet s lidmi jde jen soukromou písničku. Veřejnou vidí všichni.',
+  'error.NOTE_TODO_PRIVATE':
+    'TODO může mít jen tvoje vlastní poznámka, ne poznámka pro playlist.',
   'error.crashed':
     'Tady se něco pokazilo. Písničky máš v zařízení, načtení znovu pomůže.',
   'error.reload': 'Načíst znovu',

@@ -382,6 +382,7 @@ export const en: Record<keyof typeof cs, string> = {
     'The song is in someone else’s playlist: it can’t be private.',
   'error.SONG_NOT_PRIVATE':
     'Only a private song is shared with people. A public one is everyone’s.',
+  'error.NOTE_TODO_PRIVATE': 'Only your own note can be a TODO, not a playlist’s.',
   'error.crashed':
     'Something broke here. Your songs are on the device; reloading will help.',
   'error.reload': 'Reload',

@@ -90,7 +90,10 @@ created_at, updated_at)`. Procedures in `src/server/routers/notes/`: `notes.mine
 
 Each ships on its own, gates green.
 
-1. **The model and the server:** migration, procedures, permissions, sync of `notes.mine`.
+1. **The model and the server (shipped, D135).** As built: one table, `song_notes` (a null
+   `playlist_id` is one's own); `notes.visible` (in place of `notes.mine`: everything the viewer
+   may see, a public playlist's visitors included), `create`, `update` (text, TODO and done in
+   one call: the dialog saves them together), `delete`.
 2. **Notes in the song view:** shown at their lines, the picking mode, the note dialog, the
    Display switch, offline.
 3. **Moje poznámky:** the page and its filters.
