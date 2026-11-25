@@ -229,3 +229,16 @@
   line-height: 1.25;
   overflow-x: auto;
 }
+
+/* Picking a line for a note (D135): every line that can take one says so. */
+[data-picking] [data-place] {
+  cursor: pointer;
+  border-radius: var(--mantine-radius-sm);
+  background: var(--mantine-color-default-hover);
+
+  &:hover,
+  &:focus-visible {
+    outline: 2px solid var(--brand-text);
+    outline-offset: 1px;
+  }
+}

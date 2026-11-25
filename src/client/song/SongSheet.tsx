@@ -11,6 +11,7 @@ import {
 import { chordIn, type NoteSystem } from '#shared/chordpro/chord.ts';
 import { diagramsOf, type Instrument } from '#shared/chordpro/shapes.ts';
 import type { Block, Line, Song } from '#shared/chordpro/types.ts';
+import type { NotePlace } from '#shared/notes.ts';
 import { useMediaQuery } from '@mantine/hooks';
 import { IconLock } from '@tabler/icons-react';
 import { byline } from '../data/songText.ts';
@@ -39,7 +40,21 @@ type Props = {
   notation?: NoteSystem;
   /** Whose diagrams (D132). */
   instrument?: Instrument;
+  /**
+   * Each block's lines' places for notes (`notePlaces`, D135), read from the song as written:
+   * the song shown may be transposed. Without them, the sheet has no notes.
+   */
+  places?: (NotePlace | null)[][];
+  /** The notes at a line, shown under it. */
+  notesAt?: (place: number) => ReactNode;
+  /** Notes on the whole song, and those whose line is gone: under the title. */
+  topNotes?: ReactNode;
+  /** Picking a line for a new note: every line with a place can be picked, by keyboard too. */
+  picking?: boolean;
 };
+
+/** How a line is reached while picking one for a note (D135): a button, by any means. */
+const pickable = { role: 'button', tabIndex: 0 } as const;
 
 /**
  * Two columns of 12 song-sized ems (a short line), at 1.125rem each: the narrowest screen, in
@@ -56,12 +71,32 @@ function ChordLabel({ chord }: { chord: string }) {
   return chord.startsWith('*') ? chord.slice(1) : spell(chord);
 }
 
-function LineView({ line, showChords }: { line: Line; showChords: boolean }) {
+type Placed = { place?: NotePlace | null; picking?: boolean };
+
+/** A line's place for notes, on its element: where a long-press or a right-click finds it. */
+function placeProps({ place, picking }: Placed) {
+  return place ? { 'data-place': place.place, ...(picking ? pickable : {}) } : {};
+}
+
+function LineView({
+  line,
+  showChords,
+  ...placed
+}: { line: Line; showChords: boolean } & Placed) {
+  const at = placeProps(placed);
   if (line.type === 'comment') {
-    return <p className={classes[`comment_${line.style}`]}>{line.text}</p>;
+    return (
+      <p className={classes[`comment_${line.style}`]} {...at}>
+        {line.text}
+      </p>
+    );
   }
   if (line.type === 'tab') {
-    return <pre className={classes.tab}>{line.text || ' '}</pre>;
+    return (
+      <pre className={classes.tab} {...at}>
+        {line.text || ' '}
+      </pre>
+    );
   }
   if (line.segments.length === 0) {
     return <div className={classes.spacer} aria-hidden />;
@@ -71,12 +106,16 @@ function LineView({ line, showChords }: { line: Line; showChords: boolean }) {
     return null;
   }
   if (!showChords || !hasChords(line.segments)) {
-    return <p className={classes.line}>{line.segments.map((s) => s.text).join('')}</p>;
+    return (
+      <p className={classes.line} {...at}>
+        {line.segments.map((s) => s.text).join('')}
+      </p>
+    );
   }
   const chordOnly = isChordOnly(line.segments);
   const words = layoutLine(line.segments);
   return (
-    <p className={chordOnly ? classes.chordLine : classes.line}>
+    <p className={chordOnly ? classes.chordLine : classes.line} {...at}>
       {words.map((word, w) => (
         <Fragment key={w}>
           {w > 0 && ' '}
@@ -103,9 +142,15 @@ function LineView({ line, showChords }: { line: Line; showChords: boolean }) {
 function SectionView({
   block,
   showChords,
+  places,
+  notesAt,
+  picking,
 }: {
   block: Block & { type: 'section' };
   showChords: boolean;
+  places: (NotePlace | null)[] | undefined;
+  notesAt: Props['notesAt'];
+  picking: boolean;
 }) {
   const { t } = useI18n();
   // With chords off, a section with nothing to sing (an intro: a label and chords) goes whole.
@@ -124,9 +169,21 @@ function SectionView({
       data-line={block.line}
     >
       {label && <div className={classes.label}>{label}</div>}
-      {block.lines.map((line, i) => (
-        <LineView key={i} line={line} showChords={showChords} />
-      ))}
+      {block.lines.map((line, i) => {
+        const place = places?.[i];
+        return (
+          <Fragment key={i}>
+            <LineView
+              line={line}
+              showChords={showChords}
+              place={place}
+              picking={picking}
+            />
+            {/* A line hidden (chords alone, with chords off) keeps its notes in sight. */}
+            {place && notesAt?.(place.place)}
+          </Fragment>
+        );
+      })}
     </section>
   );
 }
@@ -154,6 +211,8 @@ function textLines(copy: HTMLElement): TextLine[] {
   const range = document.createRange();
   const lines: TextLine[] = [];
   for (const el of copy.querySelectorAll('section > *')) {
+    // A note may wrap as it likes: it's the song's lines that must not.
+    const note = el.matches('[data-notes]');
     // The text's own extent, not its block's: a short line ends where its words end.
     range.selectNodeContents(el);
     const r = range.getBoundingClientRect();
@@ -163,7 +222,7 @@ function textLines(copy: HTMLElement): TextLine[] {
         bottom: r.bottom - top,
         left: r.left,
         right: r.right,
-        wrapped: wrapped(el, range),
+        wrapped: !note && wrapped(el, range),
       });
     }
   }
@@ -227,6 +286,10 @@ export function SongSheet({
   isPrivate = false,
   notation,
   instrument = 'guitar',
+  places,
+  notesAt,
+  topNotes,
+  picking = false,
 }: Props) {
   const { t } = useI18n();
   const spell = (chord: string) =>
@@ -264,10 +327,22 @@ export function SongSheet({
             line: block.line,
           }}
           showChords={showChords}
+          places={places?.[i]}
+          notesAt={notesAt}
+          picking={picking}
         />
       ) : null;
     }
-    return <SectionView key={i} block={block} showChords={showChords} />;
+    return (
+      <SectionView
+        key={i}
+        block={block}
+        showChords={showChords}
+        places={places?.[i]}
+        notesAt={notesAt}
+        picking={picking}
+      />
+    );
   });
 
   const line = byline(song.artist, song.meta.tags);
@@ -287,6 +362,7 @@ export function SongSheet({
           </h1>
           {line && <p className={classes.artist}>{line}</p>}
           {meta.length > 0 && <p className={classes.meta}>{meta.join(' · ')}</p>}
+          {topNotes}
         </header>
         {showChords && showDiagrams && (
           <div className={classes.diagrams} aria-label={t('song.diagrams')}>
@@ -305,6 +381,7 @@ export function SongSheet({
         <div
           className={columns.fits ? classes.bodyColumns : classes.body}
           data-columns={columns.fits || undefined}
+          data-picking={picking || undefined}
         >
           {blocks}
         </div>

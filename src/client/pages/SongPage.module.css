@@ -10,4 +10,14 @@
    page. Elsewhere (the toolbar, a menu) the browser's own zoom still works. */
 .sheet {
   touch-action: pan-x pan-y;
+  /* Holds the button a mouse over a line shows, to add a note to it (D135). */
+  position: relative;
+
+  /* A finger resting on a line asks for its menu (a note, copying it), not for the system's
+     text selection: the owner's call (D135). The editor still copies a song's text. */
+  @media (pointer: coarse) {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
 }

@@ -16,6 +16,7 @@ import {
   IconEdit,
   IconMessageReport,
   IconMinus,
+  IconNotes,
   IconPlaylist,
   IconPlaylistAdd,
   IconPlus,
@@ -58,6 +59,11 @@ type Props = {
   /** May delete it: the same people for a public song, its owner alone for a private one. */
   canDelete: boolean;
   canAddToPlaylist: boolean;
+  /**
+   * Starts picking a line for a note (D135): the way in for whoever hasn't found the
+   * long-press or the right-click, and for a keyboard. Undefined: no notes for this reader.
+   */
+  onAddNote?: () => void;
   /** Out of the way: scrolled away, or the reader tapped the song (`useHideOnScroll`). */
   hidden: boolean;
   /** Played inside a playlist: its key for the song can be set there, by whoever edits it. */
@@ -93,6 +99,7 @@ export function SongToolbar(props: Props) {
     canEdit,
     canDelete,
     canAddToPlaylist,
+    onAddNote,
     hidden,
     playlist,
   } = props;
@@ -217,6 +224,11 @@ export function SongToolbar(props: Props) {
               {canAddToPlaylist && (
                 <Menu.Item leftSection={<IconPlaylistAdd size={16} />} onClick={openAdd}>
                   {t('song.addToPlaylist')}
+                </Menu.Item>
+              )}
+              {onAddNote && (
+                <Menu.Item leftSection={<IconNotes size={16} />} onClick={onAddNote}>
+                  {t('notes.add')}
                 </Menu.Item>
               )}
               {canOpenSharing && (

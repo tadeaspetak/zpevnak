@@ -30,6 +30,7 @@ import { useI18n } from '../i18n/index.tsx';
 import { SongSheet } from '../song/SongSheet.tsx';
 import { SongStatusBanner } from '../song/SongStatusBanner.tsx';
 import { SongToolbar } from '../song/SongToolbar.tsx';
+import { useSongNotes } from '../song/SongNotes.tsx';
 import { PlaylistBar } from '../song/PlaylistBar.tsx';
 import { trpc } from '../trpc.ts';
 import { idFromRef, url } from '#shared/urls.ts';
@@ -228,6 +229,12 @@ function SongPlayer({
   useSwipe(useMemo(() => ({ onLeft: next, onRight: prev }), [next, prev]));
   const sheet = useRef<HTMLDivElement>(null);
   usePinch(sheet, prefs.fontScale, prefs.setFontScale);
+  const notes = useSongNotes({
+    songId: song?.id ?? null,
+    song: parsed,
+    playlist: playlist && { id: playlist.id, name: playlist.name, role: playlist.role },
+    container: sheet,
+  });
   useKeys(
     useMemo(
       () => ({
@@ -321,6 +328,7 @@ function SongPlayer({
         canEdit={canEdit}
         canDelete={canDeleteSong(me, song)}
         canAddToPlaylist={Boolean(me?.emailVerified)}
+        onAddNote={notes.startPicking}
         hidden={toolbar.hidden}
       />
       <SongStatusBanner
@@ -348,8 +356,11 @@ function SongPlayer({
           instrument={prefs.instrument}
           showChords={prefs.showChords}
           isPrivate={song.status === 'private'}
+          {...notes.sheet}
         />
+        {notes.hoverButton}
       </div>
+      {notes.overlay}
       {playlist?.removed && (
         <Alert mx="md" mt="xs">
           {t('song.removedFromPlaylist')}

@@ -62,6 +62,7 @@ function toNoteRecord(row: NoteRow) {
     updatedAt: row.updated_at.toISOString(),
   };
 }
+export type NoteRecord = ReturnType<typeof toNoteRecord>;
 
 /** Every note the viewer may see, the newest first. */
 export async function loadVisibleNotes(db: Knex, viewer: SessionUser | null) {

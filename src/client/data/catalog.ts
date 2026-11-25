@@ -1,13 +1,14 @@
 /**
- * The catalog in memory: songs and playlists, loaded from the device first and then kept
+ * The catalog in memory: songs, playlists and notes on songs, loaded from the device first and then kept
  * in step with the server. Components read it through `useCatalog`.
  */
 import { useSyncExternalStore } from 'react';
 import { trpcClient } from '../trpc.ts';
 import {
   loadStored,
-  storePlaylists,
+  storeAll,
   storeSongs,
+  type NoteRecord,
   type PlaylistRecord,
   type SharedRecord,
   type SongRecord,
@@ -16,6 +17,8 @@ import {
 export type Catalog = {
   songs: Map<number, SongRecord>;
   playlists: Map<number, PlaylistRecord>;
+  /** Every note the viewer may see (D135). */
+  notes: Map<number, NoteRecord>;
   /** The device copy has been read; the lists are as complete as this device knows. */
   loaded: boolean;
   /** At least one sync with the server has finished since the app opened. */
@@ -26,6 +29,7 @@ export type Catalog = {
 let state: Catalog = {
   songs: new Map(),
   playlists: new Map(),
+  notes: new Map(),
   loaded: false,
   synced: false,
   syncing: false,
@@ -68,6 +72,7 @@ function loadFromDevice() {
     update({
       songs: new Map(stored.songs.map((s) => [s.id, s])),
       playlists: new Map(stored.playlists.map((p) => [p.id, p])),
+      notes: new Map(stored.notes.map((n) => [n.id, n])),
       loaded: true,
     });
   });
@@ -95,6 +100,8 @@ export function privateSongsNotSent(
 const putDuringSync = new Set<number>();
 /** Playlists put into the catalog, or taken out, since the running sync started. */
 const playlistsPutDuringSync = new Set<number>();
+/** Notes likewise. */
+const notesPutDuringSync = new Set<number>();
 
 /**
  * The songs after a sync: the delta applied, or, for a new viewer, the delta alone, with what
@@ -112,17 +119,20 @@ export function mergeSongs(
   return merged;
 }
 
+type Fetched = { id: number; updatedAt: string };
+
 /**
- * The playlists after a fetch of them all. One this device changed since the fetch left (its
- * own edit came back first) keeps the newer copy: an answer that was on its way doesn't undo it.
- * One put here or taken away while the fetch ran (`putMeanwhile`: joined by an invite, left)
- * stays as it is here: the answer may predate it.
+ * The playlists, or the notes, after a fetch of them all. One this device changed since the
+ * fetch left (its own edit came back first) keeps the newer copy: an answer that was on its way
+ * doesn't undo it. One put here or taken away while the fetch ran (`putMeanwhile`: a playlist
+ * joined by an invite or left, a note written or deleted) stays as it is here: the answer may
+ * predate it.
  */
-export function mergePlaylists(
-  local: Map<number, PlaylistRecord>,
-  fetched: PlaylistRecord[],
+export function mergeFetched<T extends Fetched>(
+  local: Map<number, T>,
+  fetched: T[],
   putMeanwhile: ReadonlySet<number> = new Set(),
-): Map<number, PlaylistRecord> {
+): Map<number, T> {
   const merged = new Map(fetched.map((p) => [p.id, newer(local.get(p.id), p)]));
   for (const id of putMeanwhile) {
     const mine = local.get(id);
@@ -135,10 +145,7 @@ export function mergePlaylists(
   return merged;
 }
 
-function newer(
-  local: PlaylistRecord | undefined,
-  incoming: PlaylistRecord,
-): PlaylistRecord {
+function newer<T extends Fetched>(local: T | undefined, incoming: T): T {
   return local && local.updatedAt > incoming.updatedAt ? local : incoming;
 }
 
@@ -152,31 +159,35 @@ async function runSync(viewer: number | null) {
   // counted before anything waits, so nothing slips in between.
   putDuringSync.clear();
   playlistsPutDuringSync.clear();
+  notesPutDuringSync.clear();
   update({ syncing: true });
   try {
     await loadFromDevice();
     const replaceAll = viewer !== viewerId || cursor === null;
     if (viewer !== viewerId) {
       // Someone else now: what the last person could see leaves the device before anything
-      // is fetched, so a fetch that fails can't leave their private songs and playlists here.
-      // Only what the new person put here meanwhile stays (a playlist they just joined).
+      // is fetched, so a fetch that fails can't leave their private songs, playlists and notes
+      // here. Only what the new person put here meanwhile stays (a playlist they just joined).
       cursor = null;
       viewerId = viewer;
       update({
         songs: only(state.songs, putDuringSync),
         playlists: only(state.playlists, playlistsPutDuringSync),
+        notes: only(state.notes, notesPutDuringSync),
       });
       await Promise.all([
         storeSongs(
           { songs: [...state.songs.values()], removedIds: [], replaceAll: true },
           { cursor, viewerId },
         ),
-        storePlaylists([...state.playlists.values()]),
+        storeAll('playlists', [...state.playlists.values()]),
+        storeAll('notes', [...state.notes.values()]),
       ]);
     }
-    const [songDelta, playlists] = await Promise.all([
+    const [songDelta, playlists, notes] = await Promise.all([
       trpcClient.songs.sync.query({ since: replaceAll ? null : cursor }),
       trpcClient.playlists.all.query(),
+      trpcClient.notes.visible.query(),
     ]);
     cursor = songDelta.cursor;
     const changes = {
@@ -188,12 +199,14 @@ async function runSync(viewer: number | null) {
     };
     update({
       songs: mergeSongs(state.songs, changes, replaceAll, putDuringSync),
-      playlists: mergePlaylists(state.playlists, playlists, playlistsPutDuringSync),
+      playlists: mergeFetched(state.playlists, playlists, playlistsPutDuringSync),
+      notes: mergeFetched(state.notes, notes, notesPutDuringSync),
       synced: true,
     });
     await Promise.all([
       storeSongs({ ...changes, replaceAll }, { cursor, viewerId }),
-      storePlaylists([...state.playlists.values()]),
+      storeAll('playlists', [...state.playlists.values()]),
+      storeAll('notes', [...state.notes.values()]),
     ]);
   } catch {
     // Offline or the server is away: the device copy stays in use, and the next sync retries.
@@ -261,7 +274,23 @@ export function putPlaylist(id: number, playlist: PlaylistRecord | null) {
     playlists.delete(id);
   }
   update({ playlists });
-  void storePlaylists([...playlists.values()]);
+  void storeAll('playlists', [...playlists.values()]);
+}
+
+/**
+ * Applies a note the server just returned, or removes one (`null`), without waiting for the
+ * next sync (D135).
+ */
+export function putNote(id: number, note: NoteRecord | null) {
+  notesPutDuringSync.add(id);
+  const notes = new Map(state.notes);
+  if (note) {
+    notes.set(id, newer(notes.get(id), note));
+  } else {
+    notes.delete(id);
+  }
+  update({ notes });
+  void storeAll('notes', [...notes.values()]);
 }
 
 /** Applies a playlist or a song the sharing procedures returned, whichever it is. */

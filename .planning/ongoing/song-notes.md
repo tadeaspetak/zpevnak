@@ -94,8 +94,12 @@ Each ships on its own, gates green.
    `playlist_id` is one's own); `notes.visible` (in place of `notes.mine`: everything the viewer
    may see, a public playlist's visitors included), `create`, `update` (text, TODO and done in
    one call: the dialog saves them together), `delete`.
-2. **Notes in the song view:** shown at their lines, the picking mode, the note dialog, the
-   Display switch, offline.
+2. **Notes in the song view (shipped).** As built: the line menu has a second item,
+   "Kopírovat řádek", since text can't be selected on touch any more (for visitors too, who
+   can't write notes); with a mouse, a button at the end of the hovered line; notes at
+   0.85 em, grey-ruled, a playlist's with its mark; a note whose line is gone sits under the
+   title, naming the line. Who a note is for is chosen when it's written, not changed later.
+   Saving a note with notes switched off switches them back on. Delete asks a second tap.
 3. **Moje poznámky:** the page and its filters.
 4. **A review and a UX walk,** their no-brainers.
 

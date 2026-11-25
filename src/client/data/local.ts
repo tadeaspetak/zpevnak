@@ -10,6 +10,7 @@ type LocalKey =
   | 'fontScale'
   | 'transpose'
   | 'showDiagrams'
+  | 'showNotes'
   | 'showChords'
   | 'instrument'
   | 'me'

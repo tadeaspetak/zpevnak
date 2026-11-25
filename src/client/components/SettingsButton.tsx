@@ -118,6 +118,11 @@ export function SettingsButton({ size = 'lg' }: Props) {
                 }))}
               />
             )}
+            <Switch
+              label={t('notes.show')}
+              checked={prefs.showNotes}
+              onChange={(e) => prefs.setShowNotes(e.currentTarget.checked)}
+            />
           </Part>
           <Part title={t('settings.app')}>
             <SegmentedControl

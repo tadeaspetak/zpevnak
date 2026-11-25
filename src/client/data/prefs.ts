@@ -9,6 +9,8 @@ type Prefs = {
   /** Chords above the lyrics; off to just sing along. */
   showChords: boolean;
   showDiagrams: boolean;
+  /** Notes on songs (D135); off to play from a clean sheet. */
+  showNotes: boolean;
   /** Whose chord diagrams (D132). */
   instrument: Instrument;
   /** Song id → how far it's transposed, for the songs someone transposed. */
@@ -33,6 +35,7 @@ let prefs: Prefs = {
   showChords: readLocalJson('showChords', true),
   // Off by default: the song's own diagrams are for the few who need an unusual voicing (D84).
   showDiagrams: readLocalJson('showDiagrams', false),
+  showNotes: readLocalJson('showNotes', true),
   instrument: readLocalJson<Instrument>('instrument', 'guitar'),
   transpose: readLocalJson('transpose', {}),
 };
@@ -79,6 +82,11 @@ export function usePrefs() {
     update({ showDiagrams });
   }, []);
 
+  const setShowNotes = useCallback((showNotes: boolean) => {
+    writeLocalJson('showNotes', showNotes);
+    update({ showNotes });
+  }, []);
+
   /** `from`: the pitch the song starts from as it is now (`songPitch`). */
   const setTranspose = useCallback(
     (songId: number, semitones: number, from: number | null) => {
@@ -108,6 +116,7 @@ export function usePrefs() {
     setFontScale,
     setShowChords,
     setShowDiagrams,
+    setShowNotes,
     setTranspose,
   };
 }

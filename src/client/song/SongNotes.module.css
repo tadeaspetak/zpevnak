@@ -1,0 +1,94 @@
+/*
+ * Notes on the song (D135): under their line, smaller and quieter than the song, so the eye
+ * reading the song passes over them and the eye looking for them finds them.
+ */
+.notes {
+  margin: 0.1em 0 0.35em;
+  break-inside: avoid;
+}
+
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35em;
+  margin: 0;
+  padding: 0.1em 0;
+  font: inherit;
+  font-size: 0.85em;
+  font-style: italic;
+  line-height: 1.35;
+  color: var(--mantine-color-dimmed);
+  text-align: left;
+  background: none;
+  border: 0;
+  /* Kept apart from the song by a rule: grey, not the chords' orange, so it reads as an aside. */
+  border-left: 2px solid var(--mantine-color-default-border);
+  padding-left: 0.5em;
+
+  & svg {
+    flex: none;
+    width: 1em;
+    height: 1em;
+    margin-top: 0.2em;
+  }
+
+  &[data-done] {
+    text-decoration: line-through;
+  }
+}
+
+button.note {
+  cursor: pointer;
+
+  &:hover {
+    color: var(--mantine-color-text);
+  }
+}
+
+.moved {
+  font-style: normal;
+}
+
+/* At the end of the line the mouse is over: a note for this line. */
+.hoverAdd {
+  position: absolute;
+  transform: translate(0.25rem, -100%);
+  z-index: 2;
+}
+
+/* Where a long-press or a right-click happened: the menu opens from here. */
+.menuAnchor {
+  position: fixed;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+.menuLine {
+  max-width: 16rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pickBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* Over the playlist's bar, which it stands in for while a line is picked. */
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
+  padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
+  padding-bottom: max(var(--mantine-spacing-sm), env(safe-area-inset-bottom));
+  border-radius: 0;
+  border-top: 1px solid var(--mantine-color-default-border);
+}
+
+.pickHint {
+  flex: 1 1 14rem;
+}

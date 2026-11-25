@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  mergePlaylists,
+  mergeFetched,
   mergeSongs,
   playable,
   privateSongsNotSent,
@@ -68,15 +68,15 @@ describe('privateSongsNotSent (D127)', () => {
   });
 });
 
-describe('mergePlaylists', () => {
+describe('mergeFetched', () => {
   it('keeps a playlist joined while the fetch ran, and one left stays gone', () => {
     // Signing up from an invite: the sync starts, the join lands first, the answer predates it.
     const local = new Map([[5, playlist(5, [])]]);
-    expect([...mergePlaylists(local, [], new Set([5])).keys()]).toEqual([5]);
+    expect([...mergeFetched(local, [], new Set([5])).keys()]).toEqual([5]);
     // Left meanwhile: the answer still has it, the device doesn't.
-    expect([
-      ...mergePlaylists(new Map(), [playlist(6, [])], new Set([6])).keys(),
-    ]).toEqual([]);
+    expect([...mergeFetched(new Map(), [playlist(6, [])], new Set([6])).keys()]).toEqual(
+      [],
+    );
   });
 
   it('takes the fetched playlists, and drops ones that are gone', () => {
@@ -84,15 +84,13 @@ describe('mergePlaylists', () => {
       [1, playlist(1, [1])],
       [2, playlist(2, [2])],
     ]);
-    const merged = mergePlaylists(local, [
-      playlist(1, [1, 2], '2026-11-10T11:00:00.000Z'),
-    ]);
+    const merged = mergeFetched(local, [playlist(1, [1, 2], '2026-11-10T11:00:00.000Z')]);
     expect([...merged.values()].map((p) => p.songIds)).toEqual([[1, 2]]);
   });
 
   it("keeps this device's newer copy over an answer that was already on its way", () => {
     const edited = playlist(1, [1, 2, 3], '2026-11-10T12:00:00.000Z');
-    const merged = mergePlaylists(new Map([[1, edited]]), [playlist(1, [1, 2])]);
+    const merged = mergeFetched(new Map([[1, edited]]), [playlist(1, [1, 2])]);
     expect(merged.get(1)).toBe(edited);
   });
 });
