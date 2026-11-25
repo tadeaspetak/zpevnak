@@ -16,8 +16,8 @@ import type { Song } from '#shared/chordpro/types.ts';
 import { notePlaces, placeOf, type NotePlace } from '#shared/notes.ts';
 import { editsAsMember } from '#shared/roles.ts';
 import { IconButton } from '../components/IconButton.tsx';
-import { useCatalog } from '../data/catalog.ts';
-import { canChangeNote } from '../data/notes.ts';
+import { useCatalog, type LocalNote } from '../data/catalog.ts';
+import { canChangeNote, inFilter } from '../data/notes.ts';
 import { usePrefs } from '../data/prefs.ts';
 import type { NoteRecord, PlaylistRecord } from '../data/store.ts';
 import { useLinePress, type LinePress } from '../hooks/useLinePress.ts';
@@ -70,12 +70,15 @@ export function useSongNotes({
   const canChange = (note: NoteRecord) => canChangeNote(note, playlist, canWrite);
 
   const { atPlace, top } = useMemo(() => {
-    const atPlace = new Map<number, NoteRecord[]>();
-    const top: { note: NoteRecord; moved: boolean }[] = [];
+    const atPlace = new Map<number, LocalNote[]>();
+    const top: { note: LocalNote; moved: boolean }[] = [];
     const mine = [...notes.values()]
       .filter(
         (n) =>
-          n.songId === songId && (n.playlistId === null || n.playlistId === playlist?.id),
+          n.songId === songId &&
+          (n.playlistId === null || n.playlistId === playlist?.id) &&
+          // A TODO done is off the song, kept in Moje poznámky → Hotové.
+          !inFilter(n, 'done'),
       )
       .sort(byAge);
     for (const note of mine) {
@@ -363,7 +366,7 @@ function NoteList({
   canChange,
   onOpen,
 }: {
-  notes: NoteRecord[];
+  notes: LocalNote[];
   /** Notes whose line has gone from the song: shown at the top, with the words they were at. */
   moved?: ReadonlySet<number>;
   canChange: (note: NoteRecord) => boolean;
@@ -395,10 +398,14 @@ function NoteList({
                 </span>
               )}
               {note.text}
+              {note.waiting && (
+                <span className={classes.waiting}> · {t('notes.waiting')}</span>
+              )}
             </span>
           </>
         );
-        return canChange(note) ? (
+        // Waiting for the connection, it can't be opened yet: the server hasn't got it.
+        return canChange(note) && !note.waiting ? (
           <button
             key={note.id}
             data-note-id={note.id}

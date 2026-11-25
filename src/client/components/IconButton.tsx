@@ -12,6 +12,8 @@ type Props = ActionIconProps &
     tooltip?: string;
     /** A link instead of a button. */
     to?: string;
+    /** What the link carries to the page it leads to (`SongLinkState`). */
+    state?: unknown;
     children: ReactNode;
   };
 
@@ -23,6 +25,7 @@ export function IconButton({
   label,
   tooltip,
   to,
+  state,
   size = 'lg',
   children,
   ...props
@@ -34,7 +37,14 @@ export function IconButton({
           {children}
         </ActionIcon>
       ) : (
-        <ActionIcon component={Link} to={to} size={size} aria-label={label} {...props}>
+        <ActionIcon
+          component={Link}
+          to={to}
+          state={state}
+          size={size}
+          aria-label={label}
+          {...props}
+        >
           {children}
         </ActionIcon>
       )}

@@ -97,7 +97,7 @@ describe('NotesPage (D135)', () => {
       note(3, { playlistId: 1, authorId: 9 }),
     ]);
     expect(texts()).toEqual(['poznámka 2', 'poznámka 1']);
-    expect(screen.getByText('Pro playlist „Vršek“')).toBeTruthy();
+    expect(screen.getByText(/Pro playlist „Vršek“/)).toBeTruthy();
   });
 
   it('filters to the TODOs still to do, or done, and keeps the filter in the address', async () => {
@@ -126,7 +126,7 @@ describe('NotesPage (D135)', () => {
 
   it('leads to the note in its song: in its playlist for a playlist’s, scrolled to it', async () => {
     await open([note(2, { playlistId: 1 })]);
-    fireEvent.click(screen.getByRole('link', { name: /poznámka 2/ }));
+    fireEvent.click(screen.getByRole('link', { name: 'Ukázat v písničce' }));
     const arrived = await screen.findByText(/^\/playlist\//);
     expect(arrived.textContent).toMatch(/^\/playlist\/1-vrsek\/2 /);
     expect(JSON.parse(arrived.textContent?.split(' ').slice(1).join(' ') ?? '')).toEqual({
@@ -138,13 +138,13 @@ describe('NotesPage (D135)', () => {
 
   it('opens a note to change it, right there', async () => {
     await open([note(1, { todo: true })]);
-    fireEvent.click(screen.getByRole('button', { name: 'Upravit poznámku' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Upravit poznámku: poznámka 1' }));
     expect(await screen.findByRole('checkbox', { name: 'Hotovo' })).toBeTruthy();
   });
 
   it('offers to change a band note only while one may edit the band’s playlist', async () => {
     await open([note(1, { playlistId: 1 })]);
-    expect(screen.getByRole('button', { name: 'Upravit poznámku' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Upravit poznámku/ })).toBeTruthy();
     act(() =>
       putPlaylist(band.id, {
         ...band,
@@ -152,7 +152,7 @@ describe('NotesPage (D135)', () => {
         updatedAt: '2026-11-23T00:00:00.000Z',
       }),
     );
-    expect(screen.queryByRole('button', { name: 'Upravit poznámku' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Upravit poznámku/ })).toBeNull();
   });
 
   it('tells an account yet to confirm its email when it can write notes, not how', async () => {
@@ -170,5 +170,25 @@ describe('NotesPage (D135)', () => {
     await open([]);
     expect(screen.getByText('Poznámky si můžeš psát, až potvrdíš e-mail.')).toBeTruthy();
     expect(screen.queryByText(/podrž prst/)).toBeNull();
+  });
+
+  it('names each song once, its notes under it, the song with the latest note first', async () => {
+    await open([note(1, {}), note(2, { songId: 9 }), note(3, {})]);
+    const headings = screen.getAllByRole('link', { name: /^(Píseň|Jiná)/ });
+    expect(headings.map((h) => h.textContent)).toEqual(['Píseň', 'Jiná']);
+    expect(texts()).toEqual(['poznámka 3', 'poznámka 1', 'poznámka 2']);
+  });
+
+  it('marks a TODO done in one tap', async () => {
+    await open([note(1, { todo: true })]);
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Hotovo: poznámka 1' }));
+    await vi.waitFor(() => {
+      const calls = vi
+        .mocked(fetch)
+        .mock.calls.filter(([input]) => String(input).includes('notes.update'));
+      expect(JSON.parse(String(calls[0]?.[1]?.body))).toEqual({
+        0: { id: 1, text: 'poznámka 1', todo: true, done: true },
+      });
+    });
   });
 });

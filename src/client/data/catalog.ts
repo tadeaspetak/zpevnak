@@ -14,11 +14,17 @@ import {
   type SongRecord,
 } from './store.ts';
 
+/** A note as the app shows it: `waiting`, a change made offline the server hasn't had yet. */
+export type LocalNote = NoteRecord & { waiting?: true };
+
 export type Catalog = {
   songs: Map<number, SongRecord>;
   playlists: Map<number, PlaylistRecord>;
-  /** Every note the viewer may see (D135). */
-  notes: Map<number, NoteRecord>;
+  /**
+   * Every note the viewer may see (D135), with the changes made offline that wait for the
+   * connection on top (`waitNote`).
+   */
+  notes: Map<number, LocalNote>;
   /** The device copy has been read; the lists are as complete as this device knows. */
   loaded: boolean;
   /** At least one sync with the server has finished since the app opened. */
@@ -55,11 +61,42 @@ export function playable(raw: Catalog): Catalog {
   return { ...raw, playlists };
 }
 
-let view: Catalog = playable(state);
+/**
+ * Notes written, changed (a note) or deleted (null) offline, waiting for the connection (D135):
+ * shown at once, on top of what the server has said, and kept in memory only. On the device
+ * they would outlive their request, lost with a reload, and wait for ever.
+ */
+const waiting = new Map<number, NoteRecord | null>();
+
+/** The notes with what waits on top. */
+export function withWaiting(
+  notes: Map<number, NoteRecord>,
+  pending: ReadonlyMap<number, NoteRecord | null>,
+): Map<number, LocalNote> {
+  if (pending.size === 0) {
+    return notes;
+  }
+  const shown = new Map<number, LocalNote>(notes);
+  for (const [id, note] of pending) {
+    if (note) {
+      shown.set(id, { ...note, waiting: true });
+    } else {
+      shown.delete(id);
+    }
+  }
+  return shown;
+}
+
+const see = (raw: Catalog): Catalog => ({
+  ...playable(raw),
+  notes: withWaiting(raw.notes, waiting),
+});
+
+let view: Catalog = see(state);
 
 function update(patch: Partial<Catalog>) {
   state = { ...state, ...patch };
-  view = playable(state);
+  view = see(state);
   listeners.forEach((l) => l());
 }
 
@@ -170,6 +207,7 @@ async function runSync(viewer: number | null) {
       // here. Only what the new person put here meanwhile stays (a playlist they just joined).
       cursor = null;
       viewerId = viewer;
+      waiting.clear();
       update({
         songs: only(state.songs, putDuringSync),
         playlists: only(state.playlists, playlistsPutDuringSync),
@@ -291,6 +329,22 @@ export function putNote(id: number, note: NoteRecord | null) {
   }
   update({ notes });
   void storeAll('notes', [...notes.values()]);
+}
+
+/**
+ * Shows a change to a note made offline at once, before the server has it: the note as written
+ * or changed, or null for one deleted. `settleNote` takes it back when its request ends.
+ */
+export function waitNote(id: number, note: NoteRecord | null) {
+  waiting.set(id, note);
+  update({});
+}
+
+/** The request for a waiting change has ended, done or refused: the server's word stands. */
+export function settleNote(id: number) {
+  if (waiting.delete(id)) {
+    update({});
+  }
 }
 
 /** Applies a playlist or a song the sharing procedures returned, whichever it is. */

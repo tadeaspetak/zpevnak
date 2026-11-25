@@ -1,4 +1,5 @@
 import { editsAsMember } from '#shared/roles.ts';
+import type { LocalNote } from './catalog.ts';
 import type { NoteRecord, PlaylistRecord, SongRecord } from './store.ts';
 
 /** How one's notes are filtered (D135): all, the TODOs still to do, or those done. */
@@ -9,26 +10,28 @@ export type NoteFilter = 'all' | 'todo' | 'done';
  * that can be shown and followed to their song. The account page counts the same ones.
  */
 export function notesBy(
-  notes: Map<number, NoteRecord>,
+  notes: Map<number, LocalNote>,
   songs: Map<number, SongRecord>,
   authorId: number | undefined,
-): NoteRecord[] {
+): LocalNote[] {
   return [...notes.values()]
     .filter((n) => n.authorId === authorId && songs.has(n.songId))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id - a.id);
 }
 
 /**
- * Whether the viewer may change a note they see (D135): their own, always; a playlist's, while
+ * Whether the viewer may change a note they see (D135): their own, always (once the server has
+ * it); a playlist's, while
  * they may edit that playlist (`playlist`: the one it's for, if the device has it). As the
  * server decides it (`assertCanChangeNote`), so nobody is offered what would be refused.
  */
 export function canChangeNote(
-  note: NoteRecord,
+  note: LocalNote,
   playlist: Pick<PlaylistRecord, 'id' | 'role'> | null | undefined,
   verified: boolean,
 ): boolean {
-  if (!verified) {
+  // Waiting for the connection, it isn't the server's yet: nothing to change.
+  if (!verified || note.waiting) {
     return false;
   }
   return (

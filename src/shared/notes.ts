@@ -48,16 +48,46 @@ export function notePlaces(song: Song): (NotePlace | null)[][] {
   });
 }
 
-/** Where `line` (a note's) is now among `places`: its place, or null when it's gone. */
+/** How alike two lines' words are, 0 to 1: one less the edits between them, per letter. */
+export function likeness(a: string, b: string): number {
+  if (a === b) {
+    return 1;
+  }
+  // Levenshtein distance, one row at a time.
+  let previous = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const row = [i];
+    for (let j = 1; j <= b.length; j++) {
+      row[j] = Math.min(
+        (previous[j] ?? 0) + 1,
+        (row[j - 1] ?? 0) + 1,
+        (previous[j - 1] ?? 0) + (a[i - 1] === b[j - 1] ? 0 : 1),
+      );
+    }
+    previous = row;
+  }
+  return 1 - (previous[b.length] ?? 0) / Math.max(a.length, b.length);
+}
+
+/** Words this alike are the same line, edited a little: a typo fixed, a comma added. */
+const SAME_LINE = 0.8;
+
+/**
+ * Where `line` (a note's) is now among `places`: its place, or null when it's gone. Its very
+ * words first, at its place or the nearest one (a verse added above moved it); else words
+ * nearly the same (a typo fixed there), the nearest again.
+ */
 export function placeOf(
   places: readonly (NotePlace | null)[][],
   line: { index: number; text: string },
 ): number | null {
   const all = places.flat().filter((p): p is NotePlace => p !== null);
-  if (all[line.index]?.words === line.text) {
-    return line.index;
-  }
-  const same = all.filter((p) => p.words === line.text);
-  same.sort((a, b) => Math.abs(a.place - line.index) - Math.abs(b.place - line.index));
-  return same[0]?.place ?? null;
+  const nearest = (lines: NotePlace[]) =>
+    lines.sort(
+      (a, b) => Math.abs(a.place - line.index) - Math.abs(b.place - line.index),
+    )[0]?.place ?? null;
+  return (
+    nearest(all.filter((p) => p.words === line.text)) ??
+    nearest(all.filter((p) => likeness(p.words, line.text) >= SAME_LINE))
+  );
 }

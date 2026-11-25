@@ -297,4 +297,31 @@ describe('notes on the song view (D135)', () => {
     expect(await screen.findByText('Pro playlist „Vršek“ · Autor: Bára')).toBeTruthy();
     act(() => putPlaylist(1, null));
   });
+
+  it('takes a TODO done off the song: it’s in Moje poznámky, under Hotové', async () => {
+    await play(null, [
+      note(1, { todo: true }),
+      note(2, { todo: true, doneAt: '2026-11-25T11:00:00.000Z' }),
+    ]);
+    expect(screen.getByText('poznámka 1')).toBeTruthy();
+    expect(screen.queryByText('poznámka 2')).toBeNull();
+  });
+
+  it('shows a note written offline at once, waiting, not to be opened until it’s saved', async () => {
+    const online = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+    try {
+      const sheet = await play(null, []);
+      fireEvent.contextMenu(sheet.querySelector('[data-place="1"]') as HTMLElement);
+      fireEvent.click(await screen.findByRole('menuitem', { name: 'Přidat poznámku' }));
+      fireEvent.change(await screen.findByRole('textbox', { name: 'Poznámka' }), {
+        target: { value: 'kapodastr' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: 'Uložit' }));
+      const waiting = await screen.findByText('kapodastr');
+      expect(waiting.closest('[data-notes]')?.textContent).toContain('čeká na připojení');
+      expect(waiting.closest('button')).toBeNull();
+    } finally {
+      online.mockRestore();
+    }
+  });
 });

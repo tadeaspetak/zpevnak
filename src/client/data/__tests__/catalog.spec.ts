@@ -4,9 +4,15 @@ import {
   mergeSongs,
   playable,
   privateSongsNotSent,
+  withWaiting,
   type Catalog,
 } from '../catalog.ts';
-import { fromDevice, type PlaylistRecord, type SongRecord } from '../store.ts';
+import {
+  fromDevice,
+  type NoteRecord,
+  type PlaylistRecord,
+  type SongRecord,
+} from '../store.ts';
 
 const song = (id: number, title = `Song ${id}`) => ({ id, title }) as SongRecord;
 const playlist = (
@@ -111,5 +117,33 @@ describe('fromDevice', () => {
     expect(fromDevice(old).songKeys).toEqual({});
     const current = { ...old, songKeys: { 1: { semitones: 2, from: 0 } } };
     expect(fromDevice(current).songKeys).toEqual({ 1: { semitones: 2, from: 0 } });
+  });
+});
+
+describe('withWaiting (D135)', () => {
+  const note = (id: number, text: string) => ({ id, text }) as NoteRecord;
+  const notes = new Map([
+    [1, note(1, 'jedna')],
+    [2, note(2, 'dvě')],
+  ]);
+
+  it('shows changes made offline on top, marked, and the notes as they were underneath', () => {
+    const shown = withWaiting(
+      notes,
+      new Map([
+        [-5, note(-5, 'nová')],
+        [1, note(1, 'jedna, opravená')],
+        [2, null],
+      ]),
+    );
+    expect([...shown.values()].map((n) => [n.text, n.waiting ?? false])).toEqual([
+      ['jedna, opravená', true],
+      ['nová', true],
+    ]);
+    expect(notes.get(1)?.text).toBe('jedna');
+  });
+
+  it('is the notes themselves when nothing waits', () => {
+    expect(withWaiting(notes, new Map())).toBe(notes);
   });
 });

@@ -55,6 +55,11 @@ button.note {
   }
 }
 
+.waiting {
+  font-style: normal;
+  white-space: nowrap;
+}
+
 .moved {
   font-style: normal;
 }

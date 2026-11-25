@@ -122,9 +122,4 @@ Each ships on its own, gates green.
 
 ## Open questions
 
-From the UX walk (2026-11-25), for the owner:
-
-- **F5** Moje poznámky grouped by song, with a checkbox to mark a TODO done in one tap?
-- **F4** A note written offline shown at once, marked waiting, rather than only the toast?
-- **F6** Done TODOs off the song (kept under Hotové), rather than struck through on it?
-- **F10** A note kept on its line when the line's words change a little (a typo fixed)?
+None. The UX walk's four questions were settled on 2026-11-25, all as recommended (D138).

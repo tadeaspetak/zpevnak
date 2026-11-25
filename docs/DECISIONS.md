@@ -571,6 +571,13 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   Edge and Firefox; Safari's own gesture) changes the text size instead of zooming the page,
   keeping the line under the pointer; so does Ctrl and a mouse wheel there, a notch about a
   step. Keyboard zoom, and zoom anywhere off the song, stay the browser's. (2026-11-25)
+- **D138. Notes after the UX walk** (the owner's calls on D135). Moje poznámky is grouped by
+  song (the song with the latest note first), a TODO ticked done there in one tap. A note
+  written, changed or deleted offline shows at once, marked "čeká na připojení", in memory only
+  until the server has it (a new pattern beside D133's message; other offline changes may follow
+  it). A TODO done leaves the song, kept under Hotové. A note stays on its line through a small
+  edit of its words (80 % alike: a typo fixed, a comma added); a line rewritten sends it to the
+  top as before. (2026-11-25)
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed

@@ -11,7 +11,8 @@ import {
 import { notifications } from '@mantine/notifications';
 import { useState } from 'react';
 import type { NotePlace } from '#shared/notes.ts';
-import { putNote, useCatalog } from '../data/catalog.ts';
+import { putNote, settleNote, useCatalog, waitNote } from '../data/catalog.ts';
+import { useMe } from '../hooks/useMe.ts';
 import { notifyIfQueued } from '../data/offline.ts';
 import type { NoteRecord } from '../data/store.ts';
 import { ConfirmModal } from '../components/ConfirmModal.tsx';
@@ -40,22 +41,90 @@ type Props = {
  * here, kept mounted, not in the form: one waiting for the connection (D133) outlives the
  * form, closed meanwhile, and still lands in the catalog, or says why it didn't.
  */
-export function NoteModal({ target, ...props }: Props) {
+/**
+ * Writing, changing and deleting notes (D135), wherever it's done: the dialog, a TODO ticked in
+ * Moje poznámky. What the server returns goes into the catalog. Offline, a change shows at once,
+ * marked as waiting (`waitNote`), until its request ends; online it shows when the server has
+ * it, a moment later, rather than flash "waiting". Kept by a component that stays mounted, so
+ * a request waiting for the connection still lands.
+ */
+export function useNoteRequests() {
   const { t, tError } = useI18n();
+  const { me } = useMe();
+  const { notes } = useCatalog();
   const onError = (error: unknown) =>
     notifications.show({ color: 'red', message: tError(error) });
-  const put = (note: NoteRecord) => putNote(note.id, note);
-  const requests: Requests = {
-    create: trpc.notes.create.useMutation({ onSuccess: put, onError }),
-    update: trpc.notes.update.useMutation({ onSuccess: put, onError }),
+  return {
+    create: trpc.notes.create.useMutation({
+      onMutate: (input) => {
+        if (navigator.onLine || !me) {
+          return {};
+        }
+        const now = new Date().toISOString();
+        // Below every real id, and apart from any other note waiting.
+        const id = -Date.now();
+        waitNote(id, {
+          id,
+          songId: input.songId,
+          playlistId: input.playlistId,
+          authorId: me.id,
+          authorName: me.displayName,
+          text: input.text,
+          todo: input.todo,
+          doneAt: null,
+          line: input.line,
+          createdAt: now,
+          updatedAt: now,
+        });
+        return { waitingId: id };
+      },
+      onSuccess: (note) => putNote(note.id, note),
+      onError: (error) => onError(error),
+      onSettled: (_note, _error, _input, context) => {
+        if (context?.waitingId !== undefined) {
+          settleNote(context.waitingId);
+        }
+      },
+    }),
+    update: trpc.notes.update.useMutation({
+      onMutate: (input) => {
+        const was = notes.get(input.id);
+        if (navigator.onLine || !was) {
+          return;
+        }
+        waitNote(input.id, {
+          ...was,
+          text: input.text,
+          todo: input.todo,
+          doneAt:
+            input.todo && input.done ? (was.doneAt ?? new Date().toISOString()) : null,
+        });
+      },
+      onSuccess: (note) => putNote(note.id, note),
+      onError: (error) => onError(error),
+      onSettled: (_note, _error, input) => settleNote(input.id),
+    }),
     remove: trpc.notes.delete.useMutation({
+      onMutate: (input) => {
+        if (!navigator.onLine) {
+          waitNote(input.id, null);
+        }
+      },
       onSuccess: (_, { id }) => {
         putNote(id, null);
         notifications.show({ message: t('notes.deleted') });
       },
-      onError,
+      onError: (error) => onError(error),
+      onSettled: (_result, _error, input) => settleNote(input.id),
     }),
   };
+}
+
+type NoteRequests = ReturnType<typeof useNoteRequests>;
+
+export function NoteModal({ target, ...props }: Props) {
+  const { t } = useI18n();
+  const requests = useNoteRequests();
   const [deleting, setDeleting] = useState<NoteRecord | null>(null);
   const key =
     target === null
@@ -112,12 +181,6 @@ export function NoteModal({ target, ...props }: Props) {
   );
 }
 
-type Requests = {
-  create: ReturnType<typeof trpc.notes.create.useMutation>;
-  update: ReturnType<typeof trpc.notes.update.useMutation>;
-  remove: ReturnType<typeof trpc.notes.delete.useMutation>;
-};
-
 function NoteForm({
   target,
   playlist,
@@ -128,7 +191,7 @@ function NoteForm({
   onDelete,
 }: Props & {
   target: NoteTarget;
-  requests: Requests;
+  requests: NoteRequests;
   onDelete: (note: NoteRecord) => void;
 }) {
   const { t } = useI18n();
@@ -148,7 +211,11 @@ function NoteForm({
 
   const words = target.kind === 'edit' ? target.note.line?.text : target.place?.words;
   const isPrivate = existing ? existing.playlistId === null : !forPlaylist;
-  const saved = () => {
+  const saved = (note: NoteRecord) => {
+    // Done, it leaves the song: say where it went.
+    if (note.doneAt !== null && existing?.doneAt === null) {
+      notifications.show({ message: t('notes.doneMoved') });
+    }
     onSaved?.();
     onClose();
   };

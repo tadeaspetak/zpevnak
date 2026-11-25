@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseSong } from '../chordpro/parse.ts';
-import { notePlaces, placeOf } from '../notes.ts';
+import { likeness, notePlaces, placeOf } from '../notes.ts';
 
 const SONG = `{title: Píseň}
 {start_of_intro: Předehra}
@@ -61,7 +61,35 @@ describe('placeOf (D135)', () => {
     expect(placeOf(shorter, { index: 5, text: 'hej hej' })).toBe(4);
   });
 
+  it('stays with its line through a small edit: a letter fixed', () => {
+    const fixed = notePlaces(parseSong(SONG.replace('lu lu [A]lu', 'lu lu [A]lů')));
+    expect(placeOf(fixed, { index: 2, text: 'lu lu lu' })).toBe(2);
+  });
+
+  it('prefers its very words moved over a line merely like them', () => {
+    const moved = notePlaces(
+      parseSong(SONG.replace('la la [D]la', 'lu lu lo\nla la [D]la')),
+    );
+    // "lu lu lo" is like it, where it was; its own words are a line further down.
+    expect(placeOf(moved, { index: 1, text: 'lu lu lu' })).toBe(3);
+  });
+
   it('says a line that’s gone is gone', () => {
     expect(placeOf(places, { index: 1, text: 'jiná slova' })).toBeNull();
+  });
+});
+
+describe('likeness', () => {
+  it('is 1 for the same words, high for a typo, low for another line', () => {
+    expect(likeness('la la la', 'la la la')).toBe(1);
+    expect(likeness('jistě rozezná', 'jiste rozezná')).toBeGreaterThan(0.9);
+    // A line of a song, a comma added and a letter fixed: still the same line.
+    expect(
+      likeness(
+        'a ticho šumělo a vonělo celou noc',
+        'a ticho šumělo, a vonělo celou noc!',
+      ),
+    ).toBeGreaterThan(0.9);
+    expect(likeness('la la la', 'hej hej')).toBeLessThan(0.5);
   });
 });

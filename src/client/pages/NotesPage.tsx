@@ -1,5 +1,13 @@
-import { Box, Group, SegmentedControl, Stack, Text } from '@mantine/core';
-import { IconEdit, IconPlaylist, IconSquare, IconSquareCheck } from '@tabler/icons-react';
+import {
+  Box,
+  Checkbox,
+  Group,
+  SegmentedControl,
+  Stack,
+  Text,
+  UnstyledButton,
+} from '@mantine/core';
+import { IconArrowRight, IconNote, IconPlaylist } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
 import { Navigate, useSearchParams } from 'react-router';
 import { url } from '#shared/urls.ts';
@@ -8,12 +16,25 @@ import { Page } from '../components/Page.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
 import { PageLoader } from '../components/PageLoader.tsx';
 import { SongRow, type SongLinkState } from '../components/SongRow.tsx';
-import { useCatalog } from '../data/catalog.ts';
+import { useCatalog, type LocalNote } from '../data/catalog.ts';
+import { notifyIfQueued } from '../data/offline.ts';
 import { canChangeNote, inFilter, notesBy, type NoteFilter } from '../data/notes.ts';
 import type { NoteRecord, PlaylistRecord } from '../data/store.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
-import { NoteModal } from '../song/NoteModal.tsx';
+import { NoteModal, useNoteRequests } from '../song/NoteModal.tsx';
+
+/**
+ * Notes by song, in the order of each song's newest note: the songs with the latest notes
+ * first, each song's notes newest first (as `notes` come).
+ */
+function bySong(notes: LocalNote[]): [number, LocalNote[]][] {
+  const songs = new Map<number, LocalNote[]>();
+  for (const note of notes) {
+    songs.set(note.songId, [...(songs.get(note.songId) ?? []), note]);
+  }
+  return [...songs];
+}
 
 /** Where a note is read: its song, in the playlist it's for, scrolled to the note. */
 function noteLink(
@@ -26,9 +47,9 @@ function noteLink(
 }
 
 /**
- * /notes, "Moje poznámky": every note the viewer wrote, their own and for playlists, newest
- * first (D135), to find a TODO again, fix it, or prune. Each leads to its place in the song, and
- * opens to be changed right here.
+ * /notes, "Moje poznámky": every note the viewer wrote, their own and for playlists, by song,
+ * the latest first (D135), to find a TODO again, tick it, fix it, or prune. Each opens to be
+ * changed right here, and leads to its place in the song.
  */
 export function NotesPage() {
   const { t } = useI18n();
@@ -40,6 +61,7 @@ export function NotesPage() {
   const filter: NoteFilter = asked === 'todo' || asked === 'done' ? asked : 'all';
   const [editing, setEditing] = useState<NoteRecord | null>(null);
 
+  const requests = useNoteRequests();
   const mine = useMemo(() => notesBy(notes, songs, me?.id), [notes, songs, me?.id]);
   const shown = mine.filter((n) => inFilter(n, filter));
 
@@ -88,42 +110,50 @@ export function NotesPage() {
                   {t(`notes.none.${filter === 'done' ? 'done' : 'todo'}`)}
                 </Text>
               ) : (
-                <Stack gap={0} mx="-md">
-                  {shown.map((note) => {
-                    const song = songs.get(note.songId);
-                    if (!song) {
-                      return null;
-                    }
-                    const playlist =
-                      note.playlistId === null
-                        ? undefined
-                        : playlists.get(note.playlistId);
+                <Stack gap="lg">
+                  {bySong(shown).map(([songId, notes]) => {
+                    const song = songs.get(songId);
                     return (
-                      <Group
-                        key={note.id}
-                        gap={0}
-                        wrap="nowrap"
-                        align="flex-start"
-                        pr="md"
-                      >
-                        <Box flex={1} miw={0}>
-                          <SongRow
-                            song={song}
-                            to={noteLink(note, playlist, url.song(song))}
-                            linkState={{ ...back, note: note.id }}
-                            detail={<NoteDetail note={note} playlist={playlist} />}
-                          />
-                        </Box>
-                        {canChangeNote(note, playlist, me.emailVerified) && (
-                          <IconButton
-                            label={t('notes.change')}
-                            mt="xs"
-                            onClick={() => setEditing(note)}
-                          >
-                            <IconEdit size={18} />
-                          </IconButton>
-                        )}
-                      </Group>
+                      song && (
+                        <section key={songId}>
+                          {/* The song once, a heading leading to it; its notes under it. */}
+                          <Box mx="-md">
+                            <SongRow song={song} to={url.song(song)} linkState={back} />
+                          </Box>
+                          <Stack gap={4} mt={2}>
+                            {notes.map((note) => {
+                              const playlist =
+                                note.playlistId === null
+                                  ? undefined
+                                  : playlists.get(note.playlistId);
+                              return (
+                                <NoteRow
+                                  key={note.id}
+                                  note={note}
+                                  playlist={playlist}
+                                  canChange={canChangeNote(
+                                    note,
+                                    playlist,
+                                    me.emailVerified,
+                                  )}
+                                  to={noteLink(note, playlist, url.song(song))}
+                                  linkState={{ ...back, note: note.id }}
+                                  onOpen={() => setEditing(note)}
+                                  onDone={(done) => {
+                                    requests.update.mutate({
+                                      id: note.id,
+                                      text: note.text,
+                                      todo: true,
+                                      done,
+                                    });
+                                    notifyIfQueued(t('common.savesWhenOnline'));
+                                  }}
+                                />
+                              );
+                            })}
+                          </Stack>
+                        </section>
+                      )
                     );
                   })}
                 </Stack>
@@ -142,45 +172,88 @@ export function NotesPage() {
   );
 }
 
-/** The note under its song: what it says, where in the song, and whose it is. */
-function NoteDetail({
+/**
+ * One note under its song: a TODO's checkbox (one tap, done), what it says (a tap opens it to
+ * change it), where in the song and whose, and the way to it in the song.
+ */
+function NoteRow({
   note,
   playlist,
+  canChange,
+  to,
+  linkState,
+  onOpen,
+  onDone,
 }: {
-  note: NoteRecord;
+  note: LocalNote;
   playlist: PlaylistRecord | undefined;
+  canChange: boolean;
+  to: string;
+  linkState: SongLinkState;
+  onOpen: () => void;
+  onDone: (done: boolean) => void;
 }) {
   const { t } = useI18n();
-  const mark = note.todo ? (
-    note.doneAt ? (
-      <IconSquareCheck size={14} role="img" aria-label={t('notes.doneMark')} />
-    ) : (
-      <IconSquare size={14} role="img" aria-label={t('notes.todoMark')} />
-    )
-  ) : null;
-  return (
-    <Stack gap={2} mt={4}>
-      <Group gap={6} wrap="nowrap" align="flex-start">
-        {mark}
-        <Text
-          size="sm"
-          td={note.doneAt ? 'line-through' : undefined}
-          style={{ whiteSpace: 'pre-line' }}
-        >
-          {note.text}
+  const done = note.doneAt !== null;
+  const text = (
+    <Text
+      size="sm"
+      td={done ? 'line-through' : undefined}
+      style={{ whiteSpace: 'pre-line' }}
+    >
+      {note.text}
+      {note.waiting && (
+        <Text span size="xs" c="dimmed">
+          {' · '}
+          {t('notes.waiting')}
         </Text>
-      </Group>
-      <Text size="xs" c="dimmed" lineClamp={1}>
-        {note.line ? t('notes.atLine', { words: note.line.text }) : t('notes.wholeSong')}
-      </Text>
-      {playlist && (
-        <Group gap={4} wrap="nowrap">
-          <IconPlaylist size={14} color="var(--mantine-color-dimmed)" />
+      )}
+    </Text>
+  );
+  return (
+    <Group gap="sm" wrap="nowrap" align="flex-start">
+      {/* One width whatever leads, so the notes' text lines up. */}
+      <Box w={20} style={{ flex: 'none' }}>
+        {note.todo ? (
+          <Checkbox
+            mt={2}
+            checked={done}
+            disabled={!canChange}
+            aria-label={t('notes.doneOf', { text: note.text })}
+            onChange={(e) => onDone(e.currentTarget.checked)}
+          />
+        ) : note.playlistId !== null ? (
+          <IconPlaylist size={18} role="img" aria-label={t('notes.playlistMark')} />
+        ) : (
+          <IconNote size={18} role="img" aria-label={t('notes.mark')} />
+        )}
+      </Box>
+      <Stack gap={2} flex={1} miw={0}>
+        {canChange ? (
+          <UnstyledButton
+            onClick={onOpen}
+            aria-label={t('notes.changeOf', { text: note.text })}
+          >
+            {text}
+          </UnstyledButton>
+        ) : (
+          text
+        )}
+        <Text size="xs" c="dimmed" lineClamp={1}>
+          {note.line
+            ? t('notes.atLine', { words: note.line.text })
+            : t('notes.wholeSong')}
+        </Text>
+        {/* A row of its own: the line's words may be long, the playlist's name must show. */}
+        {playlist && (
           <Text size="xs" c="dimmed" lineClamp={1}>
             {t('notes.forPlaylist', { name: playlist.name })}
           </Text>
-        </Group>
-      )}
-    </Stack>
+        )}
+      </Stack>
+      <IconButton label={t('notes.showInSong')} to={to} state={linkState}>
+        <IconArrowRight size={18} />
+      </IconButton>
+    </Group>
   );
 }
