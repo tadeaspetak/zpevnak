@@ -13,6 +13,20 @@ export function lineWraps(tops: number[]): boolean {
 }
 
 /**
+ * How far a computed `transform` moves an element down (px): a bar slid out of the way is
+ * `matrix(1, 0, 0, 1, 0, 60)`, or `matrix3d(…)` with it 14th; none moves it nowhere.
+ */
+export function translateYOf(transform: string): number {
+  const values = /^matrix(3d)?\((.*)\)$/.exec(transform.trim());
+  if (!values) {
+    return 0;
+  }
+  const numbers = (values[2] ?? '').split(',').map(Number);
+  const y = values[1] ? numbers[13] : numbers[5];
+  return y !== undefined && Number.isFinite(y) ? y : 0;
+}
+
+/**
  * Whether a song laid out in columns can be read whole with its top at the top of the screen
  * (D88): no line has to wrap to fit its column, so the columns are wide enough at this text
  * size, whatever the screen (a tablet held upright too); and no text runs past the bottom of the

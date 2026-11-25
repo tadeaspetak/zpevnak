@@ -1,4 +1,4 @@
-import { act } from '@testing-library/react';
+import { cleanup } from '@testing-library/react';
 import { renderApp } from '#tests/client/render.tsx';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { parseSong } from '#shared/chordpro/parse.ts';
@@ -51,32 +51,28 @@ describe('SongSheet columns (D88, D108)', () => {
     expect(body(true, true).measured).not.toBeNull();
   });
 
-  it('measures again once a bar has slid out of the way, and in again (D109)', () => {
-    // A line ending 40px from the bottom of a 1000px window, and a 60px bar over it.
+  it('counts a bar where it is shown, slid away or not: scrolling doesn’t rearrange (D136)', () => {
+    // A line ending 40px from the bottom of a 1000px window, and a 60px bar over it when shown.
     vi.stubGlobal('innerHeight', 1000);
     vi.spyOn(Range.prototype, 'getBoundingClientRect').mockReturnValue(
       new DOMRect(0, 900, 300, 60),
     );
     const bar = document.createElement('nav');
     bar.setAttribute('data-bottom-overlay', '');
-    let barTop = 940;
-    bar.getBoundingClientRect = () => new DOMRect(0, barTop, 1200, 60);
+    // Slid down out of sight, as the toolbar goes on a scroll (D109).
+    bar.style.transform = 'matrix(1, 0, 0, 1, 0, 60)';
+    bar.getBoundingClientRect = () => new DOMRect(0, 1000, 1200, 60);
     document.body.append(bar);
     try {
-      const { columns } = body(true, true);
-      expect(columns).toBeNull();
-      barTop = 1000;
-      act(() => {
-        bar.dispatchEvent(new Event('transitionend', { bubbles: true }));
-      });
-      expect(document.querySelector('[data-columns]')).not.toBeNull();
-      barTop = 940;
-      act(() => {
-        bar.dispatchEvent(new Event('transitionend', { bubbles: true }));
-      });
-      expect(document.querySelector('[data-columns]')).toBeNull();
+      expect(body(true, true).columns).toBeNull();
     } finally {
       bar.remove();
+    }
+    try {
+      // Without the bar, the same song fits: it was the bar that kept it in one column.
+      cleanup();
+      expect(body(true, true).columns).not.toBeNull();
+    } finally {
       vi.restoreAllMocks();
     }
   });

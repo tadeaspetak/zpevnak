@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { columnsFit, lineWraps, type Box, type TextLine } from '../columnsFit.ts';
+import {
+  columnsFit,
+  lineWraps,
+  translateYOf,
+  type Box,
+  type TextLine,
+} from '../columnsFit.ts';
 
 const line = (
   left: number,
@@ -52,5 +58,15 @@ describe('lineWraps', () => {
     expect(lineWraps([100, 101, 100.5])).toBe(false);
     expect(lineWraps([100])).toBe(false);
     expect(lineWraps([])).toBe(false);
+  });
+});
+
+describe('translateYOf', () => {
+  it('reads how far a transform moves a bar down, and nothing from none', () => {
+    expect(translateYOf('matrix(1, 0, 0, 1, 0, 60)')).toBe(60);
+    expect(
+      translateYOf('matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 72, 0, 1)'),
+    ).toBe(72);
+    expect(translateYOf('none')).toBe(0);
   });
 });

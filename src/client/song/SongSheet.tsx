@@ -17,7 +17,13 @@ import { IconLock } from '@tabler/icons-react';
 import { byline } from '../data/songText.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { ChordDiagram, NoDiagram } from './ChordDiagram.tsx';
-import { columnsFit, lineWraps, type TextLine } from './columnsFit.ts';
+import {
+  columnsFit,
+  lineWraps,
+  translateYOf,
+  type Box,
+  type TextLine,
+} from './columnsFit.ts';
 import { restorePlace } from './keepPlace.ts';
 import { hasChords, isChordOnly, layoutLine } from './layout.ts';
 import classes from './SongSheet.module.css';
@@ -236,6 +242,18 @@ function textLines(copy: HTMLElement): TextLine[] {
   return lines;
 }
 
+/** Where a bar is when shown: its box less however far it has slid down out of the way. */
+function shownBox(el: Element): Box {
+  const box = el.getBoundingClientRect();
+  const slid = translateYOf(getComputedStyle(el).transform);
+  return {
+    top: box.top - slid,
+    bottom: box.bottom - slid,
+    left: box.left,
+    right: box.right,
+  };
+}
+
 /**
  * Whether the song, laid out in columns, can be read whole (`columnsFit`), measured on `copy`:
  * the song in columns, out of sight. Only the song has to fit, not its title: the toolbar
@@ -243,10 +261,11 @@ function textLines(copy: HTMLElement): TextLine[] {
  * run past the bottom would send the reader back up mid-song for the second one, so then the
  * song stays in one.
  *
- * Every change that moves the answer resizes either the copy (width, text size, chords,
- * transposition) or the page (a bar appearing changes its padding), or slides a bar in or out
- * of the way (D109), so it is measured on those. It can't flip back and forth: switching to
- * columns only ever makes the page shorter.
+ * The bars at the bottom count where they are when shown, slid away or not (D136): the song
+ * doesn't rearrange itself as the reader scrolls and they go (D109). Every change that moves the
+ * answer resizes either the copy (width, text size, chords, transposition) or the page (a bar
+ * appearing changes its padding), so it is measured on those. It can't flip back and forth:
+ * switching to columns only ever makes the page shorter.
  */
 function useColumnsFit(enabled: boolean) {
   const copy = useRef<HTMLDivElement>(null);
@@ -258,9 +277,7 @@ function useColumnsFit(enabled: boolean) {
       return;
     }
     const measure = () => {
-      const bars = [...document.querySelectorAll('[data-bottom-overlay]')].map((el) =>
-        el.getBoundingClientRect(),
-      );
+      const bars = [...document.querySelectorAll('[data-bottom-overlay]')].map(shownBox);
       setFits(columnsFit(textLines(copyEl), bars, window.innerHeight));
     };
     measure();
@@ -268,17 +285,9 @@ function useColumnsFit(enabled: boolean) {
     observer.observe(copyEl);
     observer.observe(document.body);
     window.addEventListener('resize', measure);
-    // Once a bar has finished sliding: measured mid-way, it would be in neither place.
-    const slid = (e: TransitionEvent) => {
-      if (e.target instanceof Element && e.target.matches('[data-bottom-overlay]')) {
-        measure();
-      }
-    };
-    document.addEventListener('transitionend', slid);
     return () => {
       observer.disconnect();
       window.removeEventListener('resize', measure);
-      document.removeEventListener('transitionend', slid);
     };
   }, [enabled]);
   return { copy, fits };
