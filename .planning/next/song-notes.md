@@ -26,14 +26,23 @@ the song's text, which is everyone's:
    filtered to the TODOs, to fix, prune, or look back at.
 5. **No mark in the playlist's list** for a song with a playlist note: showing it on the song,
    in the playlist, is enough.
+6. **Adding a note at a line** (settled 2026-11-25): a tap stays the toolbar's (D93), so:
+   - **touch: a long-press on a line** (about half a second; moving the finger cancels it, so
+     scrolling and swiping between songs stay as they are) opens a small menu at the line,
+     "Přidat poznámku" first. Android's long-press `contextmenu` and a timer for iOS, one
+     handler. **Text on the song view can't be selected on a touch screen** for this (no
+     iOS callout): the owner's call; lyrics can still be copied from the editor.
+   - **mouse: a right-click on a line** opens the same menu; hovering a line shows a faint note
+     icon in its margin that does the same, so it can be found.
+   - **⋯ → "Přidat poznámku" stays as the fallback:** it says "Podrž prst na řádku…" (teaching
+     the gesture) and starts a picking mode (lines highlight; a bar: "Ťukni na řádek", "K celé
+     písničce", "Zrušit"). The way in for the keyboard and screen readers too. The empty
+     "Moje poznámky" says the same.
+   - The menu then opens the note: its text, who it's for (Jen pro mě / Pro playlist „X“, the
+     latter only playing from a playlist one may edit), and "k opravě".
 
 ## Proposed, settle while building
 
-- **Adding:** a tap on the song already hides and shows the toolbar (D93), so a note isn't a
-  plain tap. ⋯ → "Přidat poznámku" puts the song in a picking mode (lines highlight, a bar at
-  the bottom says "Ťukni na řádek" with "K celé písničce" and "Zrušit"); a tap on a line opens
-  the note: its text, who it's for (Jen pro mě / Pro playlist „X“, the latter only playing from
-  a playlist one may edit), and "k opravě". Discoverable, and no gesture to learn.
 - **A note on the page:** under its line, small and quiet, unlike the song (a note icon,
   dimmed italic; a playlist note with the playlist's mark, D133); a TODO with its own mark. A
   tap opens it: edit, mark done, delete. A whole-song note sits under the title.
