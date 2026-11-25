@@ -59,6 +59,17 @@ took the agent's pick on all seven; shipped as D111 (the dialog renamed "Sdílen
 - [x] **"od Uršula Uživatelová" doesn't decline** (re-opens D79/D70). A: "Vlastník: {name}".
       B: the name alone with a person icon.
 
+## Notes on songs walk: the owner's answers (2026-11-25)
+
+The `/ux` walk of notes (report https://claude.ai/artifact/ASTrT8fBJpEDgkYtUCMxjK, handover
+`.ux-walk/handover-notes-2026-11-25.md`). Its "do now" list shipped with D135's phase 4; the
+owner took the agent's pick on all four, shipped as D138.
+
+- [x] **F5** Moje poznámky grouped by song, a TODO ticked done in one tap.
+- [x] **F4** A note written offline shown at once, marked waiting.
+- [x] **F6** Done TODOs off the song, kept under Hotové.
+- [x] **F10** A note kept on its line through a small edit of its words.
+
 ## The sharing dialog and settings, piece by piece (2026-11-12)
 
 The owner's feedback on the live dev server, one screenshot at a time. Shipped as D114–D116
@@ -85,11 +96,15 @@ Agreed to leave, for now:
 - Song history, credits and suggested changes: `.planning/ongoing/song-history-credits-suggestions.md`.
   Slice 1 (versions, recorded quietly) shipped as D86; credits and suggestions after the gig.
 
-## State and loose ends (updated 2026-11-12)
+## State and loose ends (updated 2026-11-25)
 
 - **`/ux` walks done:** the song view and playlist session (D88–D92), adding a song (D94–D103),
-  and playlists and sharing (D110–D111). All shipped whole. Next candidate: the account and
-  sign-in pages.
+  playlists and sharing (D110–D111), private songs and roles (D126–D128), the song view at the
+  stand after the first rehearsal (D133–D134), and notes on songs (D135, D138). All shipped
+  whole. Next candidate: the account and sign-in pages.
+- **Waiting on the owner's tablet:** "fit the text to the screen" on an upright tablet (D-1 in
+  `.planning/ongoing/after-the-first-rehearsal.md`); a real iPhone long-press on a line (D135),
+  only emulated so far.
 - **Not walked yet:** a cold offline start (needs a production build), the screen staying awake,
   full screen on an iPhone, a 30-song playlist. Check those on a phone against production
   before the gig.
@@ -97,7 +112,9 @@ Agreed to leave, for now:
   and checks for a new app version (D74, D75), from the settings on every page (D116, D117). If that proves not enough, consider pull-to-refresh.
 - **Importing the old songbook:** deliberately not done (D11). Songs get added one by one, which is
   also how they get checked; `~/dev/projects/songbook` has ~430 ChordPro files to draw from.
-- **Plans:** song history, credits and suggestions in `.planning/ongoing/` (slice 1 done, D86).
+- **Plans:** song history, credits and suggestions in `.planning/ongoing/` (slice 1 done, D86);
+  after the first rehearsal (all but D-1). Done: private songs and roles, notes on songs
+  (`.planning/done/`).
 
 ## Found along the way (2026-11-23)
 

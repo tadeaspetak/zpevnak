@@ -505,13 +505,13 @@ From the first UX walk of the song view and a playlist session (2026-11-10): _In
   song fits on screen (D88), measured on the hidden copy; on any screen, so a tablet held upright
   gets them for a song that fits, a phone almost never does, and bigger text turns them off by
   itself. From the first rehearsal (`.planning/ongoing/after-the-first-rehearsal.md`).
-  (2026-11-24)
+  (2026-11-24) _The bars count where they're shown, slid away or not: D136._
 - **D130. A pinch changes the text size** on the song, live, along the same steps as the size
   buttons (snapping), and keeps it. The page itself doesn't zoom there (`touch-action: pan-x
 pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling sideways. One
   finger still scrolls and swipes between songs. (2026-11-24) _And the reader keeps their place: through a pinch the line under the fingers,
   through the size buttons the line at the top, stays where it was, columns coming or going
-  included; that scroll doesn't hide the toolbar._
+  included; that scroll doesn't hide the toolbar._ _A laptop's touchpad too, and down to 60%: D137._
 - **D131. A playlist can play a song in its own key.** The playlist's key is everyone's
   starting point there (its people's and a public one's visitors'); a player's own
   transposition shifts from it, on their device only, the same shift in and out of playlists.
@@ -559,7 +559,7 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   playlist's note is for everyone who sees the playlist (its people, and a public one's
   visitors), never a TODO, added, changed and deleted by whoever may edit the playlist. A note
   goes with its song; a playlist's notes go with the playlist, and hide while their song is out
-  of it. Nobody sees a note on a song they can't read (a private song's, D126). (2026-11-25)
+  of it. Nobody sees a note on a song they can't read (a private song's, D126). (2026-11-25) _The UX walk's calls (by song, offline at once, done off the song, small edits): D138._
 - **D136. The bars count where they are shown, slid away or not** (narrows D129). Whether a song
   fits in columns is decided with the bars at the bottom in place (the playlist's bar, the
   pill), so the song doesn't rearrange itself as a scroll hides them (D109). Songs that would

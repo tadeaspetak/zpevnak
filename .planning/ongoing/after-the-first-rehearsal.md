@@ -1,8 +1,9 @@
 # After the first rehearsal: the song view at the stand
 
-**State:** ongoing. Agreed in conversation on 2026-11-24, from the owner's notes after the first
-rehearsal; built overnight 2026-11-24/25, unattended (forks are built the recommended way where
-it is safe, and listed for the morning).
+**State:** ongoing, everything but D-1 shipped and deployed (D129–D134; D136 and D137 built on
+it). Agreed in conversation on 2026-11-24, from the owner's notes after the first rehearsal;
+built overnight 2026-11-24/25, unattended (forks are built the recommended way where it is
+safe, and listed for the morning).
 
 ## Why
 
@@ -80,9 +81,12 @@ Each ships on its own, gates green, committed locally; nothing is deployed witho
 4. **Chord library and notation (shipped, D132).** As built: 529 guitar and 552 ukulele shapes
    (40 KB); of the 49 distinct chords in production, 46 have one, the rest (Aaddb9, F#m7+/F)
    say so. The Columns switch is now on every screen (D129 had left it to wide ones).
-5. **A code review** of the night's work (`/code-review`), its fixes.
-6. **A UX walk** of the song view at the stand (phone, tablet upright and landscape, a
-   playlist with its own key, diagrams on both instruments, both notations), its no-brainers.
+5. **A code review (shipped, 416c425)** of the night's work (`/code-review`), its fixes.
+6. **A UX walk (shipped, ab06f36; the owner's calls D133, D134)** of the song view at the stand
+   (phone, tablet upright and landscape, a playlist with its own key, diagrams on both
+   instruments, both notations), its no-brainers.
+7. **Later, from the owner's use:** columns no longer rearrange as the bars slide away (D136);
+   text down to 60%, and a touchpad's pinch (D137).
 
 ## Tests that matter most
 

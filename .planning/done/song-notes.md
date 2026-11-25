@@ -1,7 +1,7 @@
 # Notes on songs
 
-**State:** ongoing. Agreed in conversation on 2026-11-25, from the owner's notes after the first
-rehearsal. Phase 1 started 2026-11-25.
+**State:** done (D135, D138), deployed 2026-11-25. Agreed in conversation on 2026-11-25, from
+the owner's notes after the first rehearsal; all four phases built the same day.
 
 ## Why
 

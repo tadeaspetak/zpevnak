@@ -53,13 +53,18 @@ printed to the server log.
   (`validators/index.ts`), the ChordPro parser, tags (`chordpro/tags.ts`: one tag is every
   spelling with one `tagKey`; `setTags` edits the `{tag}` lines), transposing a song's text
   (`transposeSource`, the same mapping as the view), playlist edits (`playlistOps.ts`:
-  `applyOp`, `toggleOp`). Never re-derive one of these in a page or a procedure.
-- **Offline first.** The whole catalog (songs and playlists the viewer can see) lives in
+  `applyOp`, `toggleOp`), where a note on a song sits (`notes.ts`: `notePlaces`, `placeOf`,
+  found again after an edit by its line's words). Never re-derive one of these in a page or a
+  procedure.
+- **Offline first.** The whole catalog (songs, playlists and notes the viewer can see) lives in
   IndexedDB (`src/client/data/`) and is searched on the device with MiniSearch. `songs.sync`
-  sends what changed since a cursor; `playlists.all` sends everything (it is small). Reads go
-  through `useCatalog()`, not tRPC queries. After a mutation, put the returned record into the
-  catalog (`putSong`, `putPlaylist`). A change of viewer (sign-in, sign-out) clears the device
-  copy before fetching (`syncCatalog`).
+  sends what changed since a cursor; `playlists.all` and `notes.visible` send everything (they
+  are small). Reads go through `useCatalog()`, not tRPC queries. After a mutation, put the
+  returned record into the catalog (`putSong`, `putPlaylist`, `putNote`). A change of viewer
+  (sign-in, sign-out) clears the device copy before fetching (`syncCatalog`). Offline, requests
+  that write wait for the connection and say so (`notifyIfQueued`, D133); a note's change also
+  shows at once, marked waiting, in memory only (`waitNote`, D138). A new IndexedDB version
+  must not hang on a tab still open on the old one (`blocked`/`blocking` in `store.ts`).
 - **The ChordPro text is the only truth about a song.** Title and artist are read from its
   header on every save (`src/server/songs/header.ts`); never edit them separately.
 - **Changing a song** (save, approve, reject, delete) locks its row and decides on it inside the
@@ -90,7 +95,8 @@ Every change to behaviour ships with its tests in the same commit.
   with unit specs. API behaviour is tested through the tRPC caller against a real Postgres
   (`tests/server/helpers.ts`: `useCleanDatabase`, `createUser`, `callerFor`, `withCookies`,
   `seenAt`). Components render with `renderApp` (`tests/client/render.tsx`: the app's own
-  providers and a router). Every test run migrates down and up again (`global-setup.ts`).
+  providers and a router, and the location state a link carries). The device's database is
+  tested on `fake-indexeddb`. Every test run migrates down and up again (`global-setup.ts`).
   End-to-end (`tests/e2e/`) is for the main paths through the app, not for permutations.
 - **Every bug caught gets a test** that fails without its fix, in the same commit. Only CSS that
   a test can't reasonably see (an indent, a tap target) is left to `yarn ux:probe`.
@@ -111,7 +117,9 @@ Every change to behaviour ships with its tests in the same commit.
   `src/shared/errors.ts`; the client translates it (`tError`). The server never sends prose.
 - **Hide existence.** A private playlist or a private song answers NOT_FOUND to someone who
   may not see it, not FORBIDDEN; a private song does so to the songbook's editors too. Song
-  reads go through `loadSongRow` / `SONG_READABLE` (`src/server/songs/`), never a bare SELECT.
+  reads go through `loadSongRow` / `SONG_READABLE` (`src/server/songs/`), never a bare SELECT;
+  notes through `loadNote` / `loadVisibleNotes` (`src/server/notes/`), which keep a private
+  song's notes to those who may read it.
 - **Sharing is one router** (`sharing`, with a `kind`: playlist or song): invites, joining,
   people, roles. Each kind's tables are in `SHARED_TABLES` (`src/server/sharing/`).
 - **URLs come from `src/shared/urls.ts`** (`url.song(…)`, `routes`), on the client and in the
@@ -155,6 +163,10 @@ How a song's ChordPro is laid out, so songs read alike (the first pass: 2026-11-
   `IconButton` (an icon with its tooltip and name), `ConfirmModal`, `SongLabel`, `PageLoader`,
   `SettingsButton` (every setting, and "Načíst novinky", on every page). Breakpoints are the theme's: `useWide`,
   `usePhone` in code, `$mantine-breakpoint-*` in CSS.
+- **The song is played with gestures, not menus:** a tap hides the bars (D93, D109), a swipe
+  turns the song, a pinch (fingers, or a laptop's touchpad) changes the text size (D130,
+  D137), a long-press or right-click on a line opens its menu: a note, copying it (D135). So
+  text on the song view can't be selected on touch. ⋯ keeps a way to each for a keyboard.
 - **The back arrow goes one level up** to a fixed parent, and says where ("Back to Vršek
   2026"); history is the browser's back (D60). **Search is
   the last icon at top right on every page**, song view included, so it is always in one place.
@@ -163,8 +175,8 @@ How a song's ChordPro is laid out, so songs read alike (the first pass: 2026-11-
   on buttons or badges. Alerts are coloured by meaning (green/yellow/red) or neutral. The
   palette is `BRAND` in `theme.ts`, built to pass AA (a spec checks it); orange as text is
   `var(--brand-text)`, lighter on dark.
-- Secondary text uses `c="dimmed"`, which the theme darkens to pass WCAG AA (Mantine's default
-  does not). Chords use `var(--chord-color)`.
+- Secondary text uses `c="dimmed"`, which the theme sets to pass WCAG AA in light and dark
+  (Mantine's defaults do not; a spec checks both). Chords use `var(--chord-color)`.
 
 ## Deployment and production
 
