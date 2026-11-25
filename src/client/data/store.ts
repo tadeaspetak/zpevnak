@@ -28,17 +28,32 @@ interface ZpevnakDB extends DBSchema {
 let dbPromise: Promise<IDBPDatabase<ZpevnakDB>> | null = null;
 
 function database() {
-  dbPromise ??= openDB<ZpevnakDB>('zpevnak', 2, {
-    upgrade(db, oldVersion) {
-      if (oldVersion < 1) {
-        db.createObjectStore('songs', { keyPath: 'id' });
-        db.createObjectStore('playlists', { keyPath: 'id' });
-        db.createObjectStore('meta');
-      }
-      if (oldVersion < 2) {
-        db.createObjectStore('notes', { keyPath: 'id' });
-      }
-    },
+  dbPromise ??= new Promise<IDBPDatabase<ZpevnakDB>>((resolve, reject) => {
+    openDB<ZpevnakDB>('zpevnak', 2, {
+      upgrade(db, oldVersion) {
+        if (oldVersion < 1) {
+          db.createObjectStore('songs', { keyPath: 'id' });
+          db.createObjectStore('playlists', { keyPath: 'id' });
+          db.createObjectStore('meta');
+        }
+        if (oldVersion < 2) {
+          db.createObjectStore('notes', { keyPath: 'id' });
+        }
+      },
+      // A tab still open on an older version holds the old database and won't let go (one
+      // from before this handler can't be asked to). Rather than wait for it, this visit works
+      // from memory, as in a private window, and tries again next time.
+      blocked() {
+        dbPromise = null;
+        reject(new Error('IndexedDB upgrade blocked by another tab'));
+      },
+      // A newer version opened in another tab: this one lets go, and opens anew when it next
+      // needs the database.
+      blocking(_current, _blocked, event) {
+        (event.target as IDBDatabase).close();
+        dbPromise = null;
+      },
+    }).then(resolve, reject);
   });
   return dbPromise;
 }

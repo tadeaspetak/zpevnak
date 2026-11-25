@@ -14,6 +14,7 @@ import type { NotePlace } from '#shared/notes.ts';
 import { putNote } from '../data/catalog.ts';
 import { notifyIfQueued } from '../data/offline.ts';
 import type { NoteRecord } from '../data/store.ts';
+import { ConfirmModal } from '../components/ConfirmModal.tsx';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc } from '../trpc.ts';
 
@@ -33,36 +34,101 @@ type Props = {
 
 /**
  * Writing a note on a song, or changing one (D135): its text, who it's for (one's own or the
- * playlist's, chosen when it's written), and for one's own, TODO and done. Kept mounted, so a
- * save that waits for the connection still lands.
+ * playlist's, chosen when it's written), and for one's own, TODO and done. The requests live
+ * here, kept mounted, not in the form: one waiting for the connection (D133) outlives the
+ * form, closed meanwhile, and still lands in the catalog, or says why it didn't.
  */
 export function NoteModal({ target, ...props }: Props) {
-  const { t } = useI18n();
+  const { t, tError } = useI18n();
+  const onError = (error: unknown) =>
+    notifications.show({ color: 'red', message: tError(error) });
+  const put = (note: NoteRecord) => putNote(note.id, note);
+  const requests: Requests = {
+    create: trpc.notes.create.useMutation({ onSuccess: put, onError }),
+    update: trpc.notes.update.useMutation({ onSuccess: put, onError }),
+    remove: trpc.notes.delete.useMutation({
+      onSuccess: (_, { id }) => {
+        putNote(id, null);
+        notifications.show({ message: t('notes.deleted') });
+      },
+      onError,
+    }),
+  };
+  const [deleting, setDeleting] = useState<NoteRecord | null>(null);
   const key =
     target === null
       ? 'closed'
       : target.kind === 'edit'
         ? `note-${target.note.id}`
         : `new-${target.place?.place ?? 'song'}`;
+  const deleteNote = (note: NoteRecord) => {
+    requests.remove.mutate(
+      { id: note.id },
+      {
+        onSuccess: () => {
+          setDeleting(null);
+          props.onClose();
+        },
+      },
+    );
+    notifyIfQueued(t('common.savesWhenOnline'));
+    if (!navigator.onLine) {
+      setDeleting(null);
+      props.onClose();
+    }
+  };
   return (
-    <Modal
-      opened={target !== null}
-      onClose={props.onClose}
-      title={target?.kind === 'edit' ? t('notes.edit') : t('notes.new')}
-    >
-      {/* A fresh form for each note: nothing typed for one carries over to the next. */}
-      {target && <NoteForm key={key} target={target} {...props} />}
-    </Modal>
+    <>
+      <Modal
+        opened={target !== null}
+        onClose={props.onClose}
+        title={target?.kind === 'edit' ? t('notes.edit') : t('notes.new')}
+      >
+        {/* A fresh form for each note: nothing typed for one carries over to the next. */}
+        {target && (
+          <NoteForm
+            key={key}
+            target={target}
+            requests={requests}
+            onDelete={setDeleting}
+            {...props}
+          />
+        )}
+      </Modal>
+      <ConfirmModal
+        opened={deleting !== null}
+        onClose={() => setDeleting(null)}
+        title={t('notes.deleteTitle')}
+        confirmLabel={t('common.delete')}
+        onConfirm={() => deleting && deleteNote(deleting)}
+        loading={requests.remove.isPending}
+        error={null}
+      >
+        <Text>{deleting?.text}</Text>
+      </ConfirmModal>
+    </>
   );
 }
+
+type Requests = {
+  create: ReturnType<typeof trpc.notes.create.useMutation>;
+  update: ReturnType<typeof trpc.notes.update.useMutation>;
+  remove: ReturnType<typeof trpc.notes.delete.useMutation>;
+};
 
 function NoteForm({
   target,
   playlist,
   onClose,
   onSaved,
-}: Props & { target: NoteTarget }) {
-  const { t, tError } = useI18n();
+  requests: { create, update },
+  onDelete,
+}: Props & {
+  target: NoteTarget;
+  requests: Requests;
+  onDelete: (note: NoteRecord) => void;
+}) {
+  const { t } = useI18n();
   const existing = target.kind === 'edit' ? target.note : null;
   const [text, setText] = useState(existing?.text ?? '');
   const [forPlaylist, setForPlaylist] = useState(
@@ -70,24 +136,10 @@ function NoteForm({
   );
   const [todo, setTodo] = useState(existing?.todo ?? false);
   const [done, setDone] = useState(existing !== null && existing.doneAt !== null);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const create = trpc.notes.create.useMutation();
-  const update = trpc.notes.update.useMutation();
-  const remove = trpc.notes.delete.useMutation();
 
   const words = target.kind === 'edit' ? target.note.line?.text : target.place?.words;
   const isPrivate = existing ? existing.playlistId === null : !forPlaylist;
-  const onError = (error: unknown) =>
-    notifications.show({ color: 'red', message: tError(error) });
-  // Offline, the change waits for the connection (D133): the dialog doesn't wait with it.
-  const sent = () => {
-    notifyIfQueued(t('common.savesWhenOnline'));
-    if (!navigator.onLine) {
-      onClose();
-    }
-  };
-  const saved = (note: NoteRecord) => {
-    putNote(note.id, note);
+  const saved = () => {
     onSaved?.();
     onClose();
   };
@@ -101,7 +153,7 @@ function NoteForm({
           todo: isPrivate && todo,
           done: isPrivate && todo && done,
         },
-        { onSuccess: saved, onError },
+        { onSuccess: saved },
       );
     } else if (target.kind === 'new') {
       create.mutate(
@@ -114,31 +166,17 @@ function NoteForm({
             ? { index: target.place.place, text: target.place.words }
             : null,
         },
-        { onSuccess: saved, onError },
+        { onSuccess: saved },
       );
     }
-    sent();
-  };
-
-  const deleteNote = () => {
-    if (!existing) {
-      return;
+    // Offline, the change waits for the connection (D133): the dialog doesn't wait with it.
+    notifyIfQueued(t('common.savesWhenOnline'));
+    if (!navigator.onLine) {
+      onClose();
     }
-    remove.mutate(
-      { id: existing.id },
-      {
-        onSuccess: () => {
-          putNote(existing.id, null);
-          notifications.show({ message: t('notes.deleted') });
-          onClose();
-        },
-        onError,
-      },
-    );
-    sent();
   };
 
-  const busy = create.isPending || update.isPending || remove.isPending;
+  const busy = create.isPending || update.isPending;
   return (
     <form
       onSubmit={(e) => {
@@ -200,15 +238,8 @@ function NoteForm({
         )}
         <Group justify="space-between">
           {existing ? (
-            <Button
-              variant={confirmingDelete ? 'filled' : 'default'}
-              color={confirmingDelete ? 'red' : undefined}
-              onClick={() =>
-                confirmingDelete ? deleteNote() : setConfirmingDelete(true)
-              }
-              loading={remove.isPending}
-            >
-              {confirmingDelete ? t('notes.deleteConfirm') : t('common.delete')}
+            <Button variant="default" onClick={() => onDelete(existing)}>
+              {t('common.delete')}
             </Button>
           ) : (
             <span />
@@ -217,11 +248,7 @@ function NoteForm({
             <Button variant="default" onClick={onClose}>
               {t('common.cancel')}
             </Button>
-            <Button
-              type="submit"
-              disabled={!text.trim()}
-              loading={busy && !remove.isPending}
-            >
+            <Button type="submit" disabled={!text.trim()} loading={busy}>
               {t('common.save')}
             </Button>
           </Group>

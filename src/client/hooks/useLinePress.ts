@@ -1,4 +1,4 @@
-import { useEffect, useRef, type RefObject } from 'react';
+import { useEffect, useRef } from 'react';
 
 /** How long a finger rests on a line before it counts as a long-press. */
 export const LONG_PRESS_MS = 500;
@@ -24,7 +24,8 @@ function placeAt(target: EventTarget | null): number | null {
  * iOS anyway, answers it first, once. The finger lifting after a long-press doesn't tap.
  */
 export function useLinePress(
-  container: RefObject<HTMLElement | null>,
+  /** Null until it is on the page (a song still loading). */
+  el: HTMLElement | null,
   onPress: (press: LinePress) => void,
 ) {
   const latest = useRef(onPress);
@@ -33,7 +34,6 @@ export function useLinePress(
   });
 
   useEffect(() => {
-    const el = container.current;
     if (!el) {
       return;
     }
@@ -105,5 +105,5 @@ export function useLinePress(
       el.removeEventListener('touchcancel', cancel);
       el.removeEventListener('contextmenu', onContextMenu);
     };
-  }, [container]);
+  }, [el]);
 }

@@ -9,7 +9,7 @@ import {
   IconSquare,
   IconSquareCheck,
 } from '@tabler/icons-react';
-import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router';
 import type { SongLinkState } from '../components/SongRow.tsx';
 import type { Song } from '#shared/chordpro/types.ts';
@@ -17,6 +17,7 @@ import { notePlaces, placeOf, type NotePlace } from '#shared/notes.ts';
 import { editsAsMember } from '#shared/roles.ts';
 import { IconButton } from '../components/IconButton.tsx';
 import { useCatalog } from '../data/catalog.ts';
+import { canChangeNote } from '../data/notes.ts';
 import { usePrefs } from '../data/prefs.ts';
 import type { NoteRecord, PlaylistRecord } from '../data/store.ts';
 import { useLinePress, type LinePress } from '../hooks/useLinePress.ts';
@@ -37,7 +38,8 @@ const byAge = (a: NoteRecord, b: NoteRecord) =>
  * picking a line (`startPicking`), the way in for a keyboard too. One's own notes show
  * wherever the song is played; a playlist's only when playing from it.
  *
- * `container` is the element around the sheet: it hears the presses and holds the hover button.
+ * `container` is the element around the sheet, once it is on the page: it hears the presses and
+ * holds the hover button.
  */
 export function useSongNotes({
   songId,
@@ -50,7 +52,7 @@ export function useSongNotes({
   /** As written, not transposed: notes are placed by its lines. */
   song: Song | null;
   playlist: Playing | null;
-  container: RefObject<HTMLDivElement | null>;
+  container: HTMLDivElement | null;
 }) {
   const { t } = useI18n();
   const { notes } = useCatalog();
@@ -65,8 +67,7 @@ export function useSongNotes({
 
   const canWrite = Boolean(me?.emailVerified);
   const writesForPlaylist = Boolean(playlist && canWrite && editsAsMember(playlist.role));
-  const canChange = (note: NoteRecord) =>
-    note.playlistId === null || (writesForPlaylist && note.playlistId === playlist?.id);
+  const canChange = (note: NoteRecord) => canChangeNote(note, playlist, canWrite);
 
   const { atPlace, top } = useMemo(() => {
     const atPlace = new Map<number, NoteRecord[]>();
@@ -91,6 +92,14 @@ export function useSongNotes({
   const [target, setTarget] = useState<NoteTarget | null>(null);
   const [menu, setMenu] = useState<(LinePress & NotePlace) | null>(null);
   const [picking, setPicking] = useState(false);
+  // Another song (a swipe, the arrows): nothing half-done on this one follows it there.
+  const [shownFor, setShownFor] = useState(songId);
+  if (shownFor !== songId) {
+    setShownFor(songId);
+    setPicking(false);
+    setMenu(null);
+    setTarget(null);
+  }
   const [hover, setHover] = useState<{ place: number; top: number; left: number } | null>(
     null,
   );
@@ -112,7 +121,7 @@ export function useSongNotes({
   // Picking: a click or Enter on a line takes it, and nothing else on the sheet answers (the
   // toolbar stays as it is); Escape gives up.
   useEffect(() => {
-    const el = container.current;
+    const el = container;
     if (!picking || !el) {
       return;
     }
@@ -129,10 +138,7 @@ export function useSongNotes({
       }
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.stopPropagation();
-        setPicking(false);
-      } else if (e.key === 'Enter' || e.key === ' ') {
+      if (e.key === 'Enter' || e.key === ' ') {
         const line = pick(e.target);
         if (line) {
           e.preventDefault();
@@ -140,18 +146,27 @@ export function useSongNotes({
         }
       }
     };
+    // Escape gives up from anywhere: focus is often still on the ⋯ that started it. The bar is
+    // a dialog, so the page's own keys (Escape leaving the song, arrows turning it) wait.
+    const onEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setPicking(false);
+      }
+    };
     el.addEventListener('click', onClick, true);
     el.addEventListener('keydown', onKey, true);
+    window.addEventListener('keydown', onEscape);
     return () => {
       el.removeEventListener('click', onClick, true);
       el.removeEventListener('keydown', onKey, true);
+      window.removeEventListener('keydown', onEscape);
     };
   });
 
   // A mouse over a line shows a button at its end that adds a note to it: the right-click
   // can't be seen, this can.
   useEffect(() => {
-    const el = container.current;
+    const el = container;
     if (!el || !canWrite || coarse) {
       return;
     }
@@ -195,7 +210,7 @@ export function useSongNotes({
     if (goTo === undefined || wentTo.current === goTo) {
       return;
     }
-    const el = container.current?.querySelector(`[data-note-id="${goTo}"]`);
+    const el = container?.querySelector(`[data-note-id="${goTo}"]`);
     if (el) {
       wentTo.current = goTo;
       el.scrollIntoView({ block: 'center' });
@@ -205,9 +220,10 @@ export function useSongNotes({
   const open = (note: NoteRecord) => setTarget({ kind: 'edit', note });
   const shown = prefs.showNotes;
   const copy = (words: string) => {
-    void navigator.clipboard
-      ?.writeText(words)
-      .then(() => notifications.show({ message: t('notes.copied') }));
+    void navigator.clipboard?.writeText(words).then(
+      () => notifications.show({ message: t('notes.copied') }),
+      () => notifications.show({ color: 'red', message: t('notes.copyFailed') }),
+    );
   };
 
   // Inside the sheet's box, which it is placed in.
@@ -266,7 +282,12 @@ export function useSongNotes({
         </Menu.Dropdown>
       </Menu>
       {picking && (
-        <Paper className={classes.pickBar} shadow="md">
+        <Paper
+          className={classes.pickBar}
+          shadow="md"
+          role="dialog"
+          aria-label={t('notes.pickLine')}
+        >
           <Text size="sm" className={classes.pickHint}>
             {coarse ? t('notes.pickTouch') : t('notes.pickMouse')}
           </Text>

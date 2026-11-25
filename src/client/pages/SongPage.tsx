@@ -1,6 +1,6 @@
 import { Alert, Button, Center, Group, Stack, Text } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router';
 import type { SongLinkState } from '../components/SongRow.tsx';
 import { parseSong } from '#shared/chordpro/parse.ts';
@@ -228,12 +228,19 @@ function SongPlayer({
 
   useSwipe(useMemo(() => ({ onLeft: next, onRight: prev }), [next, prev]));
   const sheet = useRef<HTMLDivElement>(null);
+  // The sheet once it is on the page, for what attaches to it then (it isn't while the song
+  // loads): the notes' presses.
+  const [sheetEl, setSheetEl] = useState<HTMLDivElement | null>(null);
+  const sheetRef = useCallback((el: HTMLDivElement | null) => {
+    sheet.current = el;
+    setSheetEl(el);
+  }, []);
   usePinch(sheet, prefs.fontScale, prefs.setFontScale);
   const notes = useSongNotes({
     songId: song?.id ?? null,
     song: parsed,
     playlist: playlist && { id: playlist.id, name: playlist.name, role: playlist.role },
-    container: sheet,
+    container: sheetEl,
   });
   useKeys(
     useMemo(
@@ -340,7 +347,7 @@ function SongPlayer({
           things get tight (D93, D109).
           A pointer convenience on top of scrolling, which does the same, so no key of its own. */}
       <div
-        ref={sheet}
+        ref={sheetRef}
         className={classes.sheet}
         onClick={(e) => {
           if (isPlainTap(e.target)) {

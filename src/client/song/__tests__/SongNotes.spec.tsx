@@ -1,11 +1,12 @@
 import { act, fireEvent, renderHook, screen } from '@testing-library/react';
-import { useRef } from 'react';
+import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { parseSong } from '#shared/chordpro/parse.ts';
 import { renderApp } from '#tests/client/render.tsx';
 import { putNote, useCatalog } from '../../data/catalog.ts';
 import { usePrefs } from '../../data/prefs.ts';
 import type { NoteRecord, PlaylistRecord } from '../../data/store.ts';
+import { useKeys } from '../../hooks/useKeys.ts';
 import { SongSheet } from '../SongSheet.tsx';
 import { useSongNotes } from '../SongNotes.tsx';
 
@@ -14,6 +15,9 @@ const SONG = parseSong(`{title: Píseň}
 la la [D]la
 lu lu [A]lu
 {end_of_verse}
+{start_of_outro: Dohra}
+[A] [D]
+{end_of_outro}
 `);
 const SONG_ID = 7;
 const ME = 3;
@@ -36,32 +40,53 @@ const note = (id: number, fields: Partial<NoteRecord>): NoteRecord => ({
 /** The song as SongPage plays it, with its notes. */
 function Played({
   playlist,
+  showChords = true,
 }: {
   playlist: { id: number; name: string; role: PlaylistRecord['role'] } | null;
+  showChords?: boolean;
 }) {
-  const container = useRef<HTMLDivElement>(null);
+  const [container, setContainer] = useState<HTMLDivElement | null>(null);
   const { loaded } = useCatalog();
   const notes = useSongNotes({ songId: SONG_ID, song: SONG, playlist, container });
+  // The page's own keys: Escape leaves the song.
+  useKeys({ Escape: leftTheSong });
   return (
     <>
       <button type="button" onClick={notes.startPicking}>
         začít vybírat
       </button>
-      <div ref={container} data-loaded={loaded || undefined}>
-        <SongSheet song={SONG} fontScale={1} showDiagrams={false} {...notes.sheet} />
-        {notes.hoverButton}
-      </div>
+      {/* As on the page: the sheet comes once the song is there, after a loader. */}
+      {loaded ? (
+        <div ref={setContainer} data-loaded>
+          <SongSheet
+            song={SONG}
+            fontScale={1}
+            showDiagrams={false}
+            showChords={showChords}
+            {...notes.sheet}
+          />
+          {notes.hoverButton}
+        </div>
+      ) : (
+        <p>načítám</p>
+      )}
       {notes.overlay}
     </>
   );
 }
 
+const leftTheSong = vi.fn();
+
 async function play(
   playlist: Parameters<typeof Played>[0]['playlist'],
   notes: NoteRecord[],
   state?: unknown,
+  showChords = true,
 ) {
-  const { container } = renderApp(<Played playlist={playlist} />, { state });
+  const { container } = renderApp(
+    <Played playlist={playlist} showChords={showChords} />,
+    { state },
+  );
   // The device's copy (none here) is read first; the notes come after, as from a sync.
   await vi.waitFor(() => expect(container.querySelector('[data-loaded]')).toBeTruthy());
   act(() => notes.forEach((n) => putNote(n.id, n)));
@@ -151,6 +176,76 @@ describe('notes on the song view (D135)', () => {
     expect(scrolled.mock.contexts).toEqual([
       screen.getByText('poznámka 1').closest('button'),
     ]);
+  });
+
+  it('opens a line’s menu on a right-click, the sheet having come after a loader', async () => {
+    const sheet = await play(null, []);
+    fireEvent.contextMenu(sheet.querySelector('[data-place="1"]') as HTMLElement);
+    // Read the open menu at once: in jsdom it doesn't stay open for long.
+    const items = await screen.findAllByRole('menuitem');
+    expect(items.map((item) => item.textContent)).toEqual([
+      'Přidat poznámku',
+      'Kopírovat řádek',
+    ]);
+  });
+
+  it('keeps a note on an intro in sight with chords off', async () => {
+    await play(null, [note(1, { line: { index: 2, text: 'A D' } })], undefined, false);
+    expect(screen.getByText('poznámka 1')).toBeTruthy();
+    expect(screen.queryByText('Dohra')).toBeNull();
+  });
+
+  it('gives up picking on Escape, wherever the focus is, without leaving the song', async () => {
+    leftTheSong.mockClear();
+    await play(null, []);
+    const start = screen.getByRole('button', { name: 'začít vybírat' });
+    start.focus();
+    fireEvent.click(start);
+    expect(
+      screen.getByRole('dialog', { name: 'Vybrat řádek pro poznámku' }),
+    ).toBeTruthy();
+    fireEvent.keyDown(start, { key: 'Escape' });
+    expect(
+      screen.queryByRole('dialog', { name: 'Vybrat řádek pro poznámku' }),
+    ).toBeNull();
+    expect(leftTheSong).not.toHaveBeenCalled();
+  });
+
+  it('puts a saved note on the sheet even when its dialog closed before the answer', async () => {
+    let answer: ((response: Response) => void) | null = null;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: RequestInfo | URL) =>
+        String(input).includes('notes.create')
+          ? new Promise<Response>((resolve) => {
+              answer = resolve;
+            })
+          : new Promise<Response>(() => {}),
+      ),
+    );
+    const sheet = await play(null, []);
+    fireEvent.contextMenu(sheet.querySelector('[data-place="1"]') as HTMLElement);
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Přidat poznámku' }));
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Poznámka' }), {
+      target: { value: 'zpomalit' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Uložit' }));
+    // Closed meanwhile, as offline it closes by itself (D133).
+    fireEvent.click(screen.getByRole('button', { name: 'Zrušit' }));
+    // The request goes out on a later tick: answered once it has.
+    await vi.waitFor(() => expect(answer).not.toBeNull());
+    await act(async () => {
+      answer?.(
+        new Response(
+          JSON.stringify([{ result: { data: note(4, { text: 'zpomalit' }) } }]),
+          {
+            headers: { 'content-type': 'application/json' },
+          },
+        ),
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(await screen.findByText('zpomalit')).toBeTruthy();
   });
 
   it('picks a line from the ⋯ menu’s way in, and asks for the note there', async () => {

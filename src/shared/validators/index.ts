@@ -63,6 +63,8 @@ export const PLAYLIST_MAX_SONGS = 500;
 
 /** A note on a song: a line or a paragraph, not an essay. */
 export const noteTextSchema = z.string().trim().min(1).max(2000);
+/** Which line of a song a note is at: its place among the lines, far more than any song has. */
+export const noteLineIndexSchema = z.number().int().min(0).max(10_000);
 /** The words of the line a note is at, to find it again after an edit. */
 export const noteLineTextSchema = z.string().max(500);
 

@@ -8,13 +8,12 @@ describe('useLinePress (D135)', () => {
   const sheet = document.createElement('div');
   sheet.innerHTML = '<p data-place="4">la la la</p><button>Poznámka</button><p>nic</p>';
   const line = sheet.querySelector('p') as HTMLElement;
-  const within = { current: sheet };
   let onPress: Mock<(press: LinePress) => void>;
   beforeEach(() => {
     vi.useFakeTimers();
     document.body.append(sheet);
     onPress = vi.fn();
-    renderHook(() => useLinePress(within, onPress));
+    renderHook(() => useLinePress(sheet, onPress));
   });
   afterEach(() => {
     vi.useRealTimers();

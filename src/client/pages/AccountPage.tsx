@@ -15,7 +15,7 @@ import { writeLocalJson } from '../data/local.ts';
 import { sortByTitle } from '../data/search.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
-import { inFilter } from '../data/notes.ts';
+import { inFilter, notesBy } from '../data/notes.ts';
 import { trpc } from '../trpc.ts';
 import { url } from '#shared/urls.ts';
 
@@ -31,10 +31,8 @@ export function AccountPage() {
     setParams(next === 'users' ? { tab: 'users' } : {}, { replace: true });
   const { songs, notes } = useCatalog();
   const openTodos = useMemo(
-    () =>
-      [...notes.values()].filter((n) => n.authorId === me?.id && inFilter(n, 'todo'))
-        .length,
-    [notes, me?.id],
+    () => notesBy(notes, songs, me?.id).filter((n) => inFilter(n, 'todo')).length,
+    [notes, songs, me?.id],
   );
   const mySongs = useMemo(
     () =>

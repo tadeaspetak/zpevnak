@@ -158,7 +158,14 @@ function SectionView({
     (line) => line.type === 'lyrics' && line.segments.some((seg) => seg.text.trim()),
   );
   if (!showChords && !sings) {
-    return null;
+    // Its notes stay, where it would be: a note on the intro is still a note.
+    return (
+      <>
+        {places?.map(
+          (place, i) => place && <Fragment key={i}>{notesAt?.(place.place)}</Fragment>,
+        )}
+      </>
+    );
   }
   // Every chorus says so, the first as much as a repeat: the bar alone doesn't explain itself.
   const label = block.label ?? (block.kind === 'chorus' ? t('song.chorus') : null);

@@ -145,6 +145,14 @@ describe('notes on songs (D135)', () => {
     ).rejects.toThrow('NOT_FOUND');
   });
 
+  it('takes a line far down a long song, and refuses one past any song’s length', async () => {
+    const { owner, a } = await band();
+    const at = (index: number) =>
+      callerFor(owner).notes.create({ ...note(a.id), line: { index, text: 'la' } });
+    await expect(at(9_999)).resolves.toMatchObject({ line: { index: 9_999 } });
+    await expect(at(3_000_000_000)).rejects.toThrow(/too_big|Too big/i);
+  });
+
   it('keeps TODO to one’s own notes', async () => {
     const { owner, a, playlist } = await band();
     await expect(

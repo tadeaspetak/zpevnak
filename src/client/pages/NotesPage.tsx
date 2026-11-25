@@ -9,7 +9,7 @@ import { PageHeader } from '../components/PageHeader.tsx';
 import { PageLoader } from '../components/PageLoader.tsx';
 import { SongRow, type SongLinkState } from '../components/SongRow.tsx';
 import { useCatalog } from '../data/catalog.ts';
-import { inFilter, type NoteFilter } from '../data/notes.ts';
+import { canChangeNote, inFilter, notesBy, type NoteFilter } from '../data/notes.ts';
 import type { NoteRecord, PlaylistRecord } from '../data/store.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
@@ -40,13 +40,7 @@ export function NotesPage() {
   const filter: NoteFilter = asked === 'todo' || asked === 'done' ? asked : 'all';
   const [editing, setEditing] = useState<NoteRecord | null>(null);
 
-  const mine = useMemo(
-    () =>
-      [...notes.values()]
-        .filter((n) => n.authorId === me?.id && songs.has(n.songId))
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id - a.id),
-    [notes, songs, me?.id],
-  );
+  const mine = useMemo(() => notesBy(notes, songs, me?.id), [notes, songs, me?.id]);
   const shown = mine.filter((n) => inFilter(n, filter));
 
   if (known && !me) {
@@ -116,13 +110,15 @@ export function NotesPage() {
                             detail={<NoteDetail note={note} playlist={playlist} />}
                           />
                         </Box>
-                        <IconButton
-                          label={t('notes.change')}
-                          mt="xs"
-                          onClick={() => setEditing(note)}
-                        >
-                          <IconEdit size={18} />
-                        </IconButton>
+                        {canChangeNote(note, playlist, me.emailVerified) && (
+                          <IconButton
+                            label={t('notes.change')}
+                            mt="xs"
+                            onClick={() => setEditing(note)}
+                          >
+                            <IconEdit size={18} />
+                          </IconButton>
+                        )}
                       </Group>
                     );
                   })}

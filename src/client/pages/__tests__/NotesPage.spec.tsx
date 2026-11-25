@@ -20,6 +20,7 @@ const band = {
   name: 'Vršek',
   songIds: [9, 7],
   songKeys: {},
+  role: 'owner',
   updatedAt: '2026-11-22T10:00:00.000Z',
 } as unknown as PlaylistRecord;
 
@@ -139,5 +140,18 @@ describe('NotesPage (D135)', () => {
     await open([note(1, { todo: true })]);
     fireEvent.click(screen.getByRole('button', { name: 'Upravit poznámku' }));
     expect(await screen.findByRole('checkbox', { name: 'Hotovo' })).toBeTruthy();
+  });
+
+  it('offers to change a band note only while one may edit the band’s playlist', async () => {
+    await open([note(1, { playlistId: 1 })]);
+    expect(screen.getByRole('button', { name: 'Upravit poznámku' })).toBeTruthy();
+    act(() =>
+      putPlaylist(band.id, {
+        ...band,
+        role: 'viewer',
+        updatedAt: '2026-11-23T00:00:00.000Z',
+      }),
+    );
+    expect(screen.queryByRole('button', { name: 'Upravit poznámku' })).toBeNull();
   });
 });

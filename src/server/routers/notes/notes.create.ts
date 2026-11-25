@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   idSchema,
+  noteLineIndexSchema,
   noteLineTextSchema,
   noteTextSchema,
 } from '#shared/validators/index.ts';
@@ -21,9 +22,7 @@ export const create = verifiedProcedure
       playlistId: idSchema.nullable(),
       text: noteTextSchema,
       todo: z.boolean(),
-      line: z
-        .object({ index: z.number().int().min(0), text: noteLineTextSchema })
-        .nullable(),
+      line: z.object({ index: noteLineIndexSchema, text: noteLineTextSchema }).nullable(),
     }),
   )
   .mutation(async ({ ctx, input }) => {
