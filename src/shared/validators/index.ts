@@ -62,7 +62,8 @@ export const sharedKindSchema = z.enum(SHARED_KINDS);
 export const PLAYLIST_MAX_SONGS = 500;
 
 /** A note on a song: a line or a paragraph, not an essay. */
-export const noteTextSchema = z.string().trim().min(1).max(2000);
+export const NOTE_TEXT_MAX = 2000;
+export const noteTextSchema = z.string().trim().min(1).max(NOTE_TEXT_MAX);
 /** Which line of a song a note is at: its place among the lines, far more than any song has. */
 export const noteLineIndexSchema = z.number().int().min(0).max(10_000);
 /** The words of the line a note is at, to find it again after an edit. */

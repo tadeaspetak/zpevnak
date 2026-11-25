@@ -578,6 +578,17 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   it). A TODO done leaves the song, kept under Hotové. A note stays on its line through a small
   edit of its words (80 % alike: a typo fixed, a comma added); a line rewritten sends it to the
   top as before. (2026-11-25)
+- **D139. Notes are seen, and changed where they're listed** (the owner's calls; refines D113,
+  D135, D138). On the song a note is there to be read from a stand: the text's own colour,
+  upright, nearly the song's size, on a neutral tint with a rule (never the chords' orange). No
+  "important" flag on a note: whoever doesn't want notes in sight switches them off (settings,
+  "Poznámky"). Moje poznámky is a tab of the account, for everyone: Písničky | Poznámky |
+  Uživatelé (the last for admins), short names so three and the open TODOs' count fit on a
+  phone; `/notes` redirects there, its filter kept. In the list a note is changed in place (a
+  tap on its text: Enter or leaving the field saves, Shift+Enter is a new line, Escape and an
+  emptied field leave it as it was) and deleted with the bin at once, "Beru zpátky" in the
+  toast (D87). The delete is sent only when the toast closes without an undo, so the app
+  closed meanwhile keeps the note rather than losing it. (2026-11-25)
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed

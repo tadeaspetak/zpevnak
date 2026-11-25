@@ -45,10 +45,11 @@ export const url = {
   join: (token: string) => `/join/${token}`,
   queue: () => '/queue',
   review: (id: number) => `/queue/${id}`,
-  /** One's notes on songs (D135), all, or the TODOs open or done. */
-  notes: (filter?: 'todo' | 'done') => (filter ? `/notes?filter=${filter}` : '/notes'),
-  /** `users`: the admin's tab of everyone's accounts. */
-  account: (tab?: 'users') => (tab ? `/account?tab=${tab}` : '/account'),
+  /** One's notes on songs (D135), a tab of the account (D139): all, or the TODOs open or done. */
+  notes: (filter?: 'todo' | 'done') =>
+    `${url.account('notes')}${filter ? `&filter=${filter}` : ''}`,
+  /** `notes`: one's notes (D139); `users`: the admin's tab of everyone's accounts. */
+  account: (tab?: 'notes' | 'users') => (tab ? `/account?tab=${tab}` : '/account'),
   logIn: (next?: string) => (next ? `/login?next=${encodeURIComponent(next)}` : '/login'),
   signUp: (next?: string) =>
     next ? `/signup?next=${encodeURIComponent(next)}` : '/signup',
@@ -73,6 +74,7 @@ export const routes = {
   queue: '/queue',
   review: '/queue/:id',
   account: '/account',
+  /** Where Moje poznámky was its own page; it redirects to the account's tab (D139). */
   notes: '/notes',
   adminUsers: '/admin/users',
   logIn: '/login',

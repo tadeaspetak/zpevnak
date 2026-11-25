@@ -59,6 +59,14 @@ took the agent's pick on all seven; shipped as D111 (the dialog renamed "Sdílen
 - [x] **"od Uršula Uživatelová" doesn't decline** (re-opens D79/D70). A: "Vlastník: {name}".
       B: the name alone with a person icon.
 
+## Notes from the phone, the owner's (2026-11-25)
+
+Three screenshots from the live app, agreed as one pass, shipped as D139.
+
+- [x] Moje poznámky a tab of the account, not a button above it.
+- [x] Notes on the song louder: there to be seen. No "important" flag; the setting hides them.
+- [x] A note changed and deleted right in the list (deleting undone from the toast).
+
 ## Notes on songs walk: the owner's answers (2026-11-25)
 
 The `/ux` walk of notes (report https://claude.ai/artifact/ASTrT8fBJpEDgkYtUCMxjK, handover

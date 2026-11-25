@@ -7,7 +7,6 @@ import {
   IconNotes,
   IconPlaylist,
   IconSquare,
-  IconSquareCheck,
 } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router';
@@ -359,7 +358,7 @@ export function useSongNotes({
   };
 }
 
-/** Notes at one place on the sheet, quiet beside the song: tapped, one opens to change it. */
+/** Notes at one place on the sheet, set apart from the song: tapped, one opens to change it. */
 function NoteList({
   notes,
   moved,
@@ -380,11 +379,8 @@ function NoteList({
           note.playlistId !== null ? (
             <IconPlaylist role="img" aria-label={t('notes.playlistMark')} />
           ) : note.todo ? (
-            note.doneAt ? (
-              <IconSquareCheck role="img" aria-label={t('notes.doneMark')} />
-            ) : (
-              <IconSquare role="img" aria-label={t('notes.todoMark')} />
-            )
+            // Only open ones: a TODO done is off the song (D138).
+            <IconSquare role="img" aria-label={t('notes.todoMark')} />
           ) : (
             <IconNote role="img" aria-label={t('notes.mark')} />
           );
@@ -411,7 +407,6 @@ function NoteList({
             data-note-id={note.id}
             type="button"
             className={classes.note}
-            data-done={note.doneAt !== null || undefined}
             onClick={() => onOpen(note)}
           >
             {content}

@@ -5,7 +5,7 @@ import { syncCatalog } from './data/catalog.ts';
 import { openSearch } from './data/omnibox.ts';
 import { useKeys } from './hooks/useKeys.ts';
 import { useMe } from './hooks/useMe.ts';
-import { AccountPage } from './pages/AccountPage.tsx';
+import { AccountPage, NotesRedirect } from './pages/AccountPage.tsx';
 import {
   ForgotPasswordPage,
   LogInPage,
@@ -15,7 +15,6 @@ import {
 } from './pages/AuthPages.tsx';
 import { HomePage } from './pages/HomePage.tsx';
 import { JoinPage } from './pages/JoinPage.tsx';
-import { NotesPage } from './pages/NotesPage.tsx';
 import { NotFoundPage } from './pages/NotFoundPage.tsx';
 import { PlaylistPage } from './pages/PlaylistPage.tsx';
 import { PlaylistsPage } from './pages/PlaylistsPage.tsx';
@@ -64,7 +63,8 @@ export function App() {
         <Route path={routes.queue} element={<QueuePage />} />
         <Route path={routes.review} element={<ReviewPage />} />
         <Route path={routes.account} element={<AccountPage />} />
-        <Route path={routes.notes} element={<NotesPage />} />
+        {/* Notes became a tab of the account page too (D139), the filter kept. */}
+        <Route path={routes.notes} element={<NotesRedirect />} />
         {/* Users became a tab of the account page (D113); old links still land there. */}
         <Route
           path={routes.adminUsers}

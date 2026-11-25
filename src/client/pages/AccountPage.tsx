@@ -1,9 +1,8 @@
 import { Badge, Button, Group, Stack, Tabs, Text, Title } from '@mantine/core';
-import { IconNotes } from '@tabler/icons-react';
-import { Link } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { Navigate, useNavigate, useSearchParams } from 'react-router';
+import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router';
+import { NotesList } from '../components/NotesList.tsx';
 import { Page } from '../components/Page.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
 import { PageLoader } from '../components/PageLoader.tsx';
@@ -19,16 +18,21 @@ import { inFilter, notesBy } from '../data/notes.ts';
 import { trpc } from '../trpc.ts';
 import { url } from '#shared/urls.ts';
 
+type Tab = 'songs' | 'notes' | 'users';
+
 export function AccountPage() {
   const { t, compare } = useI18n();
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const { me, isAdmin, known } = useMe();
-  // The tab is in the address, so back and reload keep it.
+  // The tab is in the address, so back and reload keep it, and a song opened from one's notes
+  // leads back to them (D139).
   const [params, setParams] = useSearchParams();
-  const tab = params.get('tab') === 'users' ? 'users' : 'songs';
-  const setTab = (next: 'songs' | 'users') =>
-    setParams(next === 'users' ? { tab: 'users' } : {}, { replace: true });
+  const asked = params.get('tab');
+  const tab: Tab = asked === 'notes' || (asked === 'users' && isAdmin) ? asked : 'songs';
+  const setTab = (next: Tab) =>
+    setParams(next === 'songs' ? {} : { tab: next }, { replace: true });
   const { songs, notes } = useCatalog();
   const openTodos = useMemo(
     () => notesBy(notes, songs, me?.id).filter((n) => inFilter(n, 'todo')).length,
@@ -54,7 +58,7 @@ export function AccountPage() {
   });
 
   if (known && !me) {
-    return <Navigate to={url.logIn(url.account())} replace />;
+    return <Navigate to={url.logIn(`${location.pathname}${location.search}`)} replace />;
   }
   if (!me) {
     return <PageLoader full />;
@@ -116,45 +120,55 @@ export function AccountPage() {
             </Button>
           </Group>
 
-          <Group>
-            <Button
-              component={Link}
-              to={url.notes()}
-              variant="default"
-              size="sm"
-              leftSection={<IconNotes size={16} />}
-              rightSection={
-                openTodos > 0 && (
-                  <Badge size="sm">{t('notes.openTodos', { count: openTodos })}</Badge>
-                )
-              }
-            >
-              {t('notes.title')}
-            </Button>
-          </Group>
-
-          {/* Admins get a tab of everyone's accounts; for anyone else, just their songs. */}
-          {isAdmin ? (
-            <Tabs value={tab} onChange={(v) => setTab(v === 'users' ? 'users' : 'songs')}>
-              <Tabs.List mb="sm">
-                <Tabs.Tab value="songs">{t('account.mySongs')}</Tabs.Tab>
-                <Tabs.Tab value="users">{t('nav.users')}</Tabs.Tab>
-              </Tabs.List>
-              <Tabs.Panel value="songs">{songList}</Tabs.Panel>
+          {/* Everyone's own songs and notes; for admins, everyone's accounts too (D113, D139).
+              Short names, "my" being the page's: three, and a TODO count, fit on a phone. */}
+          <Tabs
+            value={tab}
+            onChange={(v) => setTab(v === 'notes' || v === 'users' ? v : 'songs')}
+          >
+            <Tabs.List mb="md">
+              <Tabs.Tab value="songs">{t('account.tab.songs')}</Tabs.Tab>
+              <Tabs.Tab
+                value="notes"
+                rightSection={
+                  openTodos > 0 && (
+                    <Badge
+                      size="sm"
+                      aria-label={t('notes.openTodos', { count: openTodos })}
+                    >
+                      {openTodos}
+                    </Badge>
+                  )
+                }
+              >
+                {t('account.tab.notes')}
+              </Tabs.Tab>
+              {isAdmin && <Tabs.Tab value="users">{t('nav.users')}</Tabs.Tab>}
+            </Tabs.List>
+            <Tabs.Panel value="songs">{songList}</Tabs.Panel>
+            <Tabs.Panel value="notes">
+              <NotesList me={me} />
+            </Tabs.Panel>
+            {isAdmin && (
               <Tabs.Panel value="users">
                 <UsersList />
               </Tabs.Panel>
-            </Tabs>
-          ) : (
-            <section>
-              <Title order={2} size="h5" mb={4}>
-                {t('account.mySongs')}
-              </Title>
-              {songList}
-            </section>
-          )}
+            )}
+          </Tabs>
         </Stack>
       </Page>
     </>
+  );
+}
+
+/** Where Moje poznámky was its own page (/notes): now the account's tab, the filter kept (D139). */
+export function NotesRedirect() {
+  const [params] = useSearchParams();
+  const filter = params.get('filter');
+  return (
+    <Navigate
+      to={url.notes(filter === 'todo' || filter === 'done' ? filter : undefined)}
+      replace
+    />
   );
 }

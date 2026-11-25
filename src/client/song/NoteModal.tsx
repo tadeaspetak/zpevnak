@@ -11,11 +11,13 @@ import {
 import { notifications } from '@mantine/notifications';
 import { useState } from 'react';
 import type { NotePlace } from '#shared/notes.ts';
+import { NOTE_TEXT_MAX } from '#shared/validators/index.ts';
 import { putNote, settleNote, useCatalog, waitNote } from '../data/catalog.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { notifyIfQueued } from '../data/offline.ts';
 import type { NoteRecord } from '../data/store.ts';
 import { ConfirmModal } from '../components/ConfirmModal.tsx';
+import { showUndoToast } from '../components/UndoToast.tsx';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc } from '../trpc.ts';
 
@@ -28,8 +30,6 @@ type Props = {
   target: NoteTarget | null;
   /** The playlist being played from, where the reader may write its notes (D135). */
   playlist: { id: number; name: string; isPublic: boolean } | null;
-  /** Name the note's song too: the dialog is opened away from it (Moje poznámky). */
-  showSong?: boolean;
   onClose: () => void;
   /** After a note is saved. */
   onSaved?: () => void;
@@ -42,8 +42,8 @@ type Props = {
  * form, closed meanwhile, and still lands in the catalog, or says why it didn't.
  */
 /**
- * Writing, changing and deleting notes (D135), wherever it's done: the dialog, a TODO ticked in
- * Moje poznámky. What the server returns goes into the catalog. Offline, a change shows at once,
+ * Writing, changing and deleting notes (D135), wherever it's done: the dialog, or right in
+ * Moje poznámky (D139). What the server returns goes into the catalog. Offline, a change shows at once,
  * marked as waiting (`waitNote`), until its request ends; online it shows when the server has
  * it, a moment later, rather than flash "waiting". Kept by a component that stays mounted, so
  * a request waiting for the connection still lands.
@@ -54,6 +54,16 @@ export function useNoteRequests() {
   const { notes } = useCatalog();
   const onError = (error: unknown) =>
     notifications.show({ color: 'red', message: tError(error) });
+  const remove = trpc.notes.delete.useMutation({
+    onMutate: (input) => {
+      if (!navigator.onLine) {
+        waitNote(input.id, null);
+      }
+    },
+    onSuccess: (_, { id }) => putNote(id, null),
+    onError: (error) => onError(error),
+    onSettled: (_result, _error, input) => settleNote(input.id),
+  });
   return {
     create: trpc.notes.create.useMutation({
       onMutate: (input) => {
@@ -104,19 +114,24 @@ export function useNoteRequests() {
       onError: (error) => onError(error),
       onSettled: (_note, _error, input) => settleNote(input.id),
     }),
-    remove: trpc.notes.delete.useMutation({
-      onMutate: (input) => {
-        if (!navigator.onLine) {
-          waitNote(input.id, null);
-        }
-      },
-      onSuccess: (_, { id }) => {
-        putNote(id, null);
-        notifications.show({ message: t('notes.deleted') });
-      },
-      onError: (error) => onError(error),
-      onSettled: (_result, _error, input) => settleNote(input.id),
-    }),
+    remove,
+    /**
+     * Deleted at once, taken back by one tap (D139): the note goes from sight while the toast
+     * says so, and the request is sent only when the toast closes without an undo. Closed with
+     * the app before then, the note is still there.
+     */
+    deleteWithUndo: (note: NoteRecord) => {
+      waitNote(note.id, null);
+      showUndoToast({
+        id: `note-deleted-${note.id}`,
+        message: t('notes.deleted'),
+        onUndo: async () => settleNote(note.id),
+        onKept: () => {
+          remove.mutate({ id: note.id });
+          notifyIfQueued(t('common.savesWhenOnline'));
+        },
+      });
+    },
   };
 }
 
@@ -137,6 +152,7 @@ export function NoteModal({ target, ...props }: Props) {
       { id: note.id },
       {
         onSuccess: () => {
+          notifications.show({ message: t('notes.deleted') });
           setDeleting(null);
           props.onClose();
         },
@@ -184,7 +200,6 @@ export function NoteModal({ target, ...props }: Props) {
 function NoteForm({
   target,
   playlist,
-  showSong = false,
   onClose,
   onSaved,
   requests: { create, update },
@@ -195,9 +210,8 @@ function NoteForm({
   onDelete: (note: NoteRecord) => void;
 }) {
   const { t } = useI18n();
-  const { songs, playlists } = useCatalog();
+  const { playlists } = useCatalog();
   const existing = target.kind === 'edit' ? target.note : null;
-  const songTitle = showSong && existing ? songs.get(existing.songId)?.title : undefined;
   const ownPlaylist =
     existing && existing.playlistId !== null
       ? playlists.get(existing.playlistId)
@@ -262,9 +276,7 @@ function NoteForm({
     >
       <Stack>
         <Text size="sm" c="dimmed" lineClamp={2}>
-          {[songTitle, words ? t('notes.atLine', { words }) : t('notes.wholeSong')]
-            .filter(Boolean)
-            .join(' · ')}
+          {words ? t('notes.atLine', { words }) : t('notes.wholeSong')}
         </Text>
         <Textarea
           label={t('notes.text')}
@@ -272,7 +284,7 @@ function NoteForm({
           onChange={(e) => setText(e.currentTarget.value)}
           autosize
           minRows={2}
-          maxLength={2000}
+          maxLength={NOTE_TEXT_MAX}
           data-autofocus
           required
         />

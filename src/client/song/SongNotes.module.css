@@ -1,29 +1,33 @@
 /*
- * Notes on the song (D135): under their line, smaller and quieter than the song, so the eye
- * reading the song passes over them and the eye looking for them finds them.
+ * Notes on the song (D135, D139): under their line, set apart from the song as an aside, but
+ * read at a glance from a stand. A note is there to be seen while playing, so it is in the
+ * text's own colour, upright, nearly the song's size, on a tint. Not the chords' orange. The
+ * reader who wants the song alone switches notes off (settings, "Poznámky").
  */
 .notes {
-  margin: 0.1em 0 0.35em;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2em;
+  margin: 0.15em 0 0.45em;
   break-inside: avoid;
 }
 
 .note {
   display: flex;
   align-items: flex-start;
-  gap: 0.35em;
+  gap: 0.4em;
   margin: 0;
-  padding: 0.1em 0;
+  padding: 0.15em 0.55em 0.2em 0.45em;
   font: inherit;
-  font-size: 0.85em;
-  font-style: italic;
+  font-size: 0.92em;
   line-height: 1.35;
-  color: var(--mantine-color-dimmed);
+  color: var(--mantine-color-text);
   text-align: left;
-  background: none;
+  background: var(--note-bg);
   border: 0;
-  /* Kept apart from the song by a rule: grey, not the chords' orange, so it reads as an aside. */
-  border-left: 2px solid var(--mantine-color-default-border);
-  padding-left: 0.5em;
+  border-left: 3px solid var(--note-rule);
+  border-radius: 0 var(--mantine-radius-sm) var(--mantine-radius-sm) 0;
 
   & svg {
     flex: none;
@@ -32,13 +36,9 @@
     margin-top: 0.2em;
   }
 
-  &[data-done] {
-    text-decoration: line-through;
-  }
-
   /* The note one came to from Moje poznámky, among others at its line. */
   &[data-flash] {
-    background: var(--mantine-color-default-hover);
+    background: var(--note-flash);
     transition: background 1.2s ease-out;
   }
 
@@ -51,7 +51,7 @@ button.note {
   cursor: pointer;
 
   &:hover {
-    color: var(--mantine-color-text);
+    background: var(--note-flash);
   }
 }
 
