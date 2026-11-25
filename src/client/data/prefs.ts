@@ -17,7 +17,8 @@ type Prefs = {
   transpose: Record<number, KeyShift>;
 };
 
-export const FONT_SCALES = [0.8, 0.9, 1, 1.15, 1.3, 1.5, 1.75, 2];
+/** Down to 60%: a long song whole on a phone, or a tablet read from further away. */
+export const FONT_SCALES = [0.6, 0.7, 0.8, 0.9, 1, 1.15, 1.3, 1.5, 1.75, 2];
 
 /**
  * The text size a pinch comes to: the size it started from, times how far the fingers spread
@@ -58,7 +59,13 @@ export function usePrefs() {
     const i = FONT_SCALES.indexOf(prefs.fontScale);
     const next =
       FONT_SCALES[
-        Math.max(0, Math.min(FONT_SCALES.length - 1, (i === -1 ? 2 : i) + direction))
+        Math.max(
+          0,
+          Math.min(
+            FONT_SCALES.length - 1,
+            (i === -1 ? FONT_SCALES.indexOf(1) : i) + direction,
+          ),
+        )
       ] ?? 1;
     writeLocalJson('fontScale', next);
     update({ fontScale: next });

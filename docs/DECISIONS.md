@@ -565,6 +565,12 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   pill), so the song doesn't rearrange itself as a scroll hides them (D109). Songs that would
   fit only with the bars away stay in one column: the owner's call, a layout that never moves
   on its own over a few more songs in columns. (2026-11-25)
+- **D137. Text down to 60%, and a touchpad pinches like a finger** (extends D130). The text
+  sizes start at 60% (two steps below 80%), for a long song whole or a tablet read from
+  further away. On a laptop, a touchpad's pinch on the song (a wheel with Ctrl held in Chrome,
+  Edge and Firefox; Safari's own gesture) changes the text size instead of zooming the page,
+  keeping the line under the pointer; so does Ctrl and a mouse wheel there, a notch about a
+  step. Keyboard zoom, and zoom anywhere off the song, stay the browser's. (2026-11-25)
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed
