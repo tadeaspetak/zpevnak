@@ -110,12 +110,12 @@ describe('SongToolbar: saving the key (D119)', () => {
 
   it('offers whoever may edit the song to save it in the key it is transposed to', async () => {
     toolbar(2, song, true);
-    expect(await menu()).toContain('Uložit v tónině H pro všechny');
+    expect(await menu()).toContain('Uložit pro všechny');
   });
 
   it('offers it to nobody else, and not in the song’s own key', async () => {
     toolbar(2, song, false);
-    expect(await menu()).not.toContain('Uložit v tónině H pro všechny');
+    expect(await menu()).not.toContain('Uložit pro všechny');
     cleanup();
     toolbar(0, song, true);
     expect((await menu()).some((item) => item?.startsWith('Uložit'))).toBe(false);
@@ -170,7 +170,7 @@ describe('SongToolbar: a key per playlist (D131)', () => {
     toolbar(2, song, false, false, playlist);
     fireEvent.click(screen.getByRole('button', { name: 'Další možnosti' }));
     fireEvent.click(
-      await screen.findByRole('menuitem', { name: 'Hrát v tónině H v tomhle playlistu' }),
+      await screen.findByRole('menuitem', { name: 'Hrát takhle v tomhle playlistu' }),
     );
     expect(playlist.setKey).toHaveBeenCalledWith(2);
   });
@@ -179,23 +179,23 @@ describe('SongToolbar: a key per playlist (D131)', () => {
     // The playlist plays it a tone lower (G); the player went up two more, to A… here, H.
     toolbar(2, song, false, false, band(true), 4);
     expect(screen.getByRole('button', { name: 'H: Zpět na G' })).toBeTruthy();
-    expect(await menu()).toContain('Hrát v tónině písničky v tomhle playlistu');
+    expect(await menu()).toContain('V playlistu hrát v tónině písničky');
   });
 
   it('offers nothing of the playlist’s key to a reader, or in the key it starts from', async () => {
     toolbar(2, song, false, false, band(true, false));
-    expect(await menu()).not.toContain('Hrát v tónině H v tomhle playlistu');
+    expect(await menu()).not.toContain('Hrát takhle v tomhle playlistu');
     cleanup();
     toolbar(-2, song, false, false, band(true), 0);
     const items = await menu();
-    expect(items.some((item) => item?.startsWith('Hrát v tónině G'))).toBe(false);
-    expect(items).toContain('Hrát v tónině písničky v tomhle playlistu');
+    expect(items.some((item) => item === 'Hrát takhle v tomhle playlistu')).toBe(false);
+    expect(items).toContain('V playlistu hrát v tónině písničky');
   });
 
   it('offers saving for everyone only a key the player came to, not the playlist’s own', async () => {
     // The playlist plays it in G; the editor hasn't transposed it themselves.
     toolbar(-2, song, true, true, band(true), 0);
-    expect((await menu()).some((item) => item?.endsWith('pro všechny'))).toBe(false);
+    expect(await menu()).not.toContain('Uložit pro všechny');
   });
 
   it('goes back to the playlist’s shift for a song that names no key, and says so', () => {
@@ -219,5 +219,18 @@ describe('SongToolbar: a key per playlist (D131)', () => {
       />,
     );
     expect(screen.getByRole('button', { name: '+3: Zpět na +2' })).toBeTruthy();
+  });
+
+  it('marks a key that is the playlist’s, in place of the clef', () => {
+    toolbar(-2, song, false, false, band(true), 0);
+    expect(screen.getByRole('img', { name: 'Tónina playlistu' })).toBeTruthy();
+  });
+
+  it('puts the key’s actions under one heading that names the key', async () => {
+    toolbar(2, song, true, true, band(false));
+    expect(await menu()).toEqual(
+      expect.arrayContaining(['Uložit pro všechny', 'Hrát takhle v tomhle playlistu']),
+    );
+    expect(screen.getByText('Tónina H')).toBeTruthy();
   });
 });

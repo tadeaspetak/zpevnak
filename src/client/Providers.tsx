@@ -5,6 +5,7 @@ import { type ReactNode, useMemo } from 'react';
 import { ErrorBoundary } from './components/ErrorBoundary.tsx';
 import { I18nProvider, useI18n } from './i18n/index.tsx';
 import { cssVariablesResolver, theme } from './theme.ts';
+import classes from './Providers.module.css';
 import { trpc, trpcReactClient } from './trpc.ts';
 
 // React Query takes itself for online until an `offline` event says otherwise, so in an app
@@ -25,7 +26,11 @@ export function Providers({ children }: { children: ReactNode }) {
         <I18nProvider>
           <Themed>
             {/* Inside the translations: a toast may hold a component that reads them. */}
-            <Notifications position="top-center" />
+            {/* Below the header (Providers.module.css). */}
+            <Notifications
+              position="top-center"
+              classNames={{ root: classes.notifications }}
+            />
             {/* Inside the translations too, so a crash is explained in the reader's language. */}
             <ErrorBoundary>{children}</ErrorBoundary>
           </Themed>

@@ -118,6 +118,19 @@ export function SongToolbar(props: Props) {
       ? t('song.backToKey', { key: shiftLabel(base) })
       : t('song.transposeReset');
 
+  const saveForEveryone = canEdit && own !== 0;
+  const playForPlaylist = Boolean(playlist?.canSetKey) && own !== 0;
+  const clearPlaylistKey = Boolean(playlist?.canSetKey && playlist.hasKey);
+  const keyActions = saveForEveryone || playForPlaylist || clearPlaylistKey;
+
+  // Played in the playlist's key (D131): its mark in place of the clef, so a reader knows the
+  // key they see is the playlist's, not the song's.
+  const keyIcon = playlist?.hasKey ? (
+    <IconPlaylist size={18} role="img" aria-label={t('song.playlistKeyMark')} />
+  ) : (
+    <IconClef size={18} aria-hidden />
+  );
+
   return (
     <>
       <header className={classes.bar} data-hidden={hidden || undefined}>
@@ -148,7 +161,7 @@ export function SongToolbar(props: Props) {
                 where the eye already is. */}
             {own === 0 ? (
               <span className={classes.key}>
-                <IconClef size={18} aria-hidden />
+                {keyIcon}
                 <Text fw={700} size="sm" span>
                   {keyLabel}
                 </Text>
@@ -161,7 +174,7 @@ export function SongToolbar(props: Props) {
                   onClick={() => prefs.setTranspose(song.id, 0, pitch)}
                   aria-label={`${keyLabel}: ${resetLabel}`}
                 >
-                  <IconClef size={18} aria-hidden />
+                  {keyIcon}
                   <Text fw={700} size="sm" span>
                     {keyLabel}
                   </Text>
@@ -229,38 +242,41 @@ export function SongToolbar(props: Props) {
                   {t('song.reportMistake')}
                 </Menu.Item>
               )}
-              {/* Who may edit the song may make the key they picked its own (D119): one they came to
-                  themselves, not a playlist's (D131), which that playlist already plays in. */}
-              {canEdit && own !== 0 && (
+              {/* What can be done with the key it's played in, under one heading (it names
+                  the key, so the items needn't): kept for everyone, by who may edit the song,
+                  only a key they came to themselves (D119); in a playlist, by who edits it, kept
+                  there, or back to the song's own (D131). */}
+              {keyActions && (
+                <>
+                  <Menu.Divider />
+                  <Menu.Label>{t('song.keyGroup', { key: keyLabel })}</Menu.Label>
+                </>
+              )}
+              {saveForEveryone && (
                 <Menu.Item
                   leftSection={<IconDeviceFloppy size={16} />}
                   onClick={openSaveKey}
                 >
-                  {shownKey
-                    ? t('song.saveKey', { key: shownKey })
-                    : t('song.saveTransposed')}
+                  {t('song.keyForEveryone')}
                 </Menu.Item>
               )}
-              {/* In a playlist, its own key for the song (D131), by whoever edits it: the key
-                  the player came to, or back to the song's own. */}
-              {playlist?.canSetKey && own !== 0 && (
+              {playlist && playForPlaylist && (
                 <Menu.Item
                   leftSection={<IconPlaylist size={16} />}
                   onClick={() => playlist.setKey(semitones)}
                 >
-                  {shownKey
-                    ? t('song.playKeyInPlaylist', { key: shownKey })
-                    : t('song.playShiftInPlaylist')}
+                  {t('song.keyForPlaylist')}
                 </Menu.Item>
               )}
-              {playlist?.canSetKey && playlist.hasKey && (
+              {playlist && clearPlaylistKey && (
                 <Menu.Item
                   leftSection={<IconPlaylist size={16} />}
                   onClick={() => playlist.setKey(0)}
                 >
-                  {t('song.playOwnKeyInPlaylist')}
+                  {t('song.keyPlaylistOwn')}
                 </Menu.Item>
               )}
+              {keyActions && <Menu.Divider />}
               {canEdit && (
                 <Menu.Item
                   component={Link}
@@ -295,7 +311,7 @@ export function SongToolbar(props: Props) {
       {canOpenSharing && (
         <SongShareModal song={song} opened={sharing} onClose={closeShare} />
       )}
-      {canEdit && own !== 0 && (
+      {saveForEveryone && (
         <SaveKeyModal
           song={song}
           semitones={semitones}

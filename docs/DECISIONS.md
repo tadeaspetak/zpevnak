@@ -518,8 +518,9 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   Kept per playlist and song (`playlist_song_keys`), not per place, as semitones from the
   pitch the song started from, so a key later saved for everyone (D119) keeps the playlist
   sounding the same; it leaves with the song. Whoever may edit the playlist sets it, from the
-  song: "Hrát v tónině G v tomhle playlistu", or back with "Hrát v tónině písničky v tomhle
-  playlistu"; "Uložit v tónině G pro všechny" (D119) now says for whom. The way back on the
+  song, in the ⋯ menu under a heading naming the key ("Tónina G"): "Hrát takhle v tomhle
+  playlistu", or back with "V playlistu hrát v tónině písničky"; "Uložit pro všechny" (D119)
+  says for whom. The way back on the
   key goes to the playlist's key. Setting the playlist's key from a song takes up the
   player's own transposition of it, which is one per song on a device, in the playlist and out
   of it (open for the owner: a separate own shift per playlist). The playlist's list says
@@ -537,6 +538,16 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   diagrams and the keys named everywhere follow the reader's. The owner's call was "go with H
   for Czech players"; showing rather than rewriting every song also gets a transposed song
   right (C up a tone is H). (2026-11-24)
+- **D133. A key the playlist plays in is marked, and a change made offline says it waits.**
+  The owner's calls after the night's build (2026-11-25). In a playlist with its own key for
+  a song, the key control shows the playlist's mark in place of the clef ("Tónina playlistu").
+  The key's actions sit in the ⋯ menu under one heading that names the key. Messages (toasts)
+  appear below the header, never over it: one about the key mustn't cover the key. A change
+  that waits for the connection (a playlist edit, its key; requests wait offline since the
+  offline check) says so: "Jsi offline: uloží se, až budeš online" (`notifyIfQueued`, the way
+  for every such change from now on). Notation stays as built (D132): songs written in English
+  notation, shown in Czech where that's the reader's. Each playlist keeps its own key for a
+  song, and setting it uses up the player's own transposition (D131), as is. (2026-11-25)
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed

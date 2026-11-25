@@ -297,7 +297,9 @@ test('a band plays a song in its own key in a playlist, and a reader sees it the
   await owner.getByRole('button', { name: 'Up a semitone' }).click();
   await owner.getByRole('button', { name: 'Up a semitone' }).click();
   await owner.getByRole('button', { name: 'More options' }).click();
-  await owner.getByRole('menuitem', { name: 'Play in B in this playlist' }).click();
+  await owner
+    .getByRole('menuitem', { name: 'Play it like this in this playlist' })
+    .click();
   await expect(owner.getByText(/now plays it in B/)).toBeVisible();
   // The playlist's key now: shown plainly, not as the player's own transposition.
   await expect(owner.getByRole('button', { name: /Back to/ })).toHaveCount(0);

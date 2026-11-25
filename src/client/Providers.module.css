@@ -1,0 +1,6 @@
+/* Below the header, not over it: a message about the key mustn't cover the key, nor the way
+   back or search (on a phone the whole bar). Only the top container: Mantine draws one for
+   every position, and the others must stay out of the page's way. */
+.notifications[data-position='top-center'] {
+  top: calc(3.75rem + env(safe-area-inset-top));
+}

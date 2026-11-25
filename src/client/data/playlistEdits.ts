@@ -4,6 +4,7 @@ import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { trpc } from '../trpc.ts';
 import { putPlaylist, syncCatalog, useCatalog } from './catalog.ts';
+import { notifyIfQueued } from './offline.ts';
 import type { PlaylistRecord } from './store.ts';
 
 /**
@@ -12,7 +13,8 @@ import type { PlaylistRecord } from './store.ts';
  * an error the device takes the server's word again.
  */
 export function usePlaylistEdits(playlistId: number) {
-  const { tError } = useI18n();
+  const { t, tError } = useI18n();
+  const queued = () => notifyIfQueued(t('common.savesWhenOnline'));
   const { me } = useMe();
   const { playlists } = useCatalog();
   const handlers = {
@@ -33,8 +35,15 @@ export function usePlaylistEdits(playlistId: number) {
         putPlaylist(playlistId, { ...playlist, songIds: applyOp(playlist.songIds, op) });
       }
       editMutation.mutate({ id: playlistId, op });
+      queued();
     },
-    rename: (name: string) => renameMutation.mutate({ id: playlistId, name }),
-    setPublic: (isPublic: boolean) => publicMutation.mutate({ id: playlistId, isPublic }),
+    rename: (name: string) => {
+      renameMutation.mutate({ id: playlistId, name });
+      queued();
+    },
+    setPublic: (isPublic: boolean) => {
+      publicMutation.mutate({ id: playlistId, isPublic });
+      queued();
+    },
   };
 }

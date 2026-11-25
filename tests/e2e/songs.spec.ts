@@ -74,7 +74,7 @@ test('an editor transposes a song and saves it in that key, for everyone (D119)'
   }
   await expect(editor.getByRole('button', { name: 'C: Back to A' })).toBeVisible();
   await editor.getByRole('button', { name: 'More options' }).click();
-  await editor.getByRole('menuitem', { name: 'Save in C' }).click();
+  await editor.getByRole('menuitem', { name: 'Save for everyone' }).click();
   await editor.getByRole('dialog').getByRole('button', { name: 'Save' }).click();
   await expect(editor.getByText('Saved in C.')).toBeVisible();
   // The song's own key now: nothing transposed, nothing to go back to.

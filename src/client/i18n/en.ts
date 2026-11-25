@@ -14,6 +14,7 @@ export const en: Record<keyof typeof cs, string> = {
   'common.offlineHint':
     "You're offline. Your songs are on this device; changes save once you're back online.",
   'common.needsConnection': 'You’re offline. This works once you’re connected.',
+  'common.savesWhenOnline': 'You’re offline: it saves once you’re online.',
   'common.somethingWrong': 'Something went wrong. Try again.',
   'common.unverified': 'Not approved',
   'common.rejected': 'Rejected',
@@ -92,12 +93,14 @@ export const en: Record<keyof typeof cs, string> = {
   'song.deleted': 'The song is deleted.',
   'song.saveKey': 'Save in {key} for everyone',
   'song.saveTransposed': 'Save transposed for everyone',
+  'song.keyGroup': 'Key: {key}',
+  'song.keyForEveryone': 'Save for everyone',
+  'song.keyForPlaylist': 'Play it like this in this playlist',
+  'song.keyPlaylistOwn': 'Play the song’s own key in this playlist',
   'song.playlistKeyCleared': '“{name}” now plays it in the song’s own key.',
+  'song.playlistKeyMark': 'The playlist’s key',
   'song.playlistShiftSet': '“{name}” now plays it like this.',
   'song.playlistKeySet': '“{name}” now plays it in {key}.',
-  'song.playOwnKeyInPlaylist': 'Play in the song’s own key in this playlist',
-  'song.playShiftInPlaylist': 'Play it like this in this playlist',
-  'song.playKeyInPlaylist': 'Play in {key} in this playlist',
   'song.saveKeyBody':
     'The song’s chords are rewritten for good, for everyone. The previous text stays in the song’s history.',
   'song.saveKeyDiagrams':

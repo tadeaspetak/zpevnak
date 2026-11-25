@@ -6,6 +6,7 @@ import type { SongLinkState } from '../components/SongRow.tsx';
 import { parseSong } from '#shared/chordpro/parse.ts';
 import { PlaylistPill } from '../components/PlaylistPill.tsx';
 import { putPlaylist, useCatalog } from '../data/catalog.ts';
+import { notifyIfQueued } from '../data/offline.ts';
 import { chordIn, transposeKey } from '#shared/chordpro/chord.ts';
 import {
   nearest,
@@ -287,7 +288,8 @@ function SongPlayer({
                 name: playlist.name,
                 hasKey: base !== 0,
                 canSetKey: editsAsMember(playlist.role) && Boolean(me?.emailVerified),
-                setKey: (shift: number) =>
+                setKey: (shift: number) => {
+                  notifyIfQueued(t('common.savesWhenOnline'));
                   setSongKey.mutate(
                     { id: playlist.id, songId: song.id, semitones: shift, from: pitch },
                     {
@@ -310,7 +312,8 @@ function SongPlayer({
                       onError: (error) =>
                         notifications.show({ color: 'red', message: tError(error) }),
                     },
-                  ),
+                  );
+                },
               }
             : null
         }
