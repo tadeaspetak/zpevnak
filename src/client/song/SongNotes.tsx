@@ -229,16 +229,20 @@ export function useSongNotes({
   // Inside the sheet's box, which it is placed in.
   const hoverButton =
     hover && !picking ? (
-      <IconButton
-        label={t('notes.addAtLine')}
-        size="sm"
+      // Placed by its wrapper: the button's own transform is Mantine's, nudging it as it's pressed.
+      <div
         className={classes.hoverAdd}
         style={{ top: hover.top, left: hover.left }}
         data-note-add
-        onClick={() => addAt(lineAt(hover.place))}
       >
-        <IconNotes size={16} />
-      </IconButton>
+        <IconButton
+          label={t('notes.addAtLine')}
+          size="sm"
+          onClick={() => addAt(lineAt(hover.place))}
+        >
+          <IconNotes size={16} />
+        </IconButton>
+      </div>
     ) : null;
 
   // Outside the sheet: a click in a dialog or a bar mustn't reach the sheet's tap (D93).
