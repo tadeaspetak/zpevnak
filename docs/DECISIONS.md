@@ -548,6 +548,11 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   for every such change from now on). Notation stays as built (D132): songs written in English
   notation, shown in Czech where that's the reader's. Each playlist keeps its own key for a
   song, and setting it uses up the player's own transposition (D131), as is. (2026-11-25)
+- **D134. Fewer settings: notation by language, columns always.** Chords are shown with H
+  and B in Czech and with B and Bb in English, by the app's language alone (narrows D132: the
+  "Značení akordů" setting goes; it comes back if someone needs it). Two columns are no longer
+  a switch (replaces D108's "the reader has them on"): wherever they fit (D129), a song is in
+  them, and where they don't, it isn't. (2026-11-25)
 - **D106. Nobody changes a song they haven't seen as it is.** Saving, approving and rejecting
   send the song's `updatedAt` as the page loaded it (`seenAt`); if the song has changed since,
   the server refuses with "Mezitím ji někdo změnil" (`SONG_CHANGED`). Reloading keeps the typed

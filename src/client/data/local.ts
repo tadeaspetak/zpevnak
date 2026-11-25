@@ -11,9 +11,7 @@ type LocalKey =
   | 'transpose'
   | 'showDiagrams'
   | 'showChords'
-  | 'showColumns'
   | 'instrument'
-  | 'notation'
   | 'me'
   | 'colorScheme'
   // Unsaved ChordPro, one per editor page (useDraft).

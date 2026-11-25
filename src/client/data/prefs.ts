@@ -1,6 +1,5 @@
 /** How the player likes songs shown, per device. */
 import { useCallback, useEffect, useSyncExternalStore } from 'react';
-import type { NoteSystem } from '#shared/chordpro/chord.ts';
 import type { Instrument } from '#shared/chordpro/shapes.ts';
 import { type KeyShift } from '#shared/chordpro/transpose.ts';
 import { readLocalJson, writeLocalJson } from './local.ts';
@@ -10,12 +9,8 @@ type Prefs = {
   /** Chords above the lyrics; off to just sing along. */
   showChords: boolean;
   showDiagrams: boolean;
-  /** Two columns for songs that ask for them. Off means a long song just scrolls down. */
-  showColumns: boolean;
   /** Whose chord diagrams (D132). */
   instrument: Instrument;
-  /** How chords are spelled for this reader (D132); null: by the app's language. */
-  notation: NoteSystem | null;
   /** Song id → how far it's transposed, for the songs someone transposed. */
   transpose: Record<number, KeyShift>;
 };
@@ -38,9 +33,7 @@ let prefs: Prefs = {
   showChords: readLocalJson('showChords', true),
   // Off by default: the song's own diagrams are for the few who need an unusual voicing (D84).
   showDiagrams: readLocalJson('showDiagrams', false),
-  showColumns: readLocalJson('showColumns', true),
   instrument: readLocalJson<Instrument>('instrument', 'guitar'),
-  notation: readLocalJson<NoteSystem | null>('notation', null),
   transpose: readLocalJson('transpose', {}),
 };
 const listeners = new Set<() => void>();
@@ -86,11 +79,6 @@ export function usePrefs() {
     update({ showDiagrams });
   }, []);
 
-  const setShowColumns = useCallback((showColumns: boolean) => {
-    writeLocalJson('showColumns', showColumns);
-    update({ showColumns });
-  }, []);
-
   /** `from`: the pitch the song starts from as it is now (`songPitch`). */
   const setTranspose = useCallback(
     (songId: number, semitones: number, from: number | null) => {
@@ -113,20 +101,13 @@ export function usePrefs() {
     update({ instrument });
   }, []);
 
-  const setNotation = useCallback((notation: NoteSystem) => {
-    writeLocalJson('notation', notation);
-    update({ notation });
-  }, []);
-
   return {
     ...state,
     setInstrument,
-    setNotation,
     stepFont,
     setFontScale,
     setShowChords,
     setShowDiagrams,
-    setShowColumns,
     setTranspose,
   };
 }

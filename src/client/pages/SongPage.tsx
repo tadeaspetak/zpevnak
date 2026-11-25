@@ -346,7 +346,6 @@ function SongPlayer({
           showDiagrams={prefs.showDiagrams}
           notation={notation}
           instrument={prefs.instrument}
-          showColumns={prefs.showColumns}
           showChords={prefs.showChords}
           isPrivate={song.status === 'private'}
         />

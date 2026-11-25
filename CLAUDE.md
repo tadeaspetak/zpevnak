@@ -124,7 +124,7 @@ Every change to behaviour ships with its tests in the same commit.
 - **Musical notation:** the song's text keeps H/B as it writes them. Czech songs use german
   notation (H = B natural, B = B♭); transposition keeps the song's system
   (`src/shared/chordpro/chord.ts`). The reader sees chords in their own notation (D132,
-  `chordIn`, `useNotation`): H in Czech, B in English, unless they chose otherwise. A
+  `chordIn`, `useNotation`): H in Czech, B in English, by the app's language (D134). A
   song is read as german only if it uses H somewhere; one with B♭ written `B` and no H needs
   `{+notes.system: german}`, or its B is taken for B natural. Flats are `Ab`, `Eb`: the parser
   doesn't know the Czech names `As`, `Es`.

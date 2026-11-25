@@ -19,9 +19,7 @@ import type { Locale } from '#shared/validators/index.ts';
 import { FONT_SCALES, usePrefs } from '../data/prefs.ts';
 import { useFullscreen } from '../hooks/useFullscreen.ts';
 import { usePlayer } from '../data/session.ts';
-import type { NoteSystem } from '#shared/chordpro/chord.ts';
 import { INSTRUMENTS, type Instrument } from '#shared/chordpro/shapes.ts';
-import { useNotation } from '../hooks/useNotation.ts';
 import { holdPlace } from '../song/keepPlace.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { RefreshAction } from './RefreshAction.tsx';
@@ -44,7 +42,6 @@ export function SettingsButton({ size = 'lg' }: Props) {
   const fullscreen = useFullscreen();
   const { session } = usePlayer();
   const playlistIds = useRefreshedPlaylists(session?.playlistId);
-  const notation = useNotation();
   const label = prefs.showChords
     ? t('settings.open')
     : `${t('settings.open')}: ${t('song.chordsHidden')}`;
@@ -100,13 +97,6 @@ export function SettingsButton({ size = 'lg' }: Props) {
               checked={prefs.showChords}
               onChange={(e) => prefs.setShowChords(e.currentTarget.checked)}
             />
-            {/* Columns are the text's to decide, on any screen (D129). */}
-            <Switch
-              label={t('song.columns')}
-              description={t('song.columnsHint')}
-              checked={prefs.showColumns}
-              onChange={(e) => prefs.setShowColumns(e.currentTarget.checked)}
-            />
             <Switch
               label={t('song.diagrams')}
               checked={prefs.showChords && prefs.showDiagrams}
@@ -128,22 +118,6 @@ export function SettingsButton({ size = 'lg' }: Props) {
                 }))}
               />
             )}
-            {/* H or B for B natural: Czech players read H (D132). */}
-            <Stack gap={4}>
-              <Text size="sm" fw={500}>
-                {t('settings.notation')}
-              </Text>
-              <SegmentedControl
-                fullWidth
-                aria-label={t('settings.notation')}
-                value={notation}
-                onChange={(v) => prefs.setNotation(v as NoteSystem)}
-                data={[
-                  { value: 'german', label: t('settings.notation.german') },
-                  { value: 'common', label: t('settings.notation.common') },
-                ]}
-              />
-            </Stack>
           </Part>
           <Part title={t('settings.app')}>
             <SegmentedControl
