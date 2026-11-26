@@ -60,6 +60,24 @@ export const url = {
   resetPassword: (token: string) => `/reset-password?token=${encodeURIComponent(token)}`,
 };
 
+/**
+ * The app's one address in production (D140). Emails link here: `scripts/deploy.sh` reads it
+ * into `APP_URL`.
+ * @public
+ */
+export const PRODUCTION_ORIGIN = 'https://zpevnak.cz';
+
+/** Where the app was, or another spelling of where it is: each sends people on (D140). */
+const MOVED_HOSTS = new Set(['zpevnak.tadeaspetak.com', 'www.zpevnak.cz']);
+
+/**
+ * The same page at the one address, for a page opened on a host the app has moved from; null
+ * anywhere else. `path` keeps the query and the hash, so a link in an old email still lands.
+ */
+export function movedTo(host: string, path: string): string | null {
+  return MOVED_HOSTS.has(host.toLowerCase()) ? `${PRODUCTION_ORIGIN}${path}` : null;
+}
+
 /** Route patterns, kept next to the builders above. */
 export const routes = {
   home: '/',

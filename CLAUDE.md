@@ -189,8 +189,9 @@ How a song's ChordPro is laid out, so songs read alike (the first pass: 2026-11-
 
 ## Deployment and production
 
-Live at **https://zpevnak.tadeaspetak.com** (testing it at a Christmas carol gig, early December
-2026; `zpevnak.cz` to be bought if it works out). Everything on personal accounts.
+Live at **https://zpevnak.cz** (D140; first played at a Christmas carol gig, early December
+2026). The old `zpevnak.tadeaspetak.com` and `www.zpevnak.cz` send pages on to it
+(`movedTo` in `urls.ts`). Everything on personal accounts.
 
 - **Deploy:** `yarn deploy` (`scripts/deploy.sh`): builds the current commit on Cloud Build and
   deploys it; refuses uncommitted work. Push and deploy only when the owner asks (batch commits
@@ -199,8 +200,10 @@ Live at **https://zpevnak.tadeaspetak.com** (testing it at a Christmas carol gig
   default config is work). Cloud Run service `zpevnak` in **europe-west4** (custom domains aren't
   offered in europe-west3), at most 2 instances; service account
   `zpevnak-run@zpevnak.iam.gserviceaccount.com`; images in Artifact Registry `zpevnak`
-  (europe-west4, cleanup keeps the newest 3). Domain mapping to the CNAME `zpevnak` →
-  `ghs.googlehosted.com.` at Namecheap. Budget: 50 SEK/month (the billing account is in SEK),
+  (europe-west4, cleanup keeps the newest 3). Domain mappings: `zpevnak.cz` (Cloud Run's A and
+  AAAA records) and `www.zpevnak.cz` (CNAME `ghs.googlehosted.com.`), DNS at Wedos, the domain
+  verified in Search Console; the old `zpevnak.tadeaspetak.com` (CNAME at Namecheap) stays
+  mapped for its redirect. Budget: 50 SEK/month (the billing account is in SEK),
   alerts only.
 - **Secrets** (Secret Manager): `database-url` (Neon, pooled), `resend-api-key`.
 - **Database:** Neon project `wild-sun-64413204` (org `org-dawn-hill-52311853`), aws-eu-central-1.

@@ -107,6 +107,9 @@ Agreed to leave, for now:
 
 ## State and loose ends (updated 2026-11-26)
 
+- **zpevnak.cz (D140):** bought 2026-11-26 at Wedos; the redirect from the old address is
+  built. To go live: the .cz registry publishes the domain, Search Console verifies it, Cloud
+  Run maps `zpevnak.cz` and `www`, the certificate is issued, then `yarn deploy`.
 - **`/ux` walks done:** the song view and playlist session (D88–D92), adding a song (D94–D103),
   playlists and sharing (D110–D111), private songs and roles (D126–D128), the song view at the
   stand after the first rehearsal (D133–D134), and notes on songs (D135, D138). All shipped

@@ -8,7 +8,8 @@ export CLOUDSDK_ACTIVE_CONFIG_NAME=zpevnak
 PROJECT=zpevnak
 REGION=europe-west4 # Cloud Run custom domains aren't offered in europe-west3
 SERVICE=zpevnak
-URL=https://zpevnak.tadeaspetak.com
+# The app's one address, as the app itself has it (src/shared/urls.ts, D140): emails link there.
+URL=$(node --input-type=module -e "import { PRODUCTION_ORIGIN } from './src/shared/urls.ts'; console.log(PRODUCTION_ORIGIN)")
 
 if [ -n "$(git status --porcelain)" ]; then
   echo "Commit first: a deploy is always one commit, so it can be found again." >&2

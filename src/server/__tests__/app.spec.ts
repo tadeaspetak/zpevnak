@@ -60,4 +60,55 @@ describe('the HTTP app', () => {
     expect(res.headers['content-security-policy']).toBe("frame-ancestors 'none'");
     expect(res.headers['x-powered-by']).toBeUndefined();
   });
+
+  describe('at an address the app has moved from (D140)', () => {
+    const OLD = 'zpevnak.tadeaspetak.com';
+
+    it('sends a page on to the same page at zpevnak.cz, for good', async () => {
+      const res = await request(app)
+        .get('/verify?token=abc')
+        .set('Host', OLD)
+        .set('Sec-Fetch-Mode', 'navigate')
+        .expect(301);
+      expect(res.headers.location).toBe('https://zpevnak.cz/verify?token=abc');
+    });
+
+    it('sends a page on for a browser that only says it wants HTML', async () => {
+      const res = await request(app)
+        .get('/song/1')
+        .set('Host', `www.zpevnak.cz`)
+        .set('Accept', 'text/html,application/xhtml+xml')
+        .expect(301);
+      expect(res.headers.location).toBe('https://zpevnak.cz/song/1');
+    });
+
+    it('still answers the API and the health check there, for an installed app to update', async () => {
+      await request(app).get('/health').set('Host', OLD).expect(200, { ok: true });
+      // The service worker's update check, as a browser sends it (served by main.ts).
+      await request(app)
+        .get('/sw.js')
+        .set('Host', OLD)
+        .set('Sec-Fetch-Mode', 'same-origin')
+        .set('Accept', '*/*')
+        .expect((res) => expect(res.status).not.toBe(301));
+      await request(app)
+        .get('/trpc/auth.me')
+        .set('Host', OLD)
+        .set('Sec-Fetch-Mode', 'cors')
+        .expect(200);
+      await request(app)
+        .post('/trpc/auth.logOut')
+        .set('Host', OLD)
+        .set('Sec-Fetch-Mode', 'navigate')
+        .expect((res) => expect(res.status).not.toBe(301));
+    });
+
+    it('leaves a page at zpevnak.cz itself where it is', async () => {
+      await request(app)
+        .get('/health')
+        .set('Host', 'zpevnak.cz')
+        .set('Sec-Fetch-Mode', 'navigate')
+        .expect(200);
+    });
+  });
 });

@@ -609,3 +609,11 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   default gcloud configuration is work and is never changed. (2026-11-09)
 - **D42. Own auth in Express**, not a hosted auth service: users and roles live in our database
   and are testable there. (2026-11-09)
+- **D140. The app lives at zpevnak.cz** (the owner's call, 2026-11-26, before the gig). One
+  address: emails link there (`PRODUCTION_ORIGIN` in `urls.ts`, read into `APP_URL` by the
+  deploy). `zpevnak.tadeaspetak.com` and `www.zpevnak.cz` send a page on to the same page there
+  (301, the query and hash kept, `movedTo`); the API, files and service worker still answer at
+  the old address, so an installed app updates onto a version that moves itself (`main.tsx`).
+  A new address is a new origin: everyone signs in once more there, and the device's copy of
+  the catalog is fetched again; an app added to a home screen is added again. Email stays
+  from `noreply@zpevnak.tadeaspetak.com` (its Resend domain works; nobody sees it).

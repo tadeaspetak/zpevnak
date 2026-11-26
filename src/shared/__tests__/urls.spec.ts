@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { idFromRef, url } from '../urls.ts';
+import { idFromRef, movedTo, url } from '../urls.ts';
 
 describe('url', () => {
   it('spells songs and playlists out, id first, slug for people', () => {
@@ -55,5 +55,22 @@ describe('idFromRef', () => {
     expect(idFromRef(undefined)).toBeNull();
     // Rounded by JavaScript, and past the database's bigint: it once made a link a 500.
     expect(idFromRef('99999999999999999999')).toBeNull();
+  });
+});
+
+describe('movedTo (D140)', () => {
+  it('sends the old address and www on to the same page at zpevnak.cz, query and hash kept', () => {
+    expect(movedTo('zpevnak.tadeaspetak.com', '/verify?token=abc&next=%2Fsong%2F1')).toBe(
+      'https://zpevnak.cz/verify?token=abc&next=%2Fsong%2F1',
+    );
+    expect(movedTo('WWW.zpevnak.cz', '/song/1-ahoj#refren')).toBe(
+      'https://zpevnak.cz/song/1-ahoj#refren',
+    );
+  });
+
+  it('leaves the app where it is at its own address, locally and on Cloud Run’s', () => {
+    expect(movedTo('zpevnak.cz', '/')).toBeNull();
+    expect(movedTo('localhost:3100', '/')).toBeNull();
+    expect(movedTo('zpevnak-898198065242.europe-west4.run.app', '/')).toBeNull();
   });
 });

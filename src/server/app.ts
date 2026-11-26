@@ -3,6 +3,7 @@ import cookieParser from 'cookie-parser';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import type { Knex } from 'knex';
+import { movedTo } from '#shared/urls.ts';
 import { env } from './env.ts';
 import { appRouter } from './routers/index.ts';
 import { createContext } from './trpc/context.ts';
@@ -46,6 +47,25 @@ function authLimiter() {
   };
 }
 
+/**
+ * A page opened at an address the app has moved from goes on to the same page at its one
+ * address (D140), for good. Only pages: the service worker, the files and the API still answer
+ * there, so an installed app updates onto a version that moves itself (`main.tsx`).
+ */
+function movedHost(req: Request, res: Response, next: NextFunction) {
+  const to = movedTo(req.hostname, req.originalUrl);
+  // A page, not a script or a request: browsers say so; old ones only by asking for HTML.
+  const fetchMode = req.get('sec-fetch-mode');
+  const page =
+    fetchMode === 'navigate' ||
+    (fetchMode === undefined && (req.get('accept') ?? '').includes('text/html'));
+  if (to && req.method === 'GET' && page) {
+    res.redirect(301, to);
+    return;
+  }
+  next();
+}
+
 function securityHeaders(_req: Request, res: Response, next: NextFunction) {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
@@ -59,6 +79,7 @@ export function createApp(db: Knex, { limitAuth = env.NODE_ENV !== 'test' } = {}
   app.disable('x-powered-by');
   // Cloud Run puts one proxy in front; rate limiting needs the client's address.
   app.set('trust proxy', 1);
+  app.use(movedHost);
   app.use(securityHeaders);
   app.use(cookieParser());
   // Not /healthz: Cloud Run reserves paths ending in z, and answers them itself with a 404.
