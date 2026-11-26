@@ -115,9 +115,14 @@ Agreed to leave, for now:
   Everyone signs in once more there; apps on a home screen are added again from zpevnak.cz.
 - **`/ux` walks done:** the song view and playlist session (D88–D92), adding a song (D94–D103),
   playlists and sharing (D110–D111), private songs and roles (D126–D128), the song view at the
-  stand after the first rehearsal (D133–D134), and notes on songs (D135, D138). All shipped
-  whole. The owner's phone feedback on notes since: D139, deployed 2026-11-25. Next
-  candidate: the account and sign-in pages (now with the notes tab).
+  stand after the first rehearsal (D133–D134), notes on songs (D135, D138), reports and song
+  comments (D146), and the corners: offline, tablets, an approved song's author, long things
+  (D148). All shipped whole. Next candidate: the account and sign-in pages (now with the notes
+  tab).
+- **Notes, as deployed 2026-11-26 (D135–D149):** a line's menu offers one item per kind (D149):
+  Poznámka, TODO, Poznámka pro playlist, Nahlásit chybu (D143), Komentář do písničky (D145),
+  each with its own dialog; reports wait in the queue's Hlášení (D144) and on the edit page
+  (D146); toasts at the bottom (D147).
 - **Waiting on the owner's tablet:** "fit the text to the screen" on an upright tablet (D-1 in
   `.planning/ongoing/after-the-first-rehearsal.md`); a real iPhone long-press on a line (D135),
   only emulated so far.
@@ -127,12 +132,14 @@ Agreed to leave, for now:
   keyboard over a dialog, real iPhone, iPad and Android. Accepted: changes made offline are
   lost if the app closes before the connection returns (the toast says so).
 - **Home-screen app and updates:** no reload in an installed app; "Načíst novinky" fetches data
-  and checks for a new app version (D74, D75), from the settings on every page (D116, D117). If that proves not enough, consider pull-to-refresh.
+  and checks for a new app version (D74, D75), from the settings on every page (D116, D117).
+  If that proves not enough, consider pull-to-refresh.
 - **Importing the old songbook:** deliberately not done (D11). Songs get added one by one, which is
   also how they get checked; `~/dev/projects/songbook` has ~430 ChordPro files to draw from.
-- **Plans:** song history, credits and suggestions in `.planning/ongoing/` (slice 1 done, D86);
-  after the first rehearsal (all but D-1). Done: private songs and roles, notes on songs,
-  reports and song comments (D143–D146) (`.planning/done/`).
+- **Plans:** song history, credits and suggestions in `.planning/ongoing/` (slice 1 done, D86;
+  suggested changes would be one more tab in the queue, D144); after the first rehearsal (all
+  but D-1). Done: private songs and roles, notes on songs, reports and song comments
+  (D143–D146) (`.planning/done/`).
 
 ## Found along the way (2026-11-23)
 

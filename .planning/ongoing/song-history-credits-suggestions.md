@@ -72,7 +72,10 @@ saving over it. The approved version stays exactly as it is until an editor acce
   directly (and every edit is now a version, so it can be rolled back). This also gives authors
   a way to improve their own approved song, which D3 doesn't allow today.
 - **Editor's side:** the review queue gets a second kind of item, "Návrhy" (suggestions), next
-  to new songs. The checklist badge (D63) counts both.
+  to new songs. The checklist badge (D63) counts both. _Since 2026-11-26 the queue is a tab
+  per kind (D144: Čeká, Zamítnuté, Hlášení), and the badge counts the open reports too:
+  "Návrhy" would be one more tab, counted the same way. A report (D143) is the light form of a
+  suggestion, words instead of a changed text._
   - **The review screen** shows the suggestion against the current version: a line diff of the
     ChordPro (a small library such as `diff`, or our own line LCS), and the preview.
   - **Actions:** accept (it becomes a version, `kind: accept_suggestion`, credited to the person

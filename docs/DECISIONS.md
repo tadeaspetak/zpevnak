@@ -242,11 +242,11 @@ entry that says which it replaces and what changed.
   author, so neither do their versions. All are kept: a song is a few kB. (2026-11-10)
 - **D87. Taking someone out of a playlist is one tap, undone by one tap.** The owner's × removes
   the listmate at once; a toast at the bottom (at the top it would cover the dialog) says
-  "{name} už v playlistu není" with "Beru zpátky" for 8 seconds.
-  Undo puts them back as they were (their join date too). The server keeps every removal
-  (`playlist_collaborator_removals`) and restores only someone this playlist's owner removed in
-  the last 10 minutes, so undo can't add anyone else. No confirmation dialog: an undo costs the
-  rare mistake a tap instead of every removal. (2026-11-10) _Deleting a note the same way: D139._
+  "{name} už v playlistu není" with "Beru zpátky" for 8 seconds. Undo puts them back as they
+  were (their join date too). The server keeps every removal (`playlist_collaborator_removals`)
+  and restores only someone this playlist's owner removed in the last 10 minutes, so undo can't
+  add anyone else. No confirmation dialog: an undo costs the rare mistake a tap instead of every
+  removal. (2026-11-10) _Deleting a note the same way: D139._ _Every toast at the bottom: D147._
 
 From the first UX walk of the song view and a playlist session (2026-11-10): _In the dialog the removed row offers the undo; the toast after it closes: D111._
 
@@ -538,16 +538,17 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   diagrams and the keys named everywhere follow the reader's. The owner's call was "go with H
   for Czech players"; showing rather than rewriting every song also gets a transposed song
   right (C up a tone is H). (2026-11-24)
-- **D133. A key the playlist plays in is marked, and a change made offline says it waits.**
-  The owner's calls after the night's build (2026-11-25). In a playlist with its own key for
-  a song, the key control shows the playlist's mark in place of the clef ("Tónina playlistu").
-  The key's actions sit in the ⋯ menu under one heading that names the key. Messages (toasts)
-  appear below the header, never over it: one about the key mustn't cover the key. A change
-  that waits for the connection (a playlist edit, its key; requests wait offline since the
-  offline check) says so: "Jsi offline: uloží se, až budeš online" (`notifyIfQueued`, the way
-  for every such change from now on). Notation stays as built (D132): songs written in English
-  notation, shown in Czech where that's the reader's. Each playlist keeps its own key for a
-  song, and setting it uses up the player's own transposition (D131), as is. (2026-11-25)
+- **D133. A key the playlist plays in is marked, and a change made offline says it waits.** The
+  owner's calls after the night's build (2026-11-25). In a playlist with its own key for a song,
+  the key control shows the playlist's mark in place of the clef ("Tónina playlistu"). The key's
+  actions sit in the ⋯ menu under one heading that names the key. Messages (toasts) appear below
+  the header, never over it: one about the key mustn't cover the key. A change that waits for
+  the connection (a playlist edit, its key; requests wait offline since the offline check) says
+  so: "Jsi offline: uloží se, až budeš online" (`notifyIfQueued`, the way for every such change
+  from now on). Notation stays as built (D132): songs written in English notation, shown in
+  Czech where that's the reader's. Each playlist keeps its own key for a song, and setting it
+  uses up the player's own transposition (D131), as is. (2026-11-25) _Offline changes wait in
+  memory only, lost if the app closes: D148._
 - **D134. Fewer settings: notation by language, columns always.** Chords are shown with H
   and B in Czech and with B and Bb in English, by the app's language alone (narrows D132: the
   "Značení akordů" setting goes; it comes back if someone needs it). Two columns are no longer
@@ -577,7 +578,8 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   until the server has it (a new pattern beside D133's message; other offline changes may follow
   it). A TODO done leaves the song, kept under Hotové. A note stays on its line through a small
   edit of its words (80 % alike: a typo fixed, a comma added); a line rewritten sends it to the
-  top as before. (2026-11-25) _Moje poznámky became the account's tab: D139._
+  top as before. (2026-11-25) _Moje poznámky became the account's tab: D139._ _One waiting
+  change doesn't hold up the next: D148._
 - **D139. Notes are seen, and changed where they're listed** (the owner's calls; refines D113,
   D135, D138). On the song a note is there to be read from a stand: the text's own colour,
   upright, nearly the song's size, on a neutral tint with a rule (never the chords' orange). No
@@ -638,20 +640,22 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   song resolves it ("Vyřešeno", in their own report's dialog too): it leaves the song, and stays
   with its reporter, struck through, to delete. Only its reporter rewrites it, while open. No
   email: the editors find it on the song and in the queue (D144). Signed out, "Nahlásit chybu"
-  leads through signing in, back to the report. _After the review and walk: D146._
+  leads through signing in, back to the report. _After the review and walk: D146._ _An approved
+  song's author reads a report: D148. Reported from the line's menu: D149._
 - **D144. The editors' queue has a tab per kind of thing waiting** (the owner's call,
   2026-11-26; `.planning/done/reports-and-song-comments.md`): Čeká, Zamítnuté, and Hlášení,
   the open reports (D143) oldest first, each with the song, what, where, who and when, leading
   to its place in the song. The count on the overview's queue icon adds the open reports to the
   songs waiting. Suggested changes, when they come, are one more tab. _Grouped by song: D146._
 - **D145. Whoever may change a song writes comments into it from the song view** (the owner's
-  call, 2026-11-26; `.planning/done/reports-and-song-comments.md`). The note dialog's "Pro
-  koho" offers them "Do písničky (uvidí všichni)": a `{comment: …}` line after the chosen line
-  (after the `{chorus}` line in a repeated chorus; at the head of the song for the whole song),
-  saved as an edit of the song (`seenAt`, a version, D86, D104, D106), never a note, never in
-  Moje poznámky. The song's own comment is changed or removed from its line's menu ("Upravit
+  call, 2026-11-26; `.planning/done/reports-and-song-comments.md`). The note dialog's "Pro koho"
+  offers them "Do písničky (uvidí všichni)": a `{comment: …}` line after the chosen line (after
+  the `{chorus}` line in a repeated chorus; at the head of the song for the whole song), saved
+  as an edit of the song (`seenAt`, a version, D86, D104, D106), never a note, never in Moje
+  poznámky. The song's own comment is changed or removed from its line's menu ("Upravit
   komentář"), only that line, the rest of the text as written; removing it is undone from the
-  toast. The song's comments keep their look on the sheet, apart from the tinted notes (D139). _Above the line, not after it: D146._
+  toast. The song's comments keep their look on the sheet, apart from the tinted notes (D139).
+  _Above the line, not after it: D146._ _Online only: D148. Chosen in the line's menu: D149._
 - **D146. Reports and song comments after the review and the walk** (the owner's calls,
   2026-11-26; refines D143–D145). The note dialog's title, field ("Text") and button follow whom
   the note is for: "Nahlásit chybu" / "Nahlásit", "Komentář do písničky" / "Zapsat do písničky";
@@ -665,7 +669,8 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   `{chorus}` line in a repeat), reading as about that line, not as the next one's heading. On
   the song's own comment no note is offered (a note on a comment makes no sense): whoever may
   change the song gets "Upravit komentář" there, on hover too, to change or remove it. A song
-  with someone else's open report can't go private (`SONG_REPORTED_BY_OTHERS`).
+  with someone else's open report can't go private (`SONG_REPORTED_BY_OTHERS`). _The kinds as
+  one list: D147; chosen in the line's menu: D149._
 - **D147. Toasts at the bottom; a note's kind chosen as one list** (the owner's calls,
   2026-11-26; refines D87, D146). Every toast sits at the bottom centre, as the undo toast did
   (D87): in a thumb's reach, never over a dialog's title nor the song's toolbar, and above a
@@ -674,6 +679,7 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   „…“ (playing from one you may edit), Chyba v písničce (pro editory a autora písničky; once
   fixed it leaves the song, and its reporter keeps it, resolved), Komentář do písničky (pro
   všechny). The TODO checkbox stays only for changing one's own note, where it's ticked done.
+  _The kind chosen in the line's menu, not in the dialog: D149._
 - **D148. The corners the walks hadn't reached** (the owner's calls, 2026-11-26, after a walk of
   offline, tablets, an approved song's author and long playlists). Changes made offline wait in
   memory only: closed before the connection returns, they're lost; the toast says so ("Do té

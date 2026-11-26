@@ -65,8 +65,8 @@ printed to the server log.
   (sign-in, sign-out) clears the device copy before fetching (`syncCatalog`). Offline, requests
   that write wait for the connection and say so (`notifyIfQueued`, D133), in memory only: lost
   if the app is closed first, and the toast says so (D148); a note's change also shows at once,
-  marked waiting (`waitNote`, D138). Writing into a song is online only (D148). A new IndexedDB version
-  must not hang on a tab still open on the old one (`blocked`/`blocking` in `store.ts`).
+  marked waiting (`waitNote`, D138). Writing into a song is online only (D148). A new IndexedDB
+  version must not hang on a tab still open on the old one (`blocked`/`blocking` in `store.ts`).
 - **The ChordPro text is the only truth about a song.** Title and artist are read from its
   header on every save (`src/server/songs/header.ts`); never edit them separately.
 - **Changing a song** (save, approve, reject, delete) locks its row and decides on it inside the
