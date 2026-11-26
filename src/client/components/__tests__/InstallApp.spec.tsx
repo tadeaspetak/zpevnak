@@ -1,7 +1,9 @@
 import { act, fireEvent, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderApp } from '#tests/client/render.tsx';
-import { InstallButton, InstallHint } from '../InstallApp.tsx';
+import { setInstallSteps } from '../../data/install.ts';
+import { SettingsButton } from '../SettingsButton.tsx';
+import { InstallButton, InstallHint, InstallSteps } from '../InstallApp.tsx';
 
 const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Safari/604.1';
 const FIREFOX = 'Mozilla/5.0 (Android 14; Mobile; rv:133.0) Gecko/133.0 Firefox/133.0';
@@ -44,6 +46,7 @@ describe('adding the app to the home screen (D141)', () => {
     // The offer is the page's, kept between renders: gone, as after installing.
     act(() => {
       window.dispatchEvent(new Event('appinstalled'));
+      setInstallSteps(false);
     });
     localStorage.clear();
     vi.unstubAllGlobals();
@@ -62,7 +65,12 @@ describe('adding the app to the home screen (D141)', () => {
 
   it('shows the steps through Share on an iPhone, where a page can’t install', async () => {
     device({ userAgent: IPHONE });
-    renderApp(<InstallButton />);
+    renderApp(
+      <>
+        <InstallButton />
+        <InstallSteps />
+      </>,
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Přidat na plochu' }));
     expect(await screen.findByText(/Ťukni na Sdílet/)).toBeTruthy();
     expect(screen.getByText(/Vyber „Přidat na plochu“/)).toBeTruthy();
@@ -70,11 +78,33 @@ describe('adding the app to the home screen (D141)', () => {
 
   it('shows the steps through its menu in Firefox on Android (D142)', async () => {
     device({ userAgent: FIREFOX });
-    renderApp(<InstallButton />);
+    renderApp(
+      <>
+        <InstallButton />
+        <InstallSteps />
+      </>,
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Přidat na plochu' }));
     expect(await screen.findByText(/Otevři nabídku ⋮/)).toBeTruthy();
     expect(screen.getByText(/Vyber „Nainstalovat“ nebo „Přidat na plochu“/)).toBeTruthy();
     expect(screen.queryByText(/Sdílet/)).toBeNull();
+  });
+
+  it('closes the settings as the steps open, so they aren’t under it', async () => {
+    device({ userAgent: IPHONE });
+    renderApp(
+      <>
+        <SettingsButton />
+        <InstallSteps />
+      </>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Nastavení' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Přidat na plochu' }));
+    expect(await screen.findByText(/Ťukni na Sdílet/)).toBeTruthy();
+    await vi.waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Načíst novinky' })).toBeNull(),
+    );
+    expect(screen.getByText(/Ťukni na Sdílet/)).toBeTruthy();
   });
 
   it('offers nothing when the app is already open from the home screen', () => {

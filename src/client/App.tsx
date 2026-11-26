@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router';
+import { InstallSteps } from './components/InstallApp.tsx';
 import { SearchOverlay } from './components/SearchOverlay.tsx';
 import { syncCatalog } from './data/catalog.ts';
 import { openSearch } from './data/omnibox.ts';
@@ -50,6 +51,7 @@ export function App() {
   return (
     <>
       <SearchOverlay />
+      <InstallSteps />
       <Routes>
         <Route path={routes.home} element={<HomePage />} />
         <Route path={routes.editSong} element={<EditSongPage />} />

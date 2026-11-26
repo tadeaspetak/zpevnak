@@ -49,6 +49,9 @@ export function isFirefoxAndroid(userAgent: string): boolean {
 type InstallPromptEvent = Event & { prompt: () => Promise<void> };
 
 let offer: InstallPromptEvent | null = null;
+// The steps' dialog, one for the app: opened from a button that may be in the settings'
+// popover, which closes as it opens (a dialog inside it would sit under it, and go with it).
+let stepsOpen = false;
 const listeners = new Set<() => void>();
 const changed = () => listeners.forEach((listener) => listener());
 
@@ -68,6 +71,15 @@ const subscribe = (listener: () => void) => {
   listeners.add(listener);
   return () => listeners.delete(listener);
 };
+
+export function setInstallSteps(open: boolean) {
+  stepsOpen = open;
+  changed();
+}
+
+export function useInstallSteps(): boolean {
+  return useSyncExternalStore(subscribe, () => stepsOpen);
+}
 
 /** How this device adds the app to its home screen, and doing it where a tap can. */
 export function useInstall() {

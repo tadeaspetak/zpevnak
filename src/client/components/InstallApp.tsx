@@ -2,72 +2,88 @@ import { Button, Group, List, Modal, Paper, Stack, Text, Title } from '@mantine/
 import { IconDeviceMobilePlus, IconShare2, IconX } from '@tabler/icons-react';
 import { useState } from 'react';
 import { readLocal, writeLocal } from '../data/local.ts';
-import { useInstall } from '../data/install.ts';
+import { setInstallSteps, useInstall, useInstallSteps } from '../data/install.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { IconButton } from './IconButton.tsx';
 
 /**
  * "Přidat na plochu" where this device can (D141): on Android the browser's own dialog, on an
  * iPhone or iPad the steps through Share, in Firefox on Android through its menu (D142).
- * Nothing where there is nothing to offer.
+ * Nothing where there is nothing to offer. `onOpen`: what it was opened from gives way to it.
  */
 export function InstallButton({
   fullWidth = false,
   variant = 'filled',
+  onOpen,
 }: {
   fullWidth?: boolean;
   /** Primary on the overview's card; among the settings, one of them (D61). */
   variant?: 'filled' | 'default';
+  onOpen?: () => void;
 }) {
   const { t } = useI18n();
   const { way, prompt } = useInstall();
-  const [steps, setSteps] = useState(false);
   if (way === null) {
     return null;
   }
   return (
-    <>
-      <Button
-        size="sm"
-        variant={variant}
-        fullWidth={fullWidth}
-        leftSection={<IconDeviceMobilePlus size={18} />}
-        onClick={() => (way === 'prompt' ? void prompt() : setSteps(true))}
-      >
-        {t('install.add')}
-      </Button>
-      <Modal opened={steps} onClose={() => setSteps(false)} title={t('install.add')}>
-        <Stack>
-          {way === 'firefox' ? (
-            <List type="ordered" spacing="sm">
-              <List.Item>{t('install.firefoxMenu')}</List.Item>
-              <List.Item>{t('install.firefoxAdd')}</List.Item>
-              <List.Item>{t('install.firefoxConfirm')}</List.Item>
-            </List>
-          ) : (
-            <List type="ordered" spacing="sm">
-              <List.Item>
-                {/* The icon beside its name, as it looks on the phone. */}
-                {t('install.iosShare')}{' '}
-                <IconShare2
-                  size={18}
-                  aria-hidden
-                  style={{ verticalAlign: 'text-bottom' }}
-                />{' '}
-                {t('install.iosShareWhere')}
-              </List.Item>
-              <List.Item>{t('install.iosAdd')}</List.Item>
-              <List.Item>{t('install.iosConfirm')}</List.Item>
-            </List>
-          )}
-          <Group justify="flex-end">
-            <Button variant="default" size="sm" onClick={() => setSteps(false)}>
-              {t('common.close')}
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
-    </>
+    <Button
+      size="sm"
+      variant={variant}
+      fullWidth={fullWidth}
+      leftSection={<IconDeviceMobilePlus size={18} />}
+      onClick={() => {
+        onOpen?.();
+        if (way === 'prompt') {
+          void prompt();
+        } else {
+          setInstallSteps(true);
+        }
+      }}
+    >
+      {t('install.add')}
+    </Button>
+  );
+}
+
+/** The steps, where a page can't install itself: one dialog for the app, beside search. */
+export function InstallSteps() {
+  const { t } = useI18n();
+  const { way } = useInstall();
+  const opened = useInstallSteps();
+  const close = () => setInstallSteps(false);
+  return (
+    <Modal opened={opened} onClose={close} title={t('install.add')}>
+      <Stack>
+        {way === 'firefox' ? (
+          <List type="ordered" spacing="sm">
+            <List.Item>{t('install.firefoxMenu')}</List.Item>
+            <List.Item>{t('install.firefoxAdd')}</List.Item>
+            <List.Item>{t('install.firefoxConfirm')}</List.Item>
+          </List>
+        ) : (
+          <List type="ordered" spacing="sm">
+            <List.Item>
+              {/* The icon beside its name, as it looks on the phone. */}
+              {t('install.iosShare')}{' '}
+              <IconShare2
+                size={18}
+                aria-hidden
+                style={{ verticalAlign: 'text-bottom' }}
+              />{' '}
+              {t('install.iosShareWhere')}
+            </List.Item>
+            <List.Item>{t('install.iosAdd')}</List.Item>
+            <List.Item>{t('install.iosConfirm')}</List.Item>
+          </List>
+        )}
+        <Group justify="flex-end">
+          <Button variant="default" size="sm" onClick={close}>
+            {t('common.close')}
+          </Button>
+        </Group>
+      </Stack>
+    </Modal>
   );
 }
 

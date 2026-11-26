@@ -12,7 +12,7 @@ import {
   useMantineColorScheme,
 } from '@mantine/core';
 import { IconAdjustmentsHorizontal, IconMinus, IconPlus } from '@tabler/icons-react';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useMatch } from 'react-router';
 import { idFromRef, routes } from '#shared/urls.ts';
 import type { Locale } from '#shared/validators/index.ts';
@@ -43,13 +43,28 @@ export function SettingsButton({ size = 'lg' }: Props) {
   const fullscreen = useFullscreen();
   const { session } = usePlayer();
   const playlistIds = useRefreshedPlaylists(session?.playlistId);
+  // Held here so the home screen's steps can close it as their dialog opens (D141).
+  const [opened, setOpened] = useState(false);
   const label = prefs.showChords
     ? t('settings.open')
     : `${t('settings.open')}: ${t('song.chordsHidden')}`;
   return (
-    <Popover position="bottom-end" shadow="md" withArrow width={320} trapFocus>
+    <Popover
+      position="bottom-end"
+      shadow="md"
+      withArrow
+      width={320}
+      trapFocus
+      opened={opened}
+      onChange={setOpened}
+    >
       <Popover.Target>
-        <ActionIcon size={size} aria-label={label} aria-haspopup="dialog">
+        <ActionIcon
+          size={size}
+          aria-label={label}
+          aria-haspopup="dialog"
+          onClick={() => setOpened((was) => !was)}
+        >
           {/* Hidden chords are remembered too: a dot says so, from every page. */}
           <Indicator size={8} offset={2} disabled={prefs.showChords}>
             <IconAdjustmentsHorizontal size={size === 'xl' ? 22 : 20} />
@@ -159,7 +174,7 @@ export function SettingsButton({ size = 'lg' }: Props) {
           </Part>
           {/* The panel's two actions, together under the settings. */}
           <Stack gap="xs">
-            <InstallButton fullWidth variant="default" />
+            <InstallButton fullWidth variant="default" onOpen={() => setOpened(false)} />
             <RefreshAction playlistIds={playlistIds} />
           </Stack>
         </Stack>
