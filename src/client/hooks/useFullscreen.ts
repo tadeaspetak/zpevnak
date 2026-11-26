@@ -17,7 +17,5 @@ export function useFullscreen() {
       void document.documentElement.requestFullscreen().catch(() => undefined);
     }
   }, []);
-  /** Installed to the home screen: already without browser bars. */
-  const standalone = window.matchMedia('(display-mode: standalone)').matches;
-  return { supported, active, toggle, standalone };
+  return { supported, active, toggle };
 }

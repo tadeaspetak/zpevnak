@@ -27,6 +27,7 @@ import { useMemo, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { Footer } from '../components/Footer.tsx';
 import { PlaylistPill } from '../components/PlaylistPill.tsx';
+import { InstallHint } from '../components/InstallApp.tsx';
 import { ListSection } from '../components/ListSection.tsx';
 import { PlaylistRow } from '../components/PlaylistRow.tsx';
 import { SearchResults, useSearchResults } from '../components/SearchResults.tsx';
@@ -199,6 +200,7 @@ export function HomePage() {
           </Group>
         ) : (
           <Stack gap="xl" pt="sm">
+            <InstallHint />
             {recentPlaylistList.length > 0 && (
               <ListSection
                 title={t('home.recentPlaylists')}

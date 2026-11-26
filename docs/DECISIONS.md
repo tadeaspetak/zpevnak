@@ -617,3 +617,10 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   A new address is a new origin: everyone signs in once more there, and the device's copy of
   the catalog is fetched again; an app added to a home screen is added again. Email stays
   from `noreply@zpevnak.tadeaspetak.com` (its Resend domain works; nobody sees it).
+- **D141. Zpěvňák offers itself for the home screen** (the owner's call, 2026-11-26). On a
+  phone or tablet (a coarse pointer: never a laptop, a touchscreen one included), unless it is
+  already open from the home screen: a card on the overview, "Zpěvňák jako aplikace", hidden
+  for good on that device once closed, and "Přidat na plochu" in the settings for always.
+  Android's browsers that offer it (`beforeinstallprompt`) open their own dialog on a tap; an
+  iPhone or iPad, where a page can't, gets the steps through Share. Firefox on Android is left
+  out on purpose: it offers no event, and its menu changes. (`useInstall`, `InstallApp.tsx`)

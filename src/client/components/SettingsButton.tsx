@@ -22,6 +22,7 @@ import { usePlayer } from '../data/session.ts';
 import { INSTRUMENTS, type Instrument } from '#shared/chordpro/shapes.ts';
 import { holdPlace } from '../song/keepPlace.ts';
 import { useI18n } from '../i18n/index.tsx';
+import { InstallButton } from './InstallApp.tsx';
 import { RefreshAction } from './RefreshAction.tsx';
 
 /** On a song, the line at the top of the screen stays there as the size changes (D130). */
@@ -146,22 +147,16 @@ export function SettingsButton({ size = 'lg' }: Props) {
                 { value: 'dark', label: t('account.themeDark') },
               ]}
             />
-            {/* The whole app goes full screen, not just the song. */}
-            {fullscreen.supported ? (
+            {/* The whole app goes full screen, not just the song. An iPhone has no full screen
+                for pages: from the home screen it opens without the browser's bars instead. */}
+            {fullscreen.supported && (
               <Switch
                 label={t('song.fullscreen')}
                 checked={fullscreen.active}
                 onChange={fullscreen.toggle}
               />
-            ) : (
-              // An iPhone has no full screen for pages: added to the home screen, it opens
-              // without the browser's bars instead.
-              !fullscreen.standalone && (
-                <Text size="sm" c="dimmed">
-                  {t('song.fullscreenHint')}
-                </Text>
-              )
             )}
+            <InstallButton fullWidth variant="default" />
           </Part>
           <RefreshAction playlistIds={playlistIds} />
         </Stack>

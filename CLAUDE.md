@@ -160,7 +160,7 @@ How a song's ChordPro is laid out, so songs read alike (the first pass: 2026-11-
 - **Theme first, then one shared component (D105).** A default that holds everywhere goes in
   `src/client/theme.ts` (`ActionIcon` subtle grey, `Badge` neutral, `Alert` grey, a `Modal`
   header tinted and ruled); what a theme can't do gets one component, not a copy per page:
-  `IconButton` (an icon with its tooltip and name), `ConfirmModal`, `showUndoToast`, `SongLabel`, `PageLoader`,
+  `IconButton` (an icon with its tooltip and name), `ConfirmModal`, `showUndoToast`, `InstallButton` (D141), `SongLabel`, `PageLoader`,
   `SettingsButton` (every setting, and "Načíst novinky", on every page). Breakpoints are the theme's: `useWide`,
   `usePhone` in code, `$mantine-breakpoint-*` in CSS.
 - **The song is played with gestures, not menus:** a tap hides the bars (D93, D109), a swipe

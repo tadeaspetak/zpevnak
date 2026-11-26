@@ -15,6 +15,8 @@ type LocalKey =
   | 'instrument'
   | 'me'
   | 'colorScheme'
+  // The overview's card offering the home screen, closed on this device (D141).
+  | 'installHintHidden'
   // Unsaved ChordPro, one per editor page (useDraft).
   | `draft:${string}`;
 

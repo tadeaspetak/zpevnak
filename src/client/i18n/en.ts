@@ -77,9 +77,18 @@ export const en: Record<keyof typeof cs, string> = {
   'song.larger': 'Larger text',
   'song.more': 'More options',
   'song.tags': 'Tags',
+  'install.add': 'Add to home screen',
+  'install.title': 'Zpěvňák as an app',
+  'install.why':
+    'From the home screen it opens full screen and works without a signal too.',
+  'install.hide': 'Hide',
+  'install.iosShare': 'Tap Share',
+  'install.iosShareWhere': 'on Safari’s bar, or in its ⋯ menu.',
+  'install.iosAdd':
+    'Choose “Add to Home Screen”. If it isn’t there, scroll the list down.',
+  'install.iosConfirm':
+    'Tap “Add”. From then on, open Zpěvňák from its icon on the home screen.',
   'song.fullscreen': 'Full screen',
-  'song.fullscreenHint':
-    'On iPhone, add Zpěvňák to your home screen (Share → Add to Home Screen). It then opens without the browser bars.',
   'song.edit': 'Edit',
   'song.delete': 'Delete song',
   'song.deleteConfirm': "Do you really want to delete “{title}”? It can't be taken back.",
