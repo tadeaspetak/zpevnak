@@ -349,6 +349,8 @@ export const cs = {
   'queue.title': 'Ke kontrole',
   'queue.pending': 'Čeká',
   'queue.rejected': 'Zamítnuté',
+  'queue.reports': 'Hlášení',
+  'queue.noReports': 'Žádné nahlášené chyby.',
   'queue.empty': 'Nic tu není. Dobrá práce!',
   'queue.inPlaylist': 'v playlistu {name}',
   'queue.inPlaylists': 'v playlistech {names}',

@@ -35,6 +35,7 @@ import { SettingsButton } from '../components/SettingsButton.tsx';
 import { SongRow } from '../components/SongRow.tsx';
 import { inSearch } from '#shared/songs.ts';
 import { useCatalog } from '../data/catalog.ts';
+import { openReports } from '../data/notes.ts';
 import { sortByTitle } from '../data/search.ts';
 import { usePlayer } from '../data/session.ts';
 import { useTags } from '../data/tags.ts';
@@ -57,7 +58,7 @@ export function HomePage() {
   const { t, tn, compare } = useI18n();
   const { me, isEditor } = useMe();
   const online = useOnline();
-  const { songs, playlists, loaded, synced } = useCatalog();
+  const { songs, playlists, notes, loaded, synced } = useCatalog();
   const { recentPlaylists, recentSongs, session } = usePlayer();
   const tags = useTags();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -70,11 +71,13 @@ export function HomePage() {
 
   useKeys(useMemo(() => ({ '/': () => inputRef.current?.focus() }), []));
 
-  // Every pending song is in every catalog, so the device counts them itself: no request,
-  // and right offline too.
+  // Every pending song is in every catalog, and every open report in an editor's (D143), so
+  // the device counts them itself: no request, and right offline too.
   const waiting = useMemo(
-    () => [...songs.values()].filter((s) => s.status === 'pending').length,
-    [songs],
+    () =>
+      [...songs.values()].filter((s) => s.status === 'pending').length +
+      openReports(notes).length,
+    [songs, notes],
   );
   // Song lists show what can be found: a rejected song only to its author (D77).
   const findable = useMemo(

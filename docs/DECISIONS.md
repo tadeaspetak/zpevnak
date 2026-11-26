@@ -637,5 +637,10 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   editors and the song's author, never by players; marked with a flag. Whoever may change the
   song resolves it ("Vyřešeno", in their own report's dialog too): it leaves the song, and stays
   with its reporter, struck through, to delete. Only its reporter rewrites it, while open. No
-  email: the editors find it on the song (and, next, in the queue). Signed out, "Nahlásit chybu"
+  email: the editors find it on the song and in the queue (D144). Signed out, "Nahlásit chybu"
   leads through signing in, back to the report.
+- **D144. The editors' queue has a tab per kind of thing waiting** (the owner's call,
+  2026-11-26; `.planning/ongoing/reports-and-song-comments.md`): Čeká, Zamítnuté, and Hlášení,
+  the open reports (D143) oldest first, each with the song, what, where, who and when, leading
+  to its place in the song. The count on the overview's queue icon adds the open reports to the
+  songs waiting. Suggested changes, when they come, are one more tab.

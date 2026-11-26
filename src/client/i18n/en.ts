@@ -355,6 +355,8 @@ export const en: Record<keyof typeof cs, string> = {
   'queue.title': 'To review',
   'queue.pending': 'Pending',
   'queue.rejected': 'Rejected',
+  'queue.reports': 'Reports',
+  'queue.noReports': 'No mistakes reported.',
   'queue.empty': 'Nothing here. Nice work!',
   'queue.inPlaylist': 'in {name}',
   'queue.inPlaylists': 'in {names}',

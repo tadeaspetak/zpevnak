@@ -45,6 +45,16 @@ export function canChangeNote(
   }
 }
 
+/**
+ * The reports waiting for an editor (D143), the oldest first: the queue's "Hlášení" and its
+ * count. An editor's device has every one (`notes.visible`), so it counts them itself.
+ */
+export function openReports(notes: Map<number, LocalNote>): LocalNote[] {
+  return [...notes.values()]
+    .filter((n) => n.kind === 'report' && !isResolved(n))
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id - b.id);
+}
+
 /** A report of a mistake that has been fixed (D143): off the song, kept by its author. */
 export function isResolved(note: NoteRecord): boolean {
   return note.resolvedAt !== null;

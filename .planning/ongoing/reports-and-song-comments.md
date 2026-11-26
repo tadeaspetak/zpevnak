@@ -1,6 +1,6 @@
 # Reports and song comments, through the note dialog
 
-**State:** ongoing: phase 1 shipped (D143). Agreed in conversation on 2026-11-26 with the
+**State:** ongoing: phases 1 and 2 shipped (D143, D144). Agreed in conversation on 2026-11-26 with the
 owner, who took the recommended pick on every question, then settled the rest (no email, a tab
 per kind, an account to report).
 
@@ -130,8 +130,15 @@ Each ships on its own, gates green.
    - **Along the way:** the e2e suite signed in 31 times from one address, one over the sign-in
      limit, which explains the private-song test that failed now and then. The limit is now a
      setting (`AUTH_LIMIT`, 30 by default), raised for the e2e server only.
-2. **Reports in the queue.** The "Hlášení" tab, the count on the queue icon, the way to the
-   report on the song.
+2. **Reports in the queue (shipped, D144).** The "Hlášení" tab, the count on the queue icon,
+   the way to the report on the song.
+   **As built:**
+   - **No `notes.reports` procedure:** an editor's device already has every open report
+     (`notes.visible`), so the tab and the count read them from there (`openReports`), as the
+     count of songs waiting already did; offline too.
+   - **A report in the list:** the song, the report's text, where in the song, then who and
+     when on a line of their own (on a phone, the line's words pushed the reporter out of
+     sight). A tap leads to the song scrolled to the report, the back arrow to the tab.
 3. **Song comments through the dialog.** The parser's source lines and the pure functions
    first (a refactor with no change in behaviour, shipped on its own); then the dialog's
    choice, the comment opened from the sheet, delete with undo.

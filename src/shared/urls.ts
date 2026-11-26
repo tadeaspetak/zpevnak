@@ -46,7 +46,8 @@ export const url = {
     `${url.playlist(playlist)}/${position}`,
   /** An invite link's path; `absolute` for sharing it outside the app. */
   join: (token: string) => `/join/${token}`,
-  queue: () => '/queue',
+  /** The editors' worklist: songs waiting (the default), rejected, or reports (D143). */
+  queue: (tab?: 'rejected' | 'reports') => (tab ? `/queue?status=${tab}` : '/queue'),
   review: (id: number) => `/queue/${id}`,
   /** One's notes on songs (D135), a tab of the account (D139): all, or the TODOs open or done. */
   notes: (filter?: 'todo' | 'done') =>
