@@ -82,11 +82,10 @@ export const en: Record<keyof typeof cs, string> = {
   'install.why': 'From the home screen it opens full screen and works offline too.',
   'install.hide': 'Hide',
   'install.iosShare': 'Tap Share',
-  'install.iosShareWhere': 'on Safari’s bar, or in its ⋯ menu.',
-  'install.iosAdd':
-    'Choose “Add to Home Screen”. If it isn’t there, scroll the list down.',
+  'install.iosShareWhere': 'on Safari’s bar, or in the ⋯ menu.',
+  'install.iosAdd': 'Choose “Add to Home Screen”.',
   'install.iosConfirm':
-    'Tap “Add”. From then on, open Zpěvňák from its icon on the home screen.',
+    'Tap “Add”. Then you can open Zpěvňák from its icon on the home screen.',
   'song.fullscreen': 'Full screen',
   'song.edit': 'Edit',
   'song.delete': 'Delete song',
