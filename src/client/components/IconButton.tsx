@@ -1,10 +1,10 @@
 import { ActionIcon, type ActionIconProps, Tooltip } from '@mantine/core';
-import type { AriaAttributes, ReactNode } from 'react';
+import type { AriaAttributes, MouseEvent, ReactNode } from 'react';
 import { Link } from 'react-router';
 
 type Props = ActionIconProps &
   Pick<AriaAttributes, 'aria-pressed' | 'aria-haspopup' | 'aria-busy'> & {
-    onClick?: () => void;
+    onClick?: (event: MouseEvent<HTMLElement>) => void;
     disabled?: boolean;
     /** Said twice: the tooltip on hover, and the name a screen reader reads. */
     label: string;

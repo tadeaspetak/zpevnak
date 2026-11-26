@@ -684,3 +684,11 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   the text ("Ukázat v textu"), the place telling repeated lines apart. Back from a song deep in
   a playlist, its row is in sight. A page-turner's PageDown brings the first line not wholly in
   sight to the top, not a cut line.
+- **D149. What to write is chosen in the line's menu** (the owner's call, 2026-11-26; refines
+  D147). A line's menu (long-press, right-click, the hover button, or ⋯ → "Přidat k řádku…" and
+  a line picked; "K celé písničce" for the whole song) lists one item per kind, only those the
+  reader may write: Poznámka, TODO, Poznámka pro playlist, Nahlásit chybu, Komentář do písničky
+  ("jen online" offline), then Kopírovat řádek; on the song's own comment, Upravit komentář
+  instead of the notes. Each opens its own dialog: its title, who will see it, the text, and a
+  button saying what happens. No choice of kind inside the dialog: picking the wrong one is
+  closing it and picking again.

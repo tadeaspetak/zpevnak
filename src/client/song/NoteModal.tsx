@@ -1,13 +1,4 @@
-import {
-  Button,
-  Checkbox,
-  Group,
-  Modal,
-  Radio,
-  Stack,
-  Text,
-  Textarea,
-} from '@mantine/core';
+import { Button, Checkbox, Group, Modal, Stack, Text, Textarea } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconPencil } from '@tabler/icons-react';
 import { useState } from 'react';
@@ -31,29 +22,29 @@ import { useI18n } from '../i18n/index.tsx';
 import { trpc, trpcClient } from '../trpc.ts';
 
 /**
- * What the dialog is about: a new note at a line (null: the whole song), asked for as a report
- * from "Nahlásit chybu" (`report`); one to change; or a report for whoever may fix the song to
- * read and resolve (D143).
+ * What the dialog is about: a new note of a kind chosen in the line's menu (D149), at a line
+ * (null: the whole song); one to change; or a report for whoever may fix the song to read and
+ * resolve (D143).
  */
 export type NoteTarget =
-  | { kind: 'new'; songId: number; place: NotePlace | null; report?: boolean }
+  | { kind: 'new'; songId: number; place: NotePlace | null; as: NewNote }
   | { kind: 'edit'; note: NoteRecord }
   | { kind: 'review'; note: NoteRecord }
   /** The song's own comment on source line `at` (D145), to change or remove. */
   | { kind: 'comment'; at: number; text: string };
 
 /**
- * What a new note is (D147): one's own note, or a TODO (one's own too, to tick off), the
- * playlist's, a report of a mistake (D143), or a comment written into the song itself (D145).
+ * What a new note is (D147, D149), chosen in the line's menu: one's own note, or a TODO (one's
+ * own too, to tick off), the playlist's, a report of a mistake (D143), or a comment written
+ * into the song itself (D145).
  */
-type Audience = 'own' | 'todo' | 'playlist' | 'report' | 'song';
+export type NewNote = 'own' | 'todo' | 'playlist' | 'report' | 'song';
+type Audience = NewNote;
 
 type Props = {
   target: NoteTarget | null;
   /** The playlist being played from, where the reader may write its notes (D135). */
   playlist: { id: number; name: string; isPublic: boolean } | null;
-  /** The reader may report a mistake in this song (D143). */
-  canReport: boolean;
   /**
    * The song, as loaded, for whoever may change it: they resolve reports, their own here too
    * (D143), and write comments into it (D145). Null for anyone else.
@@ -251,22 +242,19 @@ export function NoteModal({ target, ...props }: Props) {
     target === null
       ? 'closed'
       : target.kind === 'new'
-        ? `new-${target.place?.place ?? 'song'}-${target.report ? 'report' : 'note'}`
+        ? `new-${target.place?.place ?? 'song'}-${target.as}`
         : target.kind === 'comment'
           ? `comment-${target.at}`
           : `${target.kind}-${target.note.id}`;
-  // Whom a new note is for, chosen in its form; as it was asked for until then.
-  const [chosen, setChosen] = useState<{ key: string; audience: Audience } | null>(null);
+  // What it is: chosen in the menu for a new note (D149), the note's own otherwise.
   const audience: Audience =
-    chosen?.key === key
-      ? chosen.audience
+    target?.kind === 'new'
+      ? target.as
       : target?.kind === 'edit' || target?.kind === 'review'
         ? target.note.kind === 'own' && target.note.todo
           ? 'todo'
           : target.note.kind
-        : target?.kind === 'new' && target.report
-          ? 'report'
-          : 'own';
+        : 'own';
   const title =
     target === null
       ? ''
@@ -311,7 +299,6 @@ export function NoteModal({ target, ...props }: Props) {
           key={key}
           target={target}
           audience={audience}
-          onAudience={(next) => setChosen({ key, audience: next })}
           requests={requests}
           comments={comments}
           onDelete={deleteNote}
@@ -344,9 +331,7 @@ const SUBMIT = {
 function NoteForm({
   target,
   audience,
-  onAudience,
   playlist,
-  canReport,
   fixing,
   onClose,
   onSaved,
@@ -357,7 +342,6 @@ function NoteForm({
 }: Props & {
   target: Extract<NoteTarget, { kind: 'new' | 'edit' }>;
   audience: Audience;
-  onAudience: (audience: Audience) => void;
   requests: NoteRequests;
   comments: SongComments;
   onDelete: (note: NoteRecord) => void;
@@ -460,6 +444,29 @@ function NoteForm({
             ? t(audience === 'song' ? 'notes.aboveLine' : 'notes.atLine', { words })
             : t('notes.wholeSong')}
         </Text>
+        {/* Who will see it, said before it's written (D149): the one place a private thought
+            could be published by mistake. */}
+        {!existing && (
+          <Text size="sm" fw={500}>
+            {audience === 'own'
+              ? t('notes.kindNoteHint')
+              : audience === 'todo'
+                ? t('notes.kindTodoHint')
+                : audience === 'playlist' && playlist
+                  ? `${t('notes.forPlaylist', { name: playlist.name })}. ${
+                      playlist.isPublic
+                        ? t('notes.forPublicPlaylistHint')
+                        : t('notes.forPlaylistHint')
+                    }`
+                  : audience === 'report'
+                    ? t('notes.kindReportHint')
+                    : !online
+                      ? t('notes.onlineOnly')
+                      : song?.status === 'private'
+                        ? t('notes.kindSongPrivateHint')
+                        : t('notes.kindSongHint')}
+          </Text>
+        )}
         <Textarea
           label={t('notes.textLabel')}
           value={text}
@@ -470,62 +477,6 @@ function NoteForm({
           data-autofocus
           required
         />
-        {/* What it is is chosen once: a private note made the band's, or back, would
-            change who has seen it. Each choice says who will see it (D147). */}
-        {!existing && (
-          <Radio.Group
-            label={t('notes.kind')}
-            value={audience}
-            onChange={(v) => onAudience(v as Audience)}
-          >
-            <Stack gap="xs" mt={4}>
-              <Radio
-                value="own"
-                label={t('notes.kindNote')}
-                description={t('notes.kindNoteHint')}
-              />
-              <Radio
-                value="todo"
-                label={t('notes.kindTodo')}
-                description={t('notes.kindTodoHint')}
-              />
-              {playlist && (
-                <Radio
-                  value="playlist"
-                  label={t('notes.kindPlaylist', { name: playlist.name })}
-                  description={
-                    playlist.isPublic
-                      ? t('notes.forPublicPlaylistHint')
-                      : t('notes.forPlaylistHint')
-                  }
-                />
-              )}
-              {canReport && (
-                <Radio
-                  value="report"
-                  label={t('notes.kindReport')}
-                  description={t('notes.kindReportHint')}
-                />
-              )}
-              {song && (
-                // A private song's "everyone" is whoever it's shared with (D127). An edit of
-                // the song, online only (D148).
-                <Radio
-                  value="song"
-                  label={t('notes.kindSong')}
-                  disabled={!online}
-                  description={
-                    !online
-                      ? t('notes.onlineOnly')
-                      : song.status === 'private'
-                        ? t('notes.kindSongPrivateHint')
-                        : t('notes.kindSongHint')
-                  }
-                />
-              )}
-            </Stack>
-          </Radio.Group>
-        )}
         {existing?.kind === 'report' && (
           <Text size="sm" c="dimmed">
             {t('notes.forEditors')}

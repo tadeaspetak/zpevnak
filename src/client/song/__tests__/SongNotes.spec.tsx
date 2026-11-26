@@ -86,6 +86,11 @@ function Played({
       <button type="button" onClick={notes.startPicking}>
         začít vybírat
       </button>
+      {notes.report && 'onClick' in notes.report && (
+        <button type="button" onClick={notes.report.onClick}>
+          nahlásit celou
+        </button>
+      )}
       <button
         type="button"
         onClick={() =>
@@ -241,9 +246,11 @@ describe('notes on the song view (D135)', () => {
     fireEvent.contextMenu(sheet.querySelector('[data-place="1"]') as HTMLElement);
     // Read the open menu at once: in jsdom it doesn't stay open for long.
     const items = await screen.findAllByRole('menuitem');
-    // A reader who can't fix this approved song may report a mistake at the line (D143).
+    // One item per kind (D149): a reader who can't fix this approved song may report a
+    // mistake at the line (D143), not write into it.
     expect(items.map((item) => item.textContent)).toEqual([
-      'Přidat poznámku',
+      'Poznámka',
+      'TODO',
       'Nahlásit chybu',
       'Kopírovat řádek',
     ]);
@@ -285,7 +292,7 @@ describe('notes on the song view (D135)', () => {
     );
     const sheet = await play(null, []);
     fireEvent.contextMenu(sheet.querySelector('[data-place="1"]') as HTMLElement);
-    fireEvent.click(await screen.findByRole('menuitem', { name: 'Přidat poznámku' }));
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Poznámka' }));
     fireEvent.change(await screen.findByRole('textbox', { name: 'Text' }), {
       target: { value: 'zpomalit' },
     });
@@ -316,25 +323,27 @@ describe('notes on the song view (D135)', () => {
     const line = sheet.querySelector('[data-place="1"]') as HTMLElement;
     expect([line.getAttribute('role'), line.tabIndex]).toEqual(['button', 0]);
     fireEvent.click(line);
+    // The line's menu opens, as a long-press does (D149); playing from a playlist they edit,
+    // a note for it among the choices.
+    fireEvent.click(
+      await screen.findByRole('menuitem', { name: 'Poznámka pro playlist' }),
+    );
     expect(await screen.findByText('U řádku „lu lu lu“')).toBeTruthy();
-    // Playing from a playlist they edit, they choose who it's for.
-    expect(
-      screen.getByRole('radio', { name: /^Poznámka pro playlist „Vršek“/ }),
-    ).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Poznámka pro playlist' })).toBeTruthy();
   });
 
   it('says who will read a band note, a public playlist’s anyone, and names it whole', async () => {
     const long = 'Vánoční koncert na náměstí Míru 2026 sbor';
     const sheet = await play(vrsek('owner', long, true), []);
     fireEvent.contextMenu(sheet.querySelector('[data-place="1"]') as HTMLElement);
-    fireEvent.click(await screen.findByRole('menuitem', { name: 'Přidat poznámku' }));
+    fireEvent.click(
+      await screen.findByRole('menuitem', { name: 'Poznámka pro playlist' }),
+    );
+    // Said before it's written (D149): the whole name, and who will see it.
     expect(
-      await screen.findByRole('radio', {
-        name: new RegExp(`^Poznámka pro playlist „${long}“`),
-      }),
-    ).toBeTruthy();
-    expect(
-      screen.getByText('Playlist je veřejný: uvidí ji každý, kdo ho otevře.'),
+      await screen.findByText(
+        `Pro playlist „${long}“. Playlist je veřejný: uvidí ji každý, kdo ho otevře.`,
+      ),
     ).toBeTruthy();
   });
 
@@ -395,7 +404,7 @@ describe('notes on the song view (D135)', () => {
     try {
       const sheet = await play(null, []);
       fireEvent.contextMenu(sheet.querySelector('[data-place="1"]') as HTMLElement);
-      fireEvent.click(await screen.findByRole('menuitem', { name: 'Přidat poznámku' }));
+      fireEvent.click(await screen.findByRole('menuitem', { name: 'Poznámka' }));
       fireEvent.change(await screen.findByRole('textbox', { name: 'Text' }), {
         target: { value: 'kapodastr' },
       });
@@ -413,25 +422,33 @@ describe('notes on the song view (D135)', () => {
     onlineManager.setOnline(false);
     try {
       const sheet = await play(null, []);
-      const write = async (place: number, text: string) => {
-        // Picking the line from ⋯'s way in: the line menu doesn't reopen at once in jsdom.
-        fireEvent.click(screen.getByRole('button', { name: 'začít vybírat' }));
-        fireEvent.click(sheet.querySelector(`[data-place="${place}"]`) as HTMLElement);
-        fireEvent.change(await screen.findByRole('textbox', { name: 'Text' }), {
-          target: { value: text },
-        });
-        const save = screen.getByRole('button', { name: 'Uložit' });
-        expect(save).toHaveProperty('disabled', false);
-        fireEvent.click(save);
-        await screen.findByText(text);
-      };
-      await write(1, 'první');
-      await write(0, 'druhá');
+      fireEvent.click(screen.getByRole('button', { name: 'začít vybírat' }));
+      await screen.findByText(/na řádek/);
+      fireEvent.click(sheet.querySelector('[data-place="1"]') as HTMLElement);
+      fireEvent.click(await screen.findByRole('menuitem', { name: 'Poznámka' }));
+      fireEvent.change(await screen.findByRole('textbox', { name: 'Text' }), {
+        target: { value: 'první' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: 'Uložit' }));
+      await screen.findByText('první');
+      // The next, while the first waits: a report on the whole song (⋯'s "Nahlásit chybu"),
+      // through the same request, now paused.
+      fireEvent.click(screen.getByRole('button', { name: 'nahlásit celou' }));
+      fireEvent.change(await screen.findByRole('textbox', { name: 'Text' }), {
+        target: { value: 'druhá' },
+      });
+      const send = screen.getByRole('button', { name: 'Nahlásit' });
+      expect(send).toHaveProperty('disabled', false);
+      fireEvent.click(send);
+      await screen.findByText('druhá');
     } finally {
       // The notes still waiting go, rather than reach the next test once back online.
       renderHook(() => useQueryClient(), { wrapper: Providers })
         .result.current.getMutationCache()
         .clear();
+      // And the notes shown waiting, kept in memory, with them.
+      const catalog = renderHook(() => useCatalog()).result.current;
+      act(() => [...catalog.notes.keys()].filter((id) => id < 0).forEach(settleNote));
       onlineManager.setOnline(true);
       online.mockRestore();
     }
@@ -460,11 +477,7 @@ describe('notes on the song view (D135)', () => {
       const sheet = await play(null, []);
       fireEvent.contextMenu(sheet.querySelector('[data-place="1"]') as HTMLElement);
       fireEvent.click(await screen.findByRole('menuitem', { name: 'Nahlásit chybu' }));
-      expect(
-        (await screen.findByRole('radio', { name: /^Chyba v písničce/ })).getAttribute(
-          'aria-checked',
-        ) ?? '',
-      ).not.toBe('false');
+      expect(await screen.findByRole('heading', { name: 'Nahlásit chybu' })).toBeTruthy();
       fireEvent.change(screen.getByRole('textbox', { name: 'Text' }), {
         target: { value: 'má tu být Hm' },
       });
@@ -558,10 +571,10 @@ describe('notes on the song view (D135)', () => {
     it('lets whoever may change the song write a comment into it, above the line', async () => {
       asEditor();
       const sheet = await play(null, []);
-      await atLine(sheet, 0, 'Přidat poznámku');
-      fireEvent.click(
-        await screen.findByRole('radio', { name: /^Komentář do písničky/ }),
-      );
+      await atLine(sheet, 0, 'Komentář do písničky');
+      expect(
+        await screen.findByRole('heading', { name: 'Komentář do písničky' }),
+      ).toBeTruthy();
       fireEvent.change(screen.getByRole('textbox', { name: 'Text' }), {
         target: { value: 'tiše' },
       });
@@ -579,9 +592,9 @@ describe('notes on the song view (D135)', () => {
 
     it('offers it to nobody else', async () => {
       const sheet = await play(null, []);
-      await atLine(sheet, 0, 'Přidat poznámku');
-      expect(await screen.findByRole('radio', { name: /^Poznámka/ })).toBeTruthy();
-      expect(screen.queryByRole('radio', { name: /^Komentář do písničky/ })).toBeNull();
+      fireEvent.contextMenu(sheet.querySelector('[data-place="0"]') as HTMLElement);
+      const items = await screen.findAllByRole('menuitem');
+      expect(items.map((item) => item.textContent)).not.toContain('Komentář do písničky');
     });
 
     it('changes the song’s own comment where it is, and removes it with an undo', async () => {
@@ -657,18 +670,25 @@ describe('notes on the song view (D135)', () => {
       fireEvent.click(await screen.findByRole('menuitem', { name: item }));
     };
 
-    it('names the dialog, the field and the button after whom the note is for', async () => {
+    it('offers each kind in the line’s menu, each opening its own dialog (D149)', async () => {
       asEditor();
       const sheet = await play(null, []);
-      await pick(sheet, 0, 'Přidat poznámku');
-      expect(await screen.findByRole('heading', { name: 'Nová poznámka' })).toBeTruthy();
-      expect(screen.getByRole('textbox', { name: 'Text' })).toBeTruthy();
-      expect(screen.getByRole('button', { name: 'Uložit' })).toBeTruthy();
-      fireEvent.click(screen.getByRole('radio', { name: /^Chyba v písničce/ }));
-      expect(screen.getByRole('heading', { name: 'Nahlásit chybu' })).toBeTruthy();
-      expect(screen.getByRole('button', { name: 'Nahlásit' })).toBeTruthy();
-      fireEvent.click(screen.getByRole('radio', { name: /^Komentář do písničky/ }));
-      expect(screen.getByRole('heading', { name: 'Komentář do písničky' })).toBeTruthy();
+      // One item per kind, each only where this reader may write it (D149).
+      fireEvent.contextMenu(sheet.querySelector('[data-place="0"]') as HTMLElement);
+      const items = await screen.findAllByRole('menuitem');
+      expect(items.map((item) => item.textContent)).toEqual([
+        'Poznámka',
+        'TODO',
+        'Nahlásit chybu',
+        'Komentář do písničky',
+        'Kopírovat řádek',
+      ]);
+      // Each opens its own dialog: its title, who sees it, and a button saying what happens.
+      fireEvent.click(items[3] as HTMLElement);
+      expect(
+        await screen.findByRole('heading', { name: 'Komentář do písničky' }),
+      ).toBeTruthy();
+      expect(screen.getByText(/^Pro všechny, kdo písničku otevřou/)).toBeTruthy();
       expect(screen.getByRole('button', { name: 'Zapsat do písničky' })).toBeTruthy();
     });
 
@@ -775,11 +795,8 @@ describe('notes on the song view (D135)', () => {
     it('writes into the song as it was when the dialog opened: a song changed since is refused, not edited at a moved line', async () => {
       asEditor();
       const sheet = await play(null, []);
-      await pick(sheet, 0, 'Přidat poznámku');
-      fireEvent.click(
-        await screen.findByRole('radio', { name: /^Komentář do písničky/ }),
-      );
-      fireEvent.change(screen.getByRole('textbox', { name: 'Text' }), {
+      await pick(sheet, 0, 'Komentář do písničky');
+      fireEvent.change(await screen.findByRole('textbox', { name: 'Text' }), {
         target: { value: 'tiše' },
       });
       // Saved elsewhere meanwhile: the device's copy moves on under the open dialog.
@@ -823,23 +840,24 @@ describe('notes on the song view (D135)', () => {
       asEditor();
       const sheet = await play(null, [], undefined, true, commented);
       hover(sheet, 2);
-      fireEvent.click(await screen.findByRole('button', { name: 'Upravit komentář' }));
+      // The hover button opens the line's menu, as a right-click does (D149).
+      fireEvent.click(await screen.findByRole('button', { name: 'Přidat k řádku…' }));
+      const items = await screen.findAllByRole('menuitem');
+      expect(items.map((item) => item.textContent)).toEqual([
+        'Upravit komentář',
+        'Nahlásit chybu',
+        'Kopírovat řádek',
+      ]);
+      fireEvent.click(items[0] as HTMLElement);
       expect(await screen.findByRole('button', { name: 'Smazat' })).toBeTruthy();
-      expect(
-        screen.queryByRole('button', { name: 'Přidat poznámku k řádku' }),
-      ).toBeNull();
     });
 
     it('offers a player nothing on hover there, and a note on a sung line as before', async () => {
       const sheet = await play(null, [], undefined, true, commented);
       hover(sheet, 2);
-      expect(
-        screen.queryByRole('button', { name: /Upravit komentář|Přidat poznámku/ }),
-      ).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Přidat k řádku…' })).toBeNull();
       hover(sheet, 1);
-      expect(
-        await screen.findByRole('button', { name: 'Přidat poznámku k řádku' }),
-      ).toBeTruthy();
+      expect(await screen.findByRole('button', { name: 'Přidat k řádku…' })).toBeTruthy();
     });
 
     it('leaves a note out of the comment’s line menu', async () => {
@@ -853,14 +871,12 @@ describe('notes on the song view (D135)', () => {
     });
   });
 
-  it('writes a TODO as its own choice, not a checkbox on a note (D147)', async () => {
+  it('writes a TODO as its own kind, not a checkbox on a note (D147, D149)', async () => {
     const sheet = await play(null, []);
     fireEvent.contextMenu(sheet.querySelector('[data-place="1"]') as HTMLElement);
-    fireEvent.click(await screen.findByRole('menuitem', { name: 'Přidat poznámku' }));
-    expect(await screen.findByRole('radio', { name: /^Poznámka/ })).toBeTruthy();
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'TODO' }));
+    expect(await screen.findByRole('heading', { name: 'Nové TODO' })).toBeTruthy();
     expect(screen.queryByRole('checkbox', { name: 'TODO' })).toBeNull();
-    fireEvent.click(screen.getByRole('radio', { name: /^TODO/ }));
-    expect(screen.getByRole('heading', { name: 'Nové TODO' })).toBeTruthy();
     fireEvent.change(screen.getByRole('textbox', { name: 'Text' }), {
       target: { value: 'nacvičit' },
     });
@@ -920,10 +936,11 @@ describe('notes on the song view (D135)', () => {
       try {
         const sheet = await play(null, []);
         fireEvent.contextMenu(sheet.querySelector('[data-place="1"]') as HTMLElement);
-        fireEvent.click(await screen.findByRole('menuitem', { name: 'Přidat poznámku' }));
-        const song = await screen.findByRole('radio', { name: /^Komentář do písničky/ });
-        expect(song).toHaveProperty('disabled', true);
-        expect(screen.getByText('Jen online. Teď jsi offline.')).toBeTruthy();
+        const song = await screen.findByRole('menuitem', {
+          name: /^Komentář do písničky/,
+        });
+        expect(song.textContent).toContain('jen online');
+        expect(song.hasAttribute('data-disabled')).toBe(true);
       } finally {
         online.mockRestore();
       }

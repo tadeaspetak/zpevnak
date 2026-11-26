@@ -4,11 +4,13 @@ import { notifications } from '@mantine/notifications';
 import {
   IconCopy,
   IconFlag,
+  IconMessage,
   IconPencil,
   IconNote,
   IconNotes,
   IconPlaylist,
   IconSquare,
+  IconSquareCheck,
 } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
@@ -24,10 +26,11 @@ import { useCatalog, type LocalNote } from '../data/catalog.ts';
 import { canChangeNote, inFilter, isResolved } from '../data/notes.ts';
 import { usePrefs } from '../data/prefs.ts';
 import type { NoteRecord, PlaylistRecord, SongRecord } from '../data/store.ts';
-import { useLinePress, type LinePress } from '../hooks/useLinePress.ts';
+import { useLinePress } from '../hooks/useLinePress.ts';
 import { useMe } from '../hooks/useMe.ts';
+import { useOnline } from '../hooks/useOnline.ts';
 import { useI18n } from '../i18n/index.tsx';
-import { NoteModal, type NoteTarget } from './NoteModal.tsx';
+import { NoteModal, type NewNote, type NoteTarget } from './NoteModal.tsx';
 import classes from './SongNotes.module.css';
 
 type Playing = Pick<PlaylistRecord, 'id' | 'name' | 'role' | 'isPublic'>;
@@ -69,6 +72,7 @@ export function useSongNotes({
   const { me } = useMe();
   const prefs = usePrefs();
   const location = useLocation();
+  const online = useOnline();
   const coarse = useMediaQuery('(pointer: coarse)');
   const places = useMemo(() => (song ? notePlaces(song) : []), [song]);
   const lines = useMemo(
@@ -88,7 +92,7 @@ export function useSongNotes({
   const offer = reportOffer({
     isPrivate: record?.status === 'private',
     signedIn: me !== null,
-    start: canReport ? () => addAt(null, true) : undefined,
+    start: canReport ? () => addAt(null, 'report') : undefined,
     path: location.pathname,
     unconfirmed: () => {
       const id = 'report-unconfirmed';
@@ -146,7 +150,19 @@ export function useSongNotes({
   }, [notes, songId, playlist?.id, places]);
 
   const [target, setTarget] = useState<NoteTarget | null>(null);
-  const [menu, setMenu] = useState<(LinePress & NotePlace) | null>(null);
+  // The menu of what can be written at a line (D149), or on the whole song (`line` null), and
+  // where on the screen it opens.
+  const [menu, setMenu] = useState<{
+    x: number;
+    y: number;
+    line: NotePlace | null;
+  } | null>(null);
+  /** Opens the menu below an element: a line picked, the hover button, "K celé písničce". */
+  const menuAt = (el: Element, line: NotePlace | null) => {
+    const box = el.getBoundingClientRect();
+    setPicking(false);
+    setMenu({ x: box.left, y: box.bottom, line });
+  };
   const [picking, setPicking] = useState(false);
   // Another song (a swipe, the arrows): nothing half-done on this one follows it there.
   const [shownFor, setShownFor] = useState(songId);
@@ -180,17 +196,17 @@ export function useSongNotes({
     }
     return null;
   };
-  const addAt = (place: NotePlace | null, report = false) => {
+  const addAt = (place: NotePlace | null, as: NewNote) => {
     setPicking(false);
     if (songId !== null) {
-      setTarget({ kind: 'new', songId, place, report });
+      setTarget({ kind: 'new', songId, place, as });
     }
   };
 
   useLinePress(container, (press) => {
     const line = lineAt(press.place);
     if (line && !picking) {
-      setMenu({ ...press, ...line });
+      setMenu({ x: press.x, y: press.y, line });
     }
   });
 
@@ -201,25 +217,23 @@ export function useSongNotes({
     if (!picking || !el) {
       return;
     }
+    // A line picked opens its menu, as a long-press does (D149).
     const pick = (target: EventTarget | null) => {
-      const line =
+      const el =
         target instanceof Element ? target.closest<HTMLElement>('[data-place]') : null;
-      return line ? lineAt(Number(line.dataset.place)) : null;
+      const line = el ? lineAt(Number(el.dataset.place)) : null;
+      if (el && line) {
+        menuAt(el, line);
+      }
+      return line;
     };
     const onClick = (e: MouseEvent) => {
       e.stopPropagation();
-      const line = pick(e.target);
-      if (line) {
-        addAt(line);
-      }
+      pick(e.target);
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        const line = pick(e.target);
-        if (line) {
-          e.preventDefault();
-          addAt(line);
-        }
+      if ((e.key === 'Enter' || e.key === ' ') && pick(e.target)) {
+        e.preventDefault();
       }
     };
     // Escape gives up from anywhere: focus is often still on the ⋯ that started it. The bar is
@@ -318,35 +332,119 @@ export function useSongNotes({
     );
   };
 
-  // Inside the sheet's box, which it is placed in.
-  // On the song's own comment a note makes no sense: whoever may change the song gets the
-  // comment to change or remove instead, anyone else nothing (D146).
+  // Inside the sheet's box, which it is placed in. It opens the line's menu, as a right-click
+  // does (D149). On the song's own comment only for whoever may change it: a note on a comment
+  // makes no sense (D146).
   const hovered = hover ? lineAt(hover.place) : null;
-  const hoverAction =
-    hovered !== null && hovered.comment !== null
-      ? canFix && {
-          label: t('notes.editComment'),
-          icon: <IconPencil size={16} />,
-          run: () => hovered.comment !== null && editComment(hovered.comment),
-        }
-      : {
-          label: t('notes.addAtLine'),
-          icon: <IconNotes size={16} />,
-          run: () => addAt(hovered),
-        };
   const hoverButton =
-    hover && !picking && hoverAction ? (
+    hover && hovered && !picking && (hovered.comment === null || canFix) ? (
       // Placed by its wrapper: the button's own transform is Mantine's, nudging it as it's pressed.
       <div
         className={classes.hoverAdd}
         style={{ top: hover.top, left: hover.left }}
         data-note-add
       >
-        <IconButton label={hoverAction.label} size="sm" onClick={hoverAction.run}>
-          {hoverAction.icon}
+        <IconButton
+          label={t('notes.add')}
+          size="sm"
+          onClick={(e) => menuAt(e.currentTarget, hovered)}
+        >
+          <IconNotes size={16} />
         </IconButton>
       </div>
     ) : null;
+
+  /**
+   * What can be written at a line, or on the whole song (null), one item each (D149): the
+   * reader picks what it is here, and its dialog is only for that. Only what this reader may
+   * write; on the song's own comment, no note (D146), changing it instead.
+   */
+  const lineMenu = (line: NotePlace | null) => {
+    const onComment = line !== null && line.comment !== null;
+    const offline = !online;
+    return (
+      <>
+        <Menu.Label className={classes.menuLine}>
+          {line ? line.words : t('notes.wholeSong')}
+        </Menu.Label>
+        {canFix && line !== null && line.comment !== null && (
+          <Menu.Item
+            leftSection={<IconPencil size={16} />}
+            onClick={() => line.comment !== null && editComment(line.comment)}
+          >
+            {t('notes.editComment')}
+          </Menu.Item>
+        )}
+        {canWrite && !onComment && (
+          <>
+            <Menu.Item
+              leftSection={<IconNote size={16} />}
+              onClick={() => addAt(line, 'own')}
+            >
+              {t('notes.kindNote')}
+            </Menu.Item>
+            <Menu.Item
+              leftSection={<IconSquareCheck size={16} />}
+              onClick={() => addAt(line, 'todo')}
+            >
+              {t('notes.kindTodo')}
+            </Menu.Item>
+          </>
+        )}
+        {writesForPlaylist && !onComment && (
+          <Menu.Item
+            leftSection={<IconPlaylist size={16} />}
+            onClick={() => addAt(line, 'playlist')}
+          >
+            {t('notes.kindPlaylist')}
+          </Menu.Item>
+        )}
+        {/* Here for whoever can write it; else the way there (D143). */}
+        {offer && (
+          <Menu.Item
+            leftSection={<IconFlag size={16} />}
+            onClick={() =>
+              canReport
+                ? addAt(line, 'report')
+                : 'to' in offer
+                  ? navigate(offer.to)
+                  : offer.onClick()
+            }
+          >
+            {t('song.reportMistake')}
+          </Menu.Item>
+        )}
+        {/* An edit of the song: online only (D148). */}
+        {canFix && !onComment && (
+          <Menu.Item
+            leftSection={<IconMessage size={16} />}
+            disabled={offline}
+            rightSection={
+              offline ? (
+                <Text size="xs" c="dimmed">
+                  {t('notes.onlineOnlyShort')}
+                </Text>
+              ) : undefined
+            }
+            onClick={() => addAt(line, 'song')}
+          >
+            {t('notes.kindSong')}
+          </Menu.Item>
+        )}
+        {line && (
+          <>
+            <Menu.Divider />
+            <Menu.Item
+              leftSection={<IconCopy size={16} />}
+              onClick={() => copy(line.words)}
+            >
+              {t('notes.copyLine')}
+            </Menu.Item>
+          </>
+        )}
+      </>
+    );
+  };
 
   // Outside the sheet: a click in a dialog or a bar mustn't reach the sheet's tap (D93).
   const overlay = (
@@ -368,58 +466,12 @@ export function useSongNotes({
           <button
             type="button"
             tabIndex={-1}
-            aria-label={menu?.words ?? t('notes.lineMenu')}
+            aria-label={menu?.line?.words ?? t('notes.lineMenu')}
             className={classes.menuAnchor}
             style={{ left: menu?.x ?? 0, top: menu?.y ?? 0 }}
           />
         </Menu.Target>
-        <Menu.Dropdown>
-          {menu && (
-            <>
-              <Menu.Label className={classes.menuLine}>{menu.words}</Menu.Label>
-              {/* The song's own comment, by whoever may change the song (D145): on its line,
-                  changing it comes first. */}
-              {canFix && menu.comment !== null && (
-                <Menu.Item
-                  leftSection={<IconPencil size={16} />}
-                  onClick={() => menu.comment !== null && editComment(menu.comment)}
-                >
-                  {t('notes.editComment')}
-                </Menu.Item>
-              )}
-              {/* Not on the song's own comment: a note on a comment makes no sense. */}
-              {canWrite && menu.comment === null && (
-                <Menu.Item
-                  leftSection={<IconNotes size={16} />}
-                  onClick={() => addAt(menu)}
-                >
-                  {t('notes.add')}
-                </Menu.Item>
-              )}
-              {/* At this line for whoever can write it; else the way there (D143). */}
-              {offer && (
-                <Menu.Item
-                  leftSection={<IconFlag size={16} />}
-                  onClick={() =>
-                    canReport
-                      ? addAt(menu, true)
-                      : 'to' in offer
-                        ? navigate(offer.to)
-                        : offer.onClick()
-                  }
-                >
-                  {t('song.reportMistake')}
-                </Menu.Item>
-              )}
-              <Menu.Item
-                leftSection={<IconCopy size={16} />}
-                onClick={() => copy(menu.words)}
-              >
-                {t('notes.copyLine')}
-              </Menu.Item>
-            </>
-          )}
-        </Menu.Dropdown>
+        <Menu.Dropdown>{menu && lineMenu(menu.line)}</Menu.Dropdown>
       </Menu>
       {picking && (
         <Paper
@@ -435,7 +487,11 @@ export function useSongNotes({
             <Button size="sm" variant="default" onClick={() => setPicking(false)}>
               {t('common.cancel')}
             </Button>
-            <Button size="sm" variant="default" onClick={() => addAt(null)}>
+            <Button
+              size="sm"
+              variant="default"
+              onClick={(e) => menuAt(e.currentTarget, null)}
+            >
               {t('notes.wholeSong')}
             </Button>
           </Group>
@@ -444,7 +500,6 @@ export function useSongNotes({
       <NoteModal
         target={target}
         playlist={writesForPlaylist && playlist ? playlist : null}
-        canReport={canReport}
         fixing={canFix ? record : null}
         onClose={() => setTarget(null)}
         // Notes switched off come back into sight, to show the one just saved.

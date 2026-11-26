@@ -168,8 +168,9 @@ How a song's ChordPro is laid out, so songs read alike (the first pass: 2026-11-
   `usePhone` in code, `$mantine-breakpoint-*` in CSS.
 - **The song is played with gestures, not menus:** a tap hides the bars (D93, D109), a swipe
   turns the song, a pinch (fingers, or a laptop's touchpad) changes the text size (D130,
-  D137), a long-press or right-click on a line opens its menu: a note, copying it (D135). So
-  text on the song view can't be selected on touch. ⋯ keeps a way to each for a keyboard.
+  D137), a long-press or right-click on a line opens its menu: one item per kind of note,
+  a report, a comment into the song, copying it (D135, D149). So text on the song view can't
+  be selected on touch. ⋯ keeps a way to each for a keyboard.
 - **The back arrow goes one level up** to a fixed parent, and says where ("Back to Vršek
   2026"); history is the browser's back (D60). **Search is
   the last icon at top right on every page**, song view included, so it is always in one place.
