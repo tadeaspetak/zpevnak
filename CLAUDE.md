@@ -63,8 +63,9 @@ printed to the server log.
   are small). Reads go through `useCatalog()`, not tRPC queries. After a mutation, put the
   returned record into the catalog (`putSong`, `putPlaylist`, `putNote`). A change of viewer
   (sign-in, sign-out) clears the device copy before fetching (`syncCatalog`). Offline, requests
-  that write wait for the connection and say so (`notifyIfQueued`, D133); a note's change also
-  shows at once, marked waiting, in memory only (`waitNote`, D138). A new IndexedDB version
+  that write wait for the connection and say so (`notifyIfQueued`, D133), in memory only: lost
+  if the app is closed first, and the toast says so (D148); a note's change also shows at once,
+  marked waiting (`waitNote`, D138). Writing into a song is online only (D148). A new IndexedDB version
   must not hang on a tab still open on the old one (`blocked`/`blocking` in `store.ts`).
 - **The ChordPro text is the only truth about a song.** Title and artist are read from its
   header on every save (`src/server/songs/header.ts`); never edit them separately.

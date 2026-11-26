@@ -113,8 +113,13 @@ export function useSongNotes({
     },
   });
   const canChange = (note: NoteRecord) => canChangeNote(note, playlist, me);
+  // A report, to whoever may fix the song (to resolve it), and to the song's author who can't
+  // (an approved song: to read it, D148).
   const canReview = (note: LocalNote) =>
-    note.kind === 'report' && !note.waiting && canFix && !canChange(note);
+    note.kind === 'report' &&
+    !note.waiting &&
+    !canChange(note) &&
+    (canFix || (me !== null && record?.createdBy === me.id));
 
   const { atPlace, top } = useMemo(() => {
     const atPlace = new Map<number, LocalNote[]>();

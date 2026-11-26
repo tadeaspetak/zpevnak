@@ -674,3 +674,13 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   „…“ (playing from one you may edit), Chyba v písničce (pro editory a autora písničky; once
   fixed it leaves the song, and its reporter keeps it, resolved), Komentář do písničky (pro
   všechny). The TODO checkbox stays only for changing one's own note, where it's ticked done.
+- **D148. The corners the walks hadn't reached** (the owner's calls, 2026-11-26, after a walk of
+  offline, tablets, an approved song's author and long playlists). Changes made offline wait in
+  memory only: closed before the connection returns, they're lost; the toast says so ("Do té
+  doby aplikaci nezavírej."), and no device outbox is planned. Offline, one change waiting
+  doesn't hold up the next (the dialog is busy only while a request goes out). Writing into the
+  song is online only, as nothing would show it waiting. The author of an approved song opens a
+  report on it to read it ("Opraví ji editor."). On the edit page a report's line is shown in
+  the text ("Ukázat v textu"), the place telling repeated lines apart. Back from a song deep in
+  a playlist, its row is in sight. A page-turner's PageDown brings the first line not wholly in
+  sight to the top, not a cut line.

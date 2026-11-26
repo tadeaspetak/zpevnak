@@ -17,7 +17,8 @@ export const cs = {
   'common.offlineHint':
     'Jsi offline. Písničky máš v zařízení, změny se uloží, až budeš online.',
   'common.needsConnection': 'Jsi offline. Tohle půjde, až bude připojení.',
-  'common.savesWhenOnline': 'Jsi offline: uloží se, až budeš online.',
+  'common.savesWhenOnline':
+    'Jsi offline: uloží se, až budeš online. Do té doby aplikaci nezavírej.',
   'common.somethingWrong': 'Něco se pokazilo. Zkus to znovu.',
   'common.unverified': 'Neschváleno',
   'common.rejected': 'Zamítnuto',
@@ -202,6 +203,10 @@ export const cs = {
   'notes.kindSongPrivateHint':
     'Pro všechny, s kým je písnička sdílená. Uloží se jako úprava písničky.',
   'notes.newTodo': 'Nové TODO',
+  'notes.showInText': 'Ukázat v textu',
+  'notes.onlineOnly': 'Jen online. Teď jsi offline.',
+  'notes.songCommentOffline': 'Komentář v písničce změníš, až budeš online.',
+  'notes.editorWillFix': 'Opraví ji editor.',
   'notes.byAuthor': 'Autor: {name}',
   'notes.todo': 'TODO',
   'notes.done': 'Hotovo',

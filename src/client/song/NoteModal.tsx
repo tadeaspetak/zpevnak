@@ -23,6 +23,7 @@ import {
 } from '#shared/chordpro/comments.ts';
 import { putNote, putSong, settleNote, useCatalog, waitNote } from '../data/catalog.ts';
 import { useMe } from '../hooks/useMe.ts';
+import { useOnline } from '../hooks/useOnline.ts';
 import { notifyIfQueued } from '../data/offline.ts';
 import type { NoteRecord, SongRecord } from '../data/store.ts';
 import { showUndoToast } from '../components/UndoToast.tsx';
@@ -207,7 +208,8 @@ function useSongComments() {
     notifyIfQueued(t('common.savesWhenOnline'));
   };
   return {
-    pending: update.isPending,
+    // Going out now; not one paused for the connection (D133), which the next mustn't wait on.
+    pending: update.isPending && !update.isPaused,
     save,
     /** Removed at once, and put back by one tap (D139), as a new version again. */
     removeWithUndo: (song: SongRecord, at: number, then: () => void) =>
@@ -287,7 +289,11 @@ export function NoteModal({ target, ...props }: Props) {
   return (
     <Modal opened={target !== null} onClose={props.onClose} title={title}>
       {target?.kind === 'review' && (
-        <ReportReview key={key} note={target.note} onResolve={resolveNote} />
+        <ReportReview
+          key={key}
+          note={target.note}
+          onResolve={props.fixing ? resolveNote : null}
+        />
       )}
       {target?.kind === 'comment' && props.fixing && (
         <SongCommentForm
@@ -361,6 +367,7 @@ function NoteForm({
   const { playlists } = useCatalog();
   // The song as it was when the dialog opened: a comment goes where the reader saw the line,
   // and a song changed meanwhile is refused (`seenAt`, D106), not written at a moved line.
+  const online = useOnline();
   const [song] = useState(fixing);
   const existing = target.kind === 'edit' ? target.note : null;
   const ownPlaylist =
@@ -396,9 +403,6 @@ function NoteForm({
           notifications.show({ message: t('notes.songCommentSaved') });
           onClose();
         });
-        if (!navigator.onLine) {
-          onClose();
-        }
       }
       return;
     }
@@ -436,7 +440,12 @@ function NoteForm({
 
   // One's own report, by whoever may fix the song: closed here once fixed.
   const resolvable = existing?.kind === 'report' && song !== null;
-  const busy = create.isPending || update.isPending || comments.pending;
+  // Only a request going out now: one waiting for the connection (D133) has let the dialog
+  // close, and the next note mustn't wait on it.
+  const busy =
+    (create.isPending && !create.isPaused) ||
+    (update.isPending && !update.isPaused) ||
+    comments.pending;
   return (
     <form
       onSubmit={(e) => {
@@ -499,14 +508,18 @@ function NoteForm({
                 />
               )}
               {song && (
-                // A private song's "everyone" is whoever it's shared with (D127).
+                // A private song's "everyone" is whoever it's shared with (D127). An edit of
+                // the song, online only (D148).
                 <Radio
                   value="song"
                   label={t('notes.kindSong')}
+                  disabled={!online}
                   description={
-                    song.status === 'private'
-                      ? t('notes.kindSongPrivateHint')
-                      : t('notes.kindSongHint')
+                    !online
+                      ? t('notes.onlineOnly')
+                      : song.status === 'private'
+                        ? t('notes.kindSongPrivateHint')
+                        : t('notes.kindSongHint')
                   }
                 />
               )}
@@ -565,7 +578,11 @@ function NoteForm({
                 {t('common.cancel')}
               </Button>
             )}
-            <Button type="submit" disabled={!text.trim()} loading={busy}>
+            <Button
+              type="submit"
+              disabled={!text.trim() || (audience === 'song' && !online)}
+              loading={busy}
+            >
               {existing ? t('common.save') : t(SUBMIT[audience])}
             </Button>
           </Group>
@@ -584,7 +601,8 @@ function ReportReview({
   onResolve,
 }: {
   note: NoteRecord;
-  onResolve: (note: NoteRecord) => void;
+  /** Null for the song's author who can't fix it (an approved song): they read it (D148). */
+  onResolve: ((note: NoteRecord) => void) | null;
 }) {
   const { t } = useI18n();
   return (
@@ -596,18 +614,22 @@ function ReportReview({
       <Text size="sm" c="dimmed">
         {t('notes.reportedBy', { name: note.authorName })}
       </Text>
-      {/* The × closes: two buttons, to fix it and to say it's fixed. */}
-      <Group justify="flex-end" gap="sm">
-        <Button
-          variant="default"
-          component={Link}
-          to={url.editSong(note.songId)}
-          leftSection={<IconPencil size={16} />}
-        >
-          {t('notes.editSong')}
-        </Button>
-        <Button onClick={() => onResolve(note)}>{t('notes.resolve')}</Button>
-      </Group>
+      {onResolve ? (
+        // The × closes: two buttons, to fix it and to say it's fixed.
+        <Group justify="flex-end" gap="sm">
+          <Button
+            variant="default"
+            component={Link}
+            to={url.editSong(note.songId)}
+            leftSection={<IconPencil size={16} />}
+          >
+            {t('notes.editSong')}
+          </Button>
+          <Button onClick={() => onResolve(note)}>{t('notes.resolve')}</Button>
+        </Group>
+      ) : (
+        <Text size="sm">{t('notes.editorWillFix')}</Text>
+      )}
     </Stack>
   );
 }
@@ -633,23 +655,19 @@ function SongCommentForm({
   const { t } = useI18n();
   const [song] = useState(fixing);
   const [text, setText] = useState(written);
-  const closeOffline = () => {
-    // Offline, the change waits for the connection (D133): the dialog doesn't wait with it.
-    if (!navigator.onLine) {
-      onClose();
-    }
-  };
+  // An edit of the song, as everyone reads it: online only (D148), as nothing would show it
+  // waiting meanwhile.
+  const online = useOnline();
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
         comments.save(song, replaceComment(song.source, at, text), onClose);
-        closeOffline();
       }}
     >
       <Stack>
         <Text size="sm" c="dimmed">
-          {t('notes.songCommentHint')}
+          {online ? t('notes.songCommentHint') : t('notes.songCommentOffline')}
         </Text>
         <Textarea
           label={t('notes.textLabel')}
@@ -664,10 +682,8 @@ function SongCommentForm({
         <Group justify="space-between">
           <Button
             variant="default"
-            onClick={() => {
-              comments.removeWithUndo(song, at, onClose);
-              closeOffline();
-            }}
+            disabled={!online}
+            onClick={() => comments.removeWithUndo(song, at, onClose)}
           >
             {t('common.delete')}
           </Button>
@@ -677,7 +693,7 @@ function SongCommentForm({
             </Button>
             <Button
               type="submit"
-              disabled={!commentText(text) || commentText(text) === written}
+              disabled={!online || !commentText(text) || commentText(text) === written}
               loading={comments.pending}
             >
               {t('common.save')}

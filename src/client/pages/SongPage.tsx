@@ -30,6 +30,7 @@ import { useI18n } from '../i18n/index.tsx';
 import { SongSheet } from '../song/SongSheet.tsx';
 import { SongStatusBanner } from '../song/SongStatusBanner.tsx';
 import { SongToolbar } from '../song/SongToolbar.tsx';
+import { pageDownBy } from '../song/pageTurn.ts';
 import { useSongNotes } from '../song/SongNotes.tsx';
 import { PlaylistBar } from '../song/PlaylistBar.tsx';
 import { trpc } from '../trpc.ts';
@@ -293,7 +294,14 @@ function SongPlayer({
           if (atEnd) {
             next?.();
           } else {
-            window.scrollBy({ top: window.innerHeight * 0.8, behavior: 'smooth' });
+            // To the first line not wholly in sight, at the top: no line cut (D148).
+            const lines = [
+              ...(sheet.current?.querySelectorAll('[data-place]') ?? []),
+            ].map((line) => line.getBoundingClientRect());
+            window.scrollBy({
+              top: pageDownBy(lines, window.innerHeight),
+              behavior: 'smooth',
+            });
           }
         },
         PageUp: () => {

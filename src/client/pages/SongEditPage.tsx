@@ -14,6 +14,7 @@ import { Page } from '../components/Page.tsx';
 import { PageLoader } from '../components/PageLoader.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
 import { putPlaylist, putSong, useCatalog } from '../data/catalog.ts';
+import { reportLine } from '../data/notes.ts';
 import { useDraft } from '../hooks/useDraft.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
@@ -190,7 +191,11 @@ export function EditSongPage() {
           <Stack gap="sm">
             {resubmits && <SongStatusBanner song={song} inForm />}
             {/* What was reported, where it's fixed (D146). */}
-            <SongReports songId={song.id} />
+            <SongReports
+              songId={song.id}
+              lineOf={(report) => reportLine(source, report)}
+              onShow={(line) => editor.current?.goToLine(line)}
+            />
             <ErrorText error={update.error} />
             <ChordProEditor
               ref={editor}

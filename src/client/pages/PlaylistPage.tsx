@@ -8,7 +8,7 @@ import {
   IconTrash,
   IconUsers,
 } from '@tabler/icons-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { ConfirmModal } from '../components/ConfirmModal.tsx';
 import { VerifyEmailAlert } from '../components/VerifyEmailAlert.tsx';
@@ -65,6 +65,21 @@ export function PlaylistPage() {
       }
       navigate(url.playlists());
     },
+  });
+
+  // Back from a song deep in a long playlist: the song one is at in sight (D148), once, and
+  // only if the reader hasn't scrolled meanwhile.
+  const songList = useRef<HTMLDivElement>(null);
+  const showedCurrent = useRef(false);
+  useEffect(() => {
+    const row = songList.current?.querySelector('[data-active]');
+    if (showedCurrent.current || !row) {
+      return;
+    }
+    showedCurrent.current = true;
+    if (window.scrollY < 8) {
+      row.scrollIntoView({ block: 'center' });
+    }
   });
 
   // Not on the device yet (a link opened on a new phone): the fresh load may still bring it.
@@ -205,7 +220,7 @@ export function PlaylistPage() {
               onEdit={editWithUndo}
             />
           ) : (
-            <Stack gap={0} mx="-md">
+            <Stack gap={0} mx="-md" ref={songList}>
               {playlist.songIds.map((songId, index) => {
                 const song = songs.get(songId);
                 const position = index + 1;

@@ -1,3 +1,5 @@
+import { parseSong } from '#shared/chordpro/parse.ts';
+import { notePlaces, placeOf } from '#shared/notes.ts';
 import { editsAsMember } from '#shared/roles.ts';
 import type { LocalNote } from './catalog.ts';
 import type { NoteRecord, PlaylistRecord, SongRecord } from './store.ts';
@@ -75,4 +77,18 @@ export function inFilter(note: NoteRecord, filter: NoteFilter): boolean {
     case 'done':
       return note.todo && note.doneAt !== null;
   }
+}
+
+/**
+ * Where a report's line is in the text being edited (D148): found again by its place and words
+ * (`placeOf`), as a note is; the source line it starts on. Null for one on the whole song, or
+ * whose line is gone.
+ */
+export function reportLine(source: string, report: NoteRecord): number | null {
+  if (!report.line) {
+    return null;
+  }
+  const places = notePlaces(parseSong(source));
+  const place = placeOf(places, report.line);
+  return places.flat().find((p) => p !== null && p.place === place)?.before ?? null;
 }

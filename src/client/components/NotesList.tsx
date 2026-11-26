@@ -229,12 +229,11 @@ function NoteRow({
   };
 
   const shownText = (
-    <Text
-      size="sm"
-      td={done || resolved ? 'line-through' : undefined}
-      style={{ whiteSpace: 'pre-line' }}
-    >
-      {text}
+    <Text size="sm" style={{ whiteSpace: 'pre-line' }}>
+      {/* Only the note struck through, done or fixed: "čeká na připojení" stays readable. */}
+      <Text span inherit td={done || resolved ? 'line-through' : undefined}>
+        {text}
+      </Text>
       {note.waiting && (
         <Text span size="xs" c="dimmed">
           {' · '}

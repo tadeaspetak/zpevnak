@@ -121,9 +121,11 @@ Agreed to leave, for now:
 - **Waiting on the owner's tablet:** "fit the text to the screen" on an upright tablet (D-1 in
   `.planning/ongoing/after-the-first-rehearsal.md`); a real iPhone long-press on a line (D135),
   only emulated so far.
-- **Not walked yet:** a cold offline start (needs a production build), the screen staying awake,
-  full screen on an iPhone, a 30-song playlist. Check those on a phone against production
-  before the gig.
+- **Walked 2026-11-26 (D148):** offline (a cold start on the production build too), tablets upright
+  and landscape, an approved song's author, a 30-song playlist, a two-page song. Still only on
+  real devices: the screen staying awake, full screen, dragging with a finger, the on-screen
+  keyboard over a dialog, real iPhone, iPad and Android. Accepted: changes made offline are
+  lost if the app closes before the connection returns (the toast says so).
 - **Home-screen app and updates:** no reload in an installed app; "Načíst novinky" fetches data
   and checks for a new app version (D74, D75), from the settings on every page (D116, D117). If that proves not enough, consider pull-to-refresh.
 - **Importing the old songbook:** deliberately not done (D11). Songs get added one by one, which is

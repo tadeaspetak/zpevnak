@@ -25,6 +25,9 @@ const report = (id: number, fields: Partial<NoteRecord> = {}): NoteRecord => ({
   ...fields,
 });
 
+const lineOf = (r: NoteRecord) => (r.line ? 4 : null);
+const onShow = vi.fn();
+
 describe('SongReports: the song’s open reports where it is fixed (D146)', () => {
   beforeEach(() => {
     localStorage.setItem('zpevnak.locale', 'cs');
@@ -52,7 +55,7 @@ describe('SongReports: the song’s open reports where it is fixed (D146)', () =
       .map(([, init]) => JSON.parse(String(init?.body))[0]);
 
   it('lists the song’s open reports, not a fixed one nor another song’s', () => {
-    renderApp(<SongReports songId={song.id} />);
+    renderApp(<SongReports songId={song.id} lineOf={lineOf} onShow={onShow} />);
     act(() => {
       putSong(song);
       putSong({ ...song, id: 8 });
@@ -67,7 +70,7 @@ describe('SongReports: the song’s open reports where it is fixed (D146)', () =
   });
 
   it('resolves one there at once, sent when the toast goes without an undo', async () => {
-    renderApp(<SongReports songId={song.id} />);
+    renderApp(<SongReports songId={song.id} lineOf={lineOf} onShow={onShow} />);
     act(() => {
       putSong(song);
       putNote(1, report(1));
@@ -80,8 +83,20 @@ describe('SongReports: the song’s open reports where it is fixed (D146)', () =
   });
 
   it('shows nothing without reports', () => {
-    renderApp(<SongReports songId={song.id} />);
+    renderApp(<SongReports songId={song.id} lineOf={lineOf} onShow={onShow} />);
     act(() => putSong(song));
     expect(screen.queryByText(/Nahlášené chyby/)).toBeNull();
+  });
+
+  it('shows a report’s line in the text, the place telling repeated lines apart (D148)', () => {
+    renderApp(<SongReports songId={song.id} lineOf={lineOf} onShow={onShow} />);
+    act(() => {
+      putSong(song);
+      putNote(1, report(1));
+      putNote(2, report(2, { line: null }));
+    });
+    expect(screen.getAllByRole('button', { name: 'Ukázat v textu' })).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Ukázat v textu' }));
+    expect(onShow).toHaveBeenCalledWith(4);
   });
 });

@@ -14,7 +14,8 @@ export const en: Record<keyof typeof cs, string> = {
   'common.offlineHint':
     "You're offline. Your songs are on this device; changes save once you're back online.",
   'common.needsConnection': 'You’re offline. This works once you’re connected.',
-  'common.savesWhenOnline': 'You’re offline: it saves once you’re online.',
+  'common.savesWhenOnline':
+    'You’re offline: it saves once you’re online. Keep the app open until then.',
   'common.somethingWrong': 'Something went wrong. Try again.',
   'common.unverified': 'Not approved',
   'common.rejected': 'Rejected',
@@ -203,6 +204,10 @@ export const en: Record<keyof typeof cs, string> = {
   'notes.kindSongPrivateHint':
     'For everyone the song is shared with. It’s saved as an edit of the song.',
   'notes.newTodo': 'New TODO',
+  'notes.showInText': 'Show in the text',
+  'notes.onlineOnly': 'Only online. You’re offline now.',
+  'notes.songCommentOffline': 'You can change the song’s comment once you’re online.',
+  'notes.editorWillFix': 'An editor will fix it.',
   'notes.byAuthor': 'By {name}',
   'notes.todo': 'TODO',
   'notes.done': 'Done',

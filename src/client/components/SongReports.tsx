@@ -2,6 +2,7 @@ import { Button, Group, Paper, Stack, Text, Title } from '@mantine/core';
 import { IconFlag } from '@tabler/icons-react';
 import { useMemo } from 'react';
 import { useCatalog } from '../data/catalog.ts';
+import type { NoteRecord } from '../data/store.ts';
 import { openReports } from '../data/notes.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { useNoteRequests } from '../song/NoteModal.tsx';
@@ -11,7 +12,17 @@ import { useNoteRequests } from '../song/NoteModal.tsx';
  * who and when, each resolved there once fixed ("Vyřešeno", undone from the toast, D139).
  * Nothing when there are none.
  */
-export function SongReports({ songId }: { songId: number }) {
+export function SongReports({
+  songId,
+  lineOf,
+  onShow,
+}: {
+  songId: number;
+  /** Where a report's line is in the text being edited (1-based), or null if it's gone. */
+  lineOf: (report: NoteRecord) => number | null;
+  /** Shows that line in the text: repeated lines read alike, the place tells them apart. */
+  onShow: (line: number) => void;
+}) {
   const { t, formatDate } = useI18n();
   const { notes, songs } = useCatalog();
   const requests = useNoteRequests();
@@ -31,9 +42,11 @@ export function SongReports({ songId }: { songId: number }) {
         </Group>
       </Title>
       <Stack gap="sm">
-        {reports.map((report) => (
-          <Group key={report.id} justify="space-between" align="flex-start" wrap="nowrap">
-            <Stack gap={2} miw={0}>
+        {reports.map((report) => {
+          const line = lineOf(report);
+          return (
+            // The buttons under the report, not beside it: on a phone they'd squeeze its text.
+            <Stack key={report.id} gap={2}>
               <Text size="sm" style={{ whiteSpace: 'pre-line' }}>
                 {report.text}
               </Text>
@@ -46,17 +59,23 @@ export function SongReports({ songId }: { songId: number }) {
               <Text size="xs" c="dimmed">
                 {`${t('notes.reportedBy', { name: report.authorName })} · ${formatDate(report.createdAt)}`}
               </Text>
+              <Group gap="xs" mt={4}>
+                {line !== null && (
+                  <Button size="sm" variant="default" onClick={() => onShow(line)}>
+                    {t('notes.showInText')}
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  variant="default"
+                  onClick={() => requests.resolveWithUndo(report)}
+                >
+                  {t('notes.resolve')}
+                </Button>
+              </Group>
             </Stack>
-            <Button
-              size="sm"
-              variant="default"
-              style={{ flex: 'none' }}
-              onClick={() => requests.resolveWithUndo(report)}
-            >
-              {t('notes.resolve')}
-            </Button>
-          </Group>
-        ))}
+          );
+        })}
       </Stack>
     </Paper>
   );

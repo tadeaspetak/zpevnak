@@ -43,6 +43,8 @@ import { SongSheet } from './SongSheet.tsx';
 export type ChordProEditorHandle = {
   /** False, with the caret put in the title, when the song has none to be saved under. */
   checkTitle: () => boolean;
+  /** Selects source line `line` (1-based) and brings it into view: a report's line (D148). */
+  goToLine: (line: number) => void;
 };
 
 type Props = {
@@ -164,6 +166,7 @@ export function ChordProEditor({
   };
 
   useImperativeHandle(ref, () => ({
+    goToLine,
     checkTitle: () => {
       if (parseSong(value).meta.title?.trim()) {
         return true;
@@ -228,6 +231,8 @@ export function ChordProEditor({
       ref={previewPane}
       className={wide ? classes.previewPane : classes.preview}
       aria-label={t('editor.preview')}
+      // Its own scrolling pane, side by side: reachable from the keyboard to scroll it.
+      tabIndex={wide ? 0 : undefined}
     >
       {/* Diagrams always, to check the song's own shapes; on the instrument the song view
           would draw them for (D132). */}

@@ -1,6 +1,8 @@
 import { act, cleanup, fireEvent, renderHook, screen } from '@testing-library/react';
 import { notifications } from '@mantine/notifications';
 import { useMemo, useState } from 'react';
+import { onlineManager, useQueryClient } from '@tanstack/react-query';
+import { Providers } from '#client/Providers.tsx';
 import { useLocation } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { parseSong } from '#shared/chordpro/parse.ts';
@@ -402,6 +404,35 @@ describe('notes on the song view (D135)', () => {
       expect(waiting.closest('[data-notes]')?.textContent).toContain('čeká na připojení');
       expect(waiting.closest('button')).toBeNull();
     } finally {
+      online.mockRestore();
+    }
+  });
+
+  it('lets one write note after note offline, none waiting on the one before (D148)', async () => {
+    const online = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+    onlineManager.setOnline(false);
+    try {
+      const sheet = await play(null, []);
+      const write = async (place: number, text: string) => {
+        // Picking the line from ⋯'s way in: the line menu doesn't reopen at once in jsdom.
+        fireEvent.click(screen.getByRole('button', { name: 'začít vybírat' }));
+        fireEvent.click(sheet.querySelector(`[data-place="${place}"]`) as HTMLElement);
+        fireEvent.change(await screen.findByRole('textbox', { name: 'Text' }), {
+          target: { value: text },
+        });
+        const save = screen.getByRole('button', { name: 'Uložit' });
+        expect(save).toHaveProperty('disabled', false);
+        fireEvent.click(save);
+        await screen.findByText(text);
+      };
+      await write(1, 'první');
+      await write(0, 'druhá');
+    } finally {
+      // The notes still waiting go, rather than reach the next test once back online.
+      renderHook(() => useQueryClient(), { wrapper: Providers })
+        .result.current.getMutationCache()
+        .clear();
+      onlineManager.setOnline(true);
       online.mockRestore();
     }
   });
@@ -849,6 +880,53 @@ describe('notes on the song view (D135)', () => {
           line: { index: 1, text: 'lu lu lu' },
         },
       ]);
+    });
+  });
+
+  describe('after the walk of the corners (D148)', () => {
+    const as = (id: number, role: string) =>
+      localStorage.setItem(
+        'zpevnak.me',
+        JSON.stringify({
+          id,
+          email: 'ja@example.com',
+          displayName: 'Já',
+          role,
+          locale: 'cs',
+          emailVerified: true,
+        }),
+      );
+
+    it('lets the author of an approved song read a report on it, an editor to fix it', async () => {
+      // The song's author (APPROVED.createdBy), who can't change it now it's approved.
+      as(99, 'user');
+      await play(null, [
+        note(1, {
+          kind: 'report',
+          authorId: 9,
+          authorName: 'Bára',
+          text: 'má tu být Hm',
+        }),
+      ]);
+      fireEvent.click(screen.getByRole('button', { name: /má tu být Hm/ }));
+      expect(await screen.findByText('Nahlásil(a): Bára')).toBeTruthy();
+      expect(screen.getByText('Opraví ji editor.')).toBeTruthy();
+      expect(screen.queryByRole('button', { name: 'Vyřešeno' })).toBeNull();
+    });
+
+    it('writes into the song online only', async () => {
+      as(ME, 'editor');
+      const online = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+      try {
+        const sheet = await play(null, []);
+        fireEvent.contextMenu(sheet.querySelector('[data-place="1"]') as HTMLElement);
+        fireEvent.click(await screen.findByRole('menuitem', { name: 'Přidat poznámku' }));
+        const song = await screen.findByRole('radio', { name: /^Komentář do písničky/ });
+        expect(song).toHaveProperty('disabled', true);
+        expect(screen.getByText('Jen online. Teď jsi offline.')).toBeTruthy();
+      } finally {
+        online.mockRestore();
+      }
     });
   });
 });
