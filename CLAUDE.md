@@ -160,7 +160,7 @@ How a song's ChordPro is laid out, so songs read alike (the first pass: 2026-11-
 - **Theme first, then one shared component (D105).** A default that holds everywhere goes in
   `src/client/theme.ts` (`ActionIcon` subtle grey, `Badge` neutral, `Alert` grey, a `Modal`
   header tinted and ruled); what a theme can't do gets one component, not a copy per page:
-  `IconButton` (an icon with its tooltip and name), `ConfirmModal`, `SongLabel`, `PageLoader`,
+  `IconButton` (an icon with its tooltip and name), `ConfirmModal`, `showUndoToast`, `SongLabel`, `PageLoader`,
   `SettingsButton` (every setting, and "Načíst novinky", on every page). Breakpoints are the theme's: `useWide`,
   `usePhone` in code, `$mantine-breakpoint-*` in CSS.
 - **The song is played with gestures, not menus:** a tap hides the bars (D93, D109), a swipe
@@ -170,13 +170,22 @@ How a song's ChordPro is laid out, so songs read alike (the first pass: 2026-11-
 - **The back arrow goes one level up** to a fixed parent, and says where ("Back to Vršek
   2026"); history is the browser's back (D60). **Search is
   the last icon at top right on every page**, song view included, so it is always in one place.
+- **Undo, not a question, for small frequent changes (D87, D139):** taking a song out of a
+  playlist, a listmate out, deleting a note happen at once, "Beru zpátky" in the toast
+  (`showUndoToast`; `onKept` sends a delete only when the toast goes, so nothing has to be
+  rebuilt). `ConfirmModal` stays for what is rare, heavy and reaches others (a song, a
+  playlist) or can't be undone (leaving a shared one).
+- **A list's own things are changed in the list** (D139): a note's text in place, its bin
+  beside it, not a dialog per change.
 - Buttons inside a row or card are `size="sm"`; `md` is for page-level calls to action.
 - **One orange (D61, D103):** filled = primary, `variant="default"` = secondary, never `light`
   on buttons or badges. Alerts are coloured by meaning (green/yellow/red) or neutral. The
   palette is `BRAND` in `theme.ts`, built to pass AA (a spec checks it); orange as text is
   `var(--brand-text)`, lighter on dark.
 - Secondary text uses `c="dimmed"`, which the theme sets to pass WCAG AA in light and dark
-  (Mantine's defaults do not; a spec checks both). Chords use `var(--chord-color)`.
+  (Mantine's defaults do not; a spec checks both). Chords use `var(--chord-color)`. A note on
+  the song is meant to be read from the stand: the text's colour on a neutral tint
+  (`--note-bg`, `--note-rule`, D139), never dimmed and never orange.
 
 ## Deployment and production
 

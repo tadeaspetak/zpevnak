@@ -61,11 +61,12 @@ took the agent's pick on all seven; shipped as D111 (the dialog renamed "Sdílen
 
 ## Notes from the phone, the owner's (2026-11-25)
 
-Three screenshots from the live app, agreed as one pass, shipped as D139.
+Three screenshots from the live app, agreed as one pass, shipped and deployed as D139.
 
 - [x] Moje poznámky a tab of the account, not a button above it.
 - [x] Notes on the song louder: there to be seen. No "important" flag; the setting hides them.
 - [x] A note changed and deleted right in the list (deleting undone from the toast).
+- [x] The song's note dialog deletes the same way. Confirms stay for songs, playlists, leaving.
 
 ## Notes on songs walk: the owner's answers (2026-11-25)
 
@@ -104,12 +105,13 @@ Agreed to leave, for now:
 - Song history, credits and suggested changes: `.planning/ongoing/song-history-credits-suggestions.md`.
   Slice 1 (versions, recorded quietly) shipped as D86; credits and suggestions after the gig.
 
-## State and loose ends (updated 2026-11-25)
+## State and loose ends (updated 2026-11-26)
 
 - **`/ux` walks done:** the song view and playlist session (D88–D92), adding a song (D94–D103),
   playlists and sharing (D110–D111), private songs and roles (D126–D128), the song view at the
   stand after the first rehearsal (D133–D134), and notes on songs (D135, D138). All shipped
-  whole. Next candidate: the account and sign-in pages.
+  whole. The owner's phone feedback on notes since: D139, deployed 2026-11-25. Next
+  candidate: the account and sign-in pages (now with the notes tab).
 - **Waiting on the owner's tablet:** "fit the text to the screen" on an upright tablet (D-1 in
   `.planning/ongoing/after-the-first-rehearsal.md`); a real iPhone long-press on a line (D135),
   only emulated so far.

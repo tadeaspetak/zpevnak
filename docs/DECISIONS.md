@@ -246,7 +246,7 @@ entry that says which it replaces and what changed.
   Undo puts them back as they were (their join date too). The server keeps every removal
   (`playlist_collaborator_removals`) and restores only someone this playlist's owner removed in
   the last 10 minutes, so undo can't add anyone else. No confirmation dialog: an undo costs the
-  rare mistake a tap instead of every removal. (2026-11-10)
+  rare mistake a tap instead of every removal. (2026-11-10) _Deleting a note the same way: D139._
 
 From the first UX walk of the song view and a playlist session (2026-11-10): _In the dialog the removed row offers the undo; the toast after it closes: D111._
 
@@ -380,7 +380,7 @@ From the first UX walk of the song view and a playlist session (2026-11-10): _In
   for "Odkaz na prohlížení", a pencil for "Pozvánka pro souputníky", under the listmates; the
   link shows small, so a new one visibly replaces the old. The account page puts log out beside
   the name; admins get tabs, "Moje písničky" and "Uživatelé" (the old users page; its address
-  redirects there). (2026-11-11)
+  redirects there). (2026-11-11) _Everyone gets tabs, notes among them: D139._
 - **D114. The sharing dialog, plainer** (refines D111, D113). Titled with the playlist
   ("Sdílení playlistu „…“"). Each link is a read-only field named by what it gives (an eye:
   "Odkaz na prohlížení"; a pencil: "Odkaz pro souputníky"), with a copy button inside it; no
@@ -559,7 +559,7 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   playlist's note is for everyone who sees the playlist (its people, and a public one's
   visitors), never a TODO, added, changed and deleted by whoever may edit the playlist. A note
   goes with its song; a playlist's notes go with the playlist, and hide while their song is out
-  of it. Nobody sees a note on a song they can't read (a private song's, D126). (2026-11-25) _The UX walk's calls (by song, offline at once, done off the song, small edits): D138._
+  of it. Nobody sees a note on a song they can't read (a private song's, D126). (2026-11-25) _The UX walk's calls (by song, offline at once, done off the song, small edits): D138. Louder on the song, a tab, changed in the list: D139._
 - **D136. The bars count where they are shown, slid away or not** (narrows D129). Whether a song
   fits in columns is decided with the bars at the bottom in place (the playlist's bar, the
   pill), so the song doesn't rearrange itself as a scroll hides them (D109). Songs that would
@@ -577,7 +577,7 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   until the server has it (a new pattern beside D133's message; other offline changes may follow
   it). A TODO done leaves the song, kept under Hotové. A note stays on its line through a small
   edit of its words (80 % alike: a typo fixed, a comma added); a line rewritten sends it to the
-  top as before. (2026-11-25)
+  top as before. (2026-11-25) _Moje poznámky became the account's tab: D139._
 - **D139. Notes are seen, and changed where they're listed** (the owner's calls; refines D113,
   D135, D138). On the song a note is there to be read from a stand: the text's own colour,
   upright, nearly the song's size, on a neutral tint with a rule (never the chords' orange). No
