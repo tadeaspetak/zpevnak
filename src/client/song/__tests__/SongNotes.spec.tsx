@@ -316,7 +316,9 @@ describe('notes on the song view (D135)', () => {
     fireEvent.click(line);
     expect(await screen.findByText('U řádku „lu lu lu“')).toBeTruthy();
     // Playing from a playlist they edit, they choose who it's for.
-    expect(screen.getByRole('radio', { name: 'Pro playlist „Vršek“' })).toBeTruthy();
+    expect(
+      screen.getByRole('radio', { name: /^Poznámka pro playlist „Vršek“/ }),
+    ).toBeTruthy();
   });
 
   it('says who will read a band note, a public playlist’s anyone, and names it whole', async () => {
@@ -325,7 +327,9 @@ describe('notes on the song view (D135)', () => {
     fireEvent.contextMenu(sheet.querySelector('[data-place="1"]') as HTMLElement);
     fireEvent.click(await screen.findByRole('menuitem', { name: 'Přidat poznámku' }));
     expect(
-      await screen.findByRole('radio', { name: `Pro playlist „${long}“` }),
+      await screen.findByRole('radio', {
+        name: new RegExp(`^Poznámka pro playlist „${long}“`),
+      }),
     ).toBeTruthy();
     expect(
       screen.getByText('Playlist je veřejný: uvidí ji každý, kdo ho otevře.'),
@@ -426,9 +430,9 @@ describe('notes on the song view (D135)', () => {
       fireEvent.contextMenu(sheet.querySelector('[data-place="1"]') as HTMLElement);
       fireEvent.click(await screen.findByRole('menuitem', { name: 'Nahlásit chybu' }));
       expect(
-        (
-          await screen.findByRole('radio', { name: /Pro editory: chyba v písničce/ })
-        ).getAttribute('aria-checked') ?? '',
+        (await screen.findByRole('radio', { name: /^Chyba v písničce/ })).getAttribute(
+          'aria-checked',
+        ) ?? '',
       ).not.toBe('false');
       fireEvent.change(screen.getByRole('textbox', { name: 'Text' }), {
         target: { value: 'má tu být Hm' },
@@ -524,7 +528,9 @@ describe('notes on the song view (D135)', () => {
       asEditor();
       const sheet = await play(null, []);
       await atLine(sheet, 0, 'Přidat poznámku');
-      fireEvent.click(await screen.findByRole('radio', { name: /zapsat do písničky/ }));
+      fireEvent.click(
+        await screen.findByRole('radio', { name: /^Komentář do písničky/ }),
+      );
       fireEvent.change(screen.getByRole('textbox', { name: 'Text' }), {
         target: { value: 'tiše' },
       });
@@ -543,8 +549,8 @@ describe('notes on the song view (D135)', () => {
     it('offers it to nobody else', async () => {
       const sheet = await play(null, []);
       await atLine(sheet, 0, 'Přidat poznámku');
-      expect(await screen.findByRole('radio', { name: 'Jen pro mě' })).toBeTruthy();
-      expect(screen.queryByRole('radio', { name: /zapsat do písničky/ })).toBeNull();
+      expect(await screen.findByRole('radio', { name: /^Poznámka/ })).toBeTruthy();
+      expect(screen.queryByRole('radio', { name: /^Komentář do písničky/ })).toBeNull();
     });
 
     it('changes the song’s own comment where it is, and removes it with an undo', async () => {
@@ -627,10 +633,10 @@ describe('notes on the song view (D135)', () => {
       expect(await screen.findByRole('heading', { name: 'Nová poznámka' })).toBeTruthy();
       expect(screen.getByRole('textbox', { name: 'Text' })).toBeTruthy();
       expect(screen.getByRole('button', { name: 'Uložit' })).toBeTruthy();
-      fireEvent.click(screen.getByRole('radio', { name: /Pro editory/ }));
+      fireEvent.click(screen.getByRole('radio', { name: /^Chyba v písničce/ }));
       expect(screen.getByRole('heading', { name: 'Nahlásit chybu' })).toBeTruthy();
       expect(screen.getByRole('button', { name: 'Nahlásit' })).toBeTruthy();
-      fireEvent.click(screen.getByRole('radio', { name: /Pro všechny/ }));
+      fireEvent.click(screen.getByRole('radio', { name: /^Komentář do písničky/ }));
       expect(screen.getByRole('heading', { name: 'Komentář do písničky' })).toBeTruthy();
       expect(screen.getByRole('button', { name: 'Zapsat do písničky' })).toBeTruthy();
     });
@@ -739,7 +745,9 @@ describe('notes on the song view (D135)', () => {
       asEditor();
       const sheet = await play(null, []);
       await pick(sheet, 0, 'Přidat poznámku');
-      fireEvent.click(await screen.findByRole('radio', { name: /Pro všechny/ }));
+      fireEvent.click(
+        await screen.findByRole('radio', { name: /^Komentář do písničky/ }),
+      );
       fireEvent.change(screen.getByRole('textbox', { name: 'Text' }), {
         target: { value: 'tiše' },
       });
@@ -810,6 +818,36 @@ describe('notes on the song view (D135)', () => {
       expect(items.map((item) => item.textContent)).toEqual([
         'Nahlásit chybu',
         'Kopírovat řádek',
+      ]);
+    });
+  });
+
+  it('writes a TODO as its own choice, not a checkbox on a note (D147)', async () => {
+    const sheet = await play(null, []);
+    fireEvent.contextMenu(sheet.querySelector('[data-place="1"]') as HTMLElement);
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Přidat poznámku' }));
+    expect(await screen.findByRole('radio', { name: /^Poznámka/ })).toBeTruthy();
+    expect(screen.queryByRole('checkbox', { name: 'TODO' })).toBeNull();
+    fireEvent.click(screen.getByRole('radio', { name: /^TODO/ }));
+    expect(screen.getByRole('heading', { name: 'Nové TODO' })).toBeTruthy();
+    fireEvent.change(screen.getByRole('textbox', { name: 'Text' }), {
+      target: { value: 'nacvičit' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Uložit' }));
+    await vi.waitFor(() => {
+      const sent = vi
+        .mocked(fetch)
+        .mock.calls.filter(([input]) => String(input).includes('notes.create'))
+        .map(([, init]) => JSON.parse(String(init?.body))[0]);
+      expect(sent).toEqual([
+        {
+          songId: SONG_ID,
+          kind: 'own',
+          playlistId: null,
+          text: 'nacvičit',
+          todo: true,
+          line: { index: 1, text: 'lu lu lu' },
+        },
       ]);
     });
   });

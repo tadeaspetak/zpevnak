@@ -158,8 +158,6 @@ export const en: Record<keyof typeof cs, string> = {
   'notes.text': 'Note',
   'notes.atLine': 'At “{words}”',
   'notes.wholeSong': 'For the whole song',
-  'notes.audience': 'Who it’s for',
-  'notes.forMe': 'Just for me',
   'notes.forPlaylist': 'For playlist “{name}”',
   'notes.forPlaylistHint': 'Everyone who sees the playlist will see it.',
   'notes.forPublicPlaylistHint':
@@ -168,16 +166,11 @@ export const en: Record<keyof typeof cs, string> = {
   'notes.report': 'Mistake report',
   'notes.reportMark': 'Mistake report',
   'notes.forEditors': 'For the editors: a mistake in the song',
-  'notes.forEditorsHint':
-    'The editors and the song’s author see it. Once it’s fixed, you’ll see so in your account: Notes.',
   'notes.reportedBy': 'Reported by: {name}',
   'notes.resolve': 'Mark fixed',
   'notes.resolvedMark': 'Fixed',
   'notes.resolvedDone': 'Fixed. The report has left the song.',
   'notes.reportUnverified': 'You can report a mistake once you confirm your email.',
-  'notes.forSong': 'For everyone: into the song',
-  'notes.forSongHint':
-    'Everyone who opens the song sees it, signed in or not. It’s saved as an edit of the song.',
   'notes.songComment': 'Comment in the song',
   'notes.songCommentHint': 'It’s part of the song: everyone who plays it sees it.',
   'notes.songCommentSaved': 'The comment is in the song.',
@@ -188,15 +181,28 @@ export const en: Record<keyof typeof cs, string> = {
   'notes.newSongComment': 'Comment into the song',
   'notes.reported': 'Reported. Once it’s fixed, you’ll see it in your account: Notes.',
   'notes.textLabel': 'Text',
-  'notes.forSongPrivate': 'For everyone who sees it: into the song',
-  'notes.forSongPrivateHint':
-    'Everyone the song is shared with sees it. It’s saved as an edit of the song.',
   'notes.sendReport': 'Report',
   'notes.writeIntoSong': 'Write into the song',
   'notes.editSong': 'Edit the song',
   'notes.confirmEmail': 'Confirm the email',
   'notes.reportsHere': 'Reported mistakes: {count}',
   'notes.aboveLine': 'Above the line “{words}”',
+  'notes.kind': 'What it is',
+  'notes.kindNote': 'Note',
+  'notes.kindNoteHint': 'Just for you.',
+  'notes.kindTodo': 'TODO',
+  'notes.kindTodoHint':
+    'Just for you, to tick off. You’ll find them all in your account: Notes.',
+  'notes.kindPlaylist': 'Note for the playlist “{name}”',
+  'notes.kindReport': 'Mistake in the song',
+  'notes.kindReportHint':
+    'For the editors and the song’s author. Once it’s fixed, it leaves the song; you’ll find it fixed in your account: Notes.',
+  'notes.kindSong': 'Comment in the song',
+  'notes.kindSongHint':
+    'For everyone who opens the song, signed in or not. It’s saved as an edit of the song.',
+  'notes.kindSongPrivateHint':
+    'For everyone the song is shared with. It’s saved as an edit of the song.',
+  'notes.newTodo': 'New TODO',
   'notes.byAuthor': 'By {name}',
   'notes.todo': 'TODO',
   'notes.done': 'Done',

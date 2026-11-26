@@ -24,7 +24,7 @@ test('a band note, written at a line, is read by a visitor without an account (D
   await line.click({ button: 'right' });
   await owner.getByRole('menuitem', { name: 'Add a note' }).click();
   await owner.getByRole('textbox', { name: 'Text' }).fill('Chorus three times, end on G');
-  await owner.getByRole('radio', { name: `For playlist “${name}”` }).check();
+  await owner.getByRole('radio', { name: `Note for the playlist “${name}”` }).check();
   await owner.getByRole('button', { name: 'Save' }).click();
   await expect(owner.getByRole('button', { name: /Chorus three times/ })).toBeVisible();
 

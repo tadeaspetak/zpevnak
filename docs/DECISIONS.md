@@ -666,3 +666,11 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   the song's own comment no note is offered (a note on a comment makes no sense): whoever may
   change the song gets "Upravit komentář" there, on hover too, to change or remove it. A song
   with someone else's open report can't go private (`SONG_REPORTED_BY_OTHERS`).
+- **D147. Toasts at the bottom; a note's kind chosen as one list** (the owner's calls,
+  2026-11-26; refines D87, D146). Every toast sits at the bottom centre, as the undo toast did
+  (D87): in a thumb's reach, never over a dialog's title nor the song's toolbar, and above a
+  playlist's bar or pill when there is one. A new note's "Co to je" is one choice, each saying
+  who sees it: Poznámka (jen pro tebe), TODO (jen pro tebe, k odškrtnutí), Poznámka pro playlist
+  „…“ (playing from one you may edit), Chyba v písničce (pro editory a autora písničky; once
+  fixed it leaves the song, and its reporter keeps it, resolved), Komentář do písničky (pro
+  všechny). The TODO checkbox stays only for changing one's own note, where it's ticked done.

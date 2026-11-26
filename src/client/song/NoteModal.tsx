@@ -41,8 +41,11 @@ export type NoteTarget =
   /** The song's own comment on source line `at` (D145), to change or remove. */
   | { kind: 'comment'; at: number; text: string };
 
-/** Whom a new note is for, or, `song`, a comment written into the song itself (D145). */
-type Audience = NoteRecord['kind'] | 'song';
+/**
+ * What a new note is (D147): one's own note, or a TODO (one's own too, to tick off), the
+ * playlist's, a report of a mistake (D143), or a comment written into the song itself (D145).
+ */
+type Audience = 'own' | 'todo' | 'playlist' | 'report' | 'song';
 
 type Props = {
   target: NoteTarget | null;
@@ -256,7 +259,9 @@ export function NoteModal({ target, ...props }: Props) {
     chosen?.key === key
       ? chosen.audience
       : target?.kind === 'edit' || target?.kind === 'review'
-        ? target.note.kind
+        ? target.note.kind === 'own' && target.note.todo
+          ? 'todo'
+          : target.note.kind
         : target?.kind === 'new' && target.report
           ? 'report'
           : 'own';
@@ -315,6 +320,7 @@ export function NoteModal({ target, ...props }: Props) {
 /** A new note's title, by whom it's for. */
 const NEW_TITLE = {
   own: 'notes.new',
+  todo: 'notes.newTodo',
   playlist: 'notes.newForPlaylist',
   report: 'song.reportMistake',
   song: 'notes.newSongComment',
@@ -323,6 +329,7 @@ const NEW_TITLE = {
 /** What saves a new note, by whom it's for: saying what will happen. */
 const SUBMIT = {
   own: 'common.save',
+  todo: 'common.save',
   playlist: 'common.save',
   report: 'notes.sendReport',
   song: 'notes.writeIntoSong',
@@ -365,13 +372,8 @@ function NoteForm({
   const [done, setDone] = useState(existing !== null && existing.doneAt !== null);
 
   const words = target.kind === 'edit' ? target.note.line?.text : target.place?.words;
-  const isOwn = audience === 'own';
-  const choices: Audience[] = [
-    'own',
-    ...(playlist ? (['playlist'] as const) : []),
-    ...(canReport ? (['report'] as const) : []),
-    ...(song ? (['song'] as const) : []),
-  ];
+  const isOwn = audience === 'own' || audience === 'todo';
+
   const saved = (note: NoteRecord) => {
     // Done, it leaves the song: say where it went.
     if (note.doneAt !== null && existing?.doneAt === null) {
@@ -414,10 +416,10 @@ function NoteForm({
       create.mutate(
         {
           songId: target.songId,
-          kind: audience,
+          kind: isOwn ? 'own' : audience,
           playlistId: audience === 'playlist' && playlist ? playlist.id : null,
           text,
-          todo: isOwn && todo,
+          todo: audience === 'todo',
           line: target.place
             ? { index: target.place.place, text: target.place.words }
             : null,
@@ -459,20 +461,29 @@ function NoteForm({
           data-autofocus
           required
         />
-        {/* Who it's for is chosen once: a private note made the band's, or back, would
-            change who has seen it. Each choice says first who will see it. */}
-        {!existing && choices.length > 1 && (
+        {/* What it is is chosen once: a private note made the band's, or back, would
+            change who has seen it. Each choice says who will see it (D147). */}
+        {!existing && (
           <Radio.Group
-            label={t('notes.audience')}
+            label={t('notes.kind')}
             value={audience}
             onChange={(v) => onAudience(v as Audience)}
           >
             <Stack gap="xs" mt={4}>
-              <Radio value="own" label={t('notes.forMe')} />
+              <Radio
+                value="own"
+                label={t('notes.kindNote')}
+                description={t('notes.kindNoteHint')}
+              />
+              <Radio
+                value="todo"
+                label={t('notes.kindTodo')}
+                description={t('notes.kindTodoHint')}
+              />
               {playlist && (
                 <Radio
                   value="playlist"
-                  label={t('notes.forPlaylist', { name: playlist.name })}
+                  label={t('notes.kindPlaylist', { name: playlist.name })}
                   description={
                     playlist.isPublic
                       ? t('notes.forPublicPlaylistHint')
@@ -483,23 +494,19 @@ function NoteForm({
               {canReport && (
                 <Radio
                   value="report"
-                  label={t('notes.forEditors')}
-                  description={t('notes.forEditorsHint')}
+                  label={t('notes.kindReport')}
+                  description={t('notes.kindReportHint')}
                 />
               )}
               {song && (
                 // A private song's "everyone" is whoever it's shared with (D127).
                 <Radio
                   value="song"
-                  label={
-                    song.status === 'private'
-                      ? t('notes.forSongPrivate')
-                      : t('notes.forSong')
-                  }
+                  label={t('notes.kindSong')}
                   description={
                     song.status === 'private'
-                      ? t('notes.forSongPrivateHint')
-                      : t('notes.forSongHint')
+                      ? t('notes.kindSongPrivateHint')
+                      : t('notes.kindSongHint')
                   }
                 />
               )}
@@ -521,7 +528,8 @@ function NoteForm({
               .join(' · ')}
           </Text>
         )}
-        {isOwn && (
+        {/* Changing one's own note: made a TODO or not, and ticked done (D147). */}
+        {existing?.kind === 'own' && (
           <Group>
             <Checkbox
               label={t('notes.todo')}

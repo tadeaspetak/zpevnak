@@ -179,6 +179,8 @@ How a song's ChordPro is laid out, so songs read alike (the first pass: 2026-11-
   playlist) or can't be undone (leaving a shared one).
 - **A list's own things are changed in the list** (D139): a note's text in place, its bin
   beside it, not a dialog per change.
+- **Toasts at the bottom** (D147), above a playlist's bar when a song has one: set once in
+  `Providers.tsx`, never per toast.
 - Buttons inside a row or card are `size="sm"`; `md` is for page-level calls to action.
 - **One orange (D61, D103):** filled = primary, `variant="default"` = secondary, never `light`
   on buttons or badges. Alerts are coloured by meaning (green/yellow/red) or neutral. The

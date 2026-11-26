@@ -26,9 +26,9 @@ export function Providers({ children }: { children: ReactNode }) {
         <I18nProvider>
           <Themed>
             {/* Inside the translations: a toast may hold a component that reads them. */}
-            {/* Below the header (Providers.module.css). */}
+            {/* At the bottom, above a playlist's bar (Providers.module.css, D147). */}
             <Notifications
-              position="top-center"
+              position="bottom-center"
               classNames={{ root: classes.notifications }}
             />
             {/* Inside the translations too, so a crash is explained in the reader's language. */}

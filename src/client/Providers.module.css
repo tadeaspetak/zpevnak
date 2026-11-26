@@ -1,6 +1,11 @@
-/* Below the header, not over it: a message about the key mustn't cover the key, nor the way
-   back or search (on a phone the whole bar). Only the top container: Mantine draws one for
-   every position, and the others must stay out of the page's way. */
-.notifications[data-position='top-center'] {
-  top: calc(3.75rem + env(safe-area-inset-top));
+/* At the bottom (D147): within a thumb's reach on a phone, where "Beru zpátky" is tapped, and
+   never over a dialog's title and close button, nor the song's toolbar. Above the playlist's
+   bar or pill when a song has one (SongPage's `data-bottom-bar`), not over it. Only the bottom
+   container: Mantine draws one for every position. */
+.notifications[data-position='bottom-center'] {
+  bottom: calc(1rem + env(safe-area-inset-bottom));
+}
+
+:global(body:has([data-bottom-bar])) .notifications[data-position='bottom-center'] {
+  bottom: calc(5rem + env(safe-area-inset-bottom));
 }
