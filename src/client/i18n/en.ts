@@ -79,8 +79,7 @@ export const en: Record<keyof typeof cs, string> = {
   'song.tags': 'Tags',
   'install.add': 'Add to home screen',
   'install.title': 'Zpěvňák as an app',
-  'install.why':
-    'From the home screen it opens full screen and works without a signal too.',
+  'install.why': 'From the home screen it opens full screen and works offline too.',
   'install.hide': 'Hide',
   'install.iosShare': 'Tap Share',
   'install.iosShareWhere': 'on Safari’s bar, or in its ⋯ menu.',

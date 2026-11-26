@@ -83,7 +83,7 @@ export const cs = {
   'song.tags': 'Štítky',
   'install.add': 'Přidat na plochu',
   'install.title': 'Zpěvňák jako aplikace',
-  'install.why': 'Z plochy se otevře přes celou obrazovku a funguje i bez signálu.',
+  'install.why': 'Z plochy se otevře přes celou obrazovku a funguje i offline.',
   'install.hide': 'Skrýt',
   'install.iosShare': 'Ťukni na Sdílet',
   'install.iosShareWhere': 'na liště Safari, nebo v jeho nabídce ⋯.',
