@@ -128,7 +128,8 @@ Agreed to leave, for now:
   and checks for a new app version (D74, D75), from the settings on every page (D116, D117). If that proves not enough, consider pull-to-refresh.
 - **Importing the old songbook:** deliberately not done (D11). Songs get added one by one, which is
   also how they get checked; `~/dev/projects/songbook` has ~430 ChordPro files to draw from.
-- **Plans:** song history, credits and suggestions in `.planning/ongoing/` (slice 1 done, D86);
+- **Plans:** reports and song comments through the note dialog in `.planning/next/` (agreed
+  2026-11-26, not started); song history, credits and suggestions in `.planning/ongoing/` (slice 1 done, D86);
   after the first rehearsal (all but D-1). Done: private songs and roles, notes on songs
   (`.planning/done/`).
 
