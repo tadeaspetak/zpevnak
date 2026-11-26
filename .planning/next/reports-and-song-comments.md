@@ -36,13 +36,18 @@ Both are "write something at this line", so both should start where notes do.
 6. **The editors' queue is a tab per kind** (2026-11-26): songs waiting, rejected, reports, and
    later suggested changes (`.planning/ongoing/song-history-credits-suggestions.md`, slice 3)
    as one more tab. Suggestions themselves aren't built here.
+7. **Reporting needs an account** (2026-11-26), as adding a song does: one channel, in the
+   app. Signed out, "Nahlásit chybu" leads to signing in and back to the report; the email
+   link goes from the song.
 
 ## Proposed, settle while building
 
 ### Reports
 
-- **Who may report:** a signed-in, confirmed account (as every note, D135). A visitor without
-  an account: open question 1.
+- **Who may report:** a signed-in, confirmed account (as every note, D135; Decided 7).
+  Signed out, "Nahlásit chybu" stays in ⋯ and leads to signing in (or up), then back to the
+  song with the report dialog open (the way back carried in `next`, as joining a playlist
+  does). Signed in but unconfirmed, it says to confirm the email first, as the notes page does.
 - **Not on a private song:** it has no editors' review, and "Nahlásit chybu" isn't offered
   there today (D85). Whoever may change a private song edits it.
 - **On the song:** an editor and the song's author see open reports under their lines with
@@ -105,7 +110,7 @@ Each ships on its own, gates green.
 1. **Reports as notes.** The migration and visibility; create and resolve; the
    dialog's third audience for whoever can't edit the song; reports on the song for editors
    and the author; "Nahlásit chybu" in ⋯ opens the dialog for the whole song (the long-press
-   menu gains it too); someone who can't write a report as open question 1 settles.
+   menu gains it too); signed out, it leads through signing in; the mailto goes from the song.
 2. **Reports in the queue.** The "Hlášení" tab, the count on the queue icon, the way to the
    report on the song.
 3. **Song comments through the dialog.** The parser's source lines and the pure functions
@@ -129,6 +134,5 @@ Each ships on its own, gates green.
 
 ## Open questions
 
-1. **Without an account:** today a visitor who isn't signed in can report by email (the ⋯
-   menu's "Nahlásit chybu" opens a mail to the owner). Keep that link for those who can't
-   write a report (signed out, or not yet confirmed), or lead them to sign in?
+None. Settled on 2026-11-26: no email on a report (Decided 3), the queue a tab per kind
+(Decided 6), reporting with an account only (Decided 7).
