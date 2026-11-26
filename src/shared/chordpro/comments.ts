@@ -2,7 +2,8 @@ import { readDirective } from './parse.ts';
 
 /**
  * A song's own comments, written from the song view (D145): a `{comment}` line in its
- * ChordPro, after the line it's about (`Line.source`), or after the header for the whole song.
+ * ChordPro, above the line it's about (`Line.source`, D146), or after the header for the whole
+ * song.
  * Only that line is added, changed or removed; the rest of the text stays as it was written.
  */
 
@@ -53,17 +54,18 @@ function bodyStart(lines: string[]): number {
 }
 
 /**
- * Adds `{comment: text}` after source line `after` (1-based), or, with null, at the head of the
- * song, before its first verse, apart from it by a blank line.
+ * Adds `{comment: text}` above source line `before` (1-based), so it reads as about that line,
+ * not as the next one's heading (D146); or, with null, at the head of the song, before its
+ * first verse, apart from it by a blank line.
  */
-export function addComment(source: string, after: number | null, text: string): string {
+export function addComment(source: string, before: number | null, text: string): string {
   const { lines, newline } = linesOf(source);
   const line = `{comment: ${commentText(text)}}`;
-  if (after === null) {
+  if (before === null) {
     const at = bodyStart(lines);
     lines.splice(at, 0, ...(at < lines.length ? [line, ''] : [line]));
   } else {
-    lines.splice(Math.min(after, lines.length), 0, line);
+    lines.splice(Math.min(before - 1, lines.length), 0, line);
   }
   return lines.join(newline);
 }

@@ -36,10 +36,10 @@ describe('notePlaces (D135)', () => {
     ]);
   });
 
-  it('says where a song comment written at a line goes, and which lines are one (D145)', () => {
+  it('says where a song comment written at a line goes, and which lines are one (D145, D146)', () => {
     const at = notePlaces(parseSong(SONG))
       .flat()
-      .map((p) => p && [p.after, p.comment]);
+      .map((p) => p && [p.before, p.comment]);
     expect(at).toEqual([
       [3, null],
       [6, null],

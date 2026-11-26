@@ -31,8 +31,8 @@ describe('song comments (D145)', () => {
     expect(lines(SONG).map((l) => l.source)).toEqual([7, 8, 12]);
   });
 
-  it('adds a comment after a line, inside its section, touching nothing else', () => {
-    const changed = addComment(SONG, 7, 'pomalu');
+  it('adds a comment above a line, inside its section, touching nothing else (D146)', () => {
+    const changed = addComment(SONG, 8, 'pomalu');
     expect(changed.split('\n')).toEqual([
       ...SONG.split('\n').slice(0, 7),
       '{comment: pomalu}',
@@ -42,6 +42,13 @@ describe('song comments (D145)', () => {
     expect(verse?.type === 'section' && verse.lines.map((l) => l.type)).toEqual([
       'lyrics',
       'comment',
+      'lyrics',
+    ]);
+    // Above a section's first line: still inside the section.
+    const first = parseSong(addComment(SONG, 7, 'tiše')).blocks[0];
+    expect(first?.type === 'section' && first.lines.map((l) => l.type)).toEqual([
+      'comment',
+      'lyrics',
       'lyrics',
     ]);
   });
@@ -68,7 +75,7 @@ describe('song comments (D145)', () => {
   it('keeps the song’s line ends', () => {
     const crlf = SONG.replace(/\n/g, '\r\n');
     const changed = addComment(crlf, 8, 'konec');
-    expect(changed).toContain('lu lu [C]lu\r\n{comment: konec}\r\n{end_of_verse}');
+    expect(changed).toContain('la la [Am]la\r\n{comment: konec}\r\nlu lu [C]lu');
     expect(changed).not.toMatch(/[^\r]\n/);
   });
 
@@ -88,19 +95,19 @@ describe('song comments (D145)', () => {
   });
 
   it('removes a comment, and the blank line one at the head came with', () => {
-    expect(removeComment(addComment(SONG, 7, 'pomalu'), 8)).toBe(SONG);
+    expect(removeComment(addComment(SONG, 7, 'pomalu'), 7)).toBe(SONG);
     expect(removeComment(addComment(SONG, null, 'capo 2'), 6)).toBe(SONG);
   });
 
   it('refuses to change or remove a line that isn’t a comment, or to empty one', () => {
     expect(() => replaceComment(SONG, 7, 'x')).toThrow();
     expect(() => removeComment(SONG, 7)).toThrow();
-    expect(() => replaceComment(addComment(SONG, 7, 'pomalu'), 8, '  ')).toThrow();
+    expect(() => replaceComment(addComment(SONG, 7, 'pomalu'), 7, '  ')).toThrow();
   });
 
   it('keeps a song’s old Mac line ends', () => {
     const cr = SONG.replace(/\n/g, '\r');
-    expect(addComment(cr, 8, 'konec')).toContain('lu lu [C]lu\r{comment: konec}\r');
+    expect(addComment(cr, 8, 'konec')).toContain('la la [Am]la\r{comment: konec}\rlu lu');
   });
 
   it('keeps the song’s own spacing around a comment it removes inside the song', () => {

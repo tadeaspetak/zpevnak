@@ -520,7 +520,7 @@ describe('notes on the song view (D135)', () => {
       fireEvent.click(await screen.findByRole('menuitem', { name: item }));
     };
 
-    it('lets whoever may change the song write a comment into it, after the line', async () => {
+    it('lets whoever may change the song write a comment into it, above the line', async () => {
       asEditor();
       const sheet = await play(null, []);
       await atLine(sheet, 0, 'Přidat poznámku');
@@ -533,7 +533,7 @@ describe('notes on the song view (D135)', () => {
         expect(saved()).toEqual([
           {
             id: SONG_ID,
-            source: SOURCE.replace('la la [D]la\n', 'la la [D]la\n{comment: tiše}\n'),
+            source: SOURCE.replace('la la [D]la\n', '{comment: tiše}\nla la [D]la\n'),
             seenAt: APPROVED.updatedAt,
           },
         ]),
@@ -750,7 +750,7 @@ describe('notes on the song view (D135)', () => {
         expect(calls('songs.update')).toEqual([
           {
             id: SONG_ID,
-            source: SOURCE.replace('la la [D]la\n', 'la la [D]la\n{comment: tiše}\n'),
+            source: SOURCE.replace('la la [D]la\n', '{comment: tiše}\nla la [D]la\n'),
             seenAt: APPROVED.updatedAt,
           },
         ]),

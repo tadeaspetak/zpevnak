@@ -196,6 +196,7 @@ export const en: Record<keyof typeof cs, string> = {
   'notes.editSong': 'Edit the song',
   'notes.confirmEmail': 'Confirm the email',
   'notes.reportsHere': 'Reported mistakes: {count}',
+  'notes.aboveLine': 'Above the line “{words}”',
   'notes.byAuthor': 'By {name}',
   'notes.todo': 'TODO',
   'notes.done': 'Done',

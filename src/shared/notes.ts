@@ -11,14 +11,14 @@ const MAX_WORDS = 500;
 
 /**
  * A line a note can be at: its place, and its words. For a comment written into the song from
- * here (D145): the source line it goes after (`after`: the line itself; in a recalled chorus,
- * the `{chorus}` line, so it isn't copied into every repeat), and, a line that is the song's
- * own comment, its source line (`comment`), to change or remove it.
+ * here (D145): the source line it goes above (`before`: the line itself, D146; in a recalled
+ * chorus, the `{chorus}` line, so it isn't copied into every repeat), and, a line that is the
+ * song's own comment, its source line (`comment`), to change or remove it.
  */
 export type NotePlace = {
   place: number;
   words: string;
-  after: number;
+  before: number;
   comment: number | null;
 };
 
@@ -58,7 +58,7 @@ export function notePlaces(song: Song): (NotePlace | null)[][] {
         ? {
             place: place++,
             words,
-            after: recalled ? block.line : line.source,
+            before: recalled ? block.line : line.source,
             comment: line.type === 'comment' ? line.source : null,
           }
         : null;

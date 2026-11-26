@@ -389,7 +389,7 @@ function NoteForm({
     if (audience === 'song') {
       // Offered only for a new note, to whoever may change the song.
       if (song && target.kind === 'new') {
-        const source = addComment(song.source, target.place?.after ?? null, text);
+        const source = addComment(song.source, target.place?.before ?? null, text);
         comments.save(song, source, () => {
           notifications.show({ message: t('notes.songCommentSaved') });
           onClose();
@@ -444,7 +444,10 @@ function NoteForm({
     >
       <Stack>
         <Text size="sm" c="dimmed" lineClamp={2}>
-          {words ? t('notes.atLine', { words }) : t('notes.wholeSong')}
+          {/* Written into the song, it goes above the line (D146): said so. */}
+          {words
+            ? t(audience === 'song' ? 'notes.aboveLine' : 'notes.atLine', { words })
+            : t('notes.wholeSong')}
         </Text>
         <Textarea
           label={t('notes.textLabel')}

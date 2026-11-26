@@ -630,7 +630,7 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   through its menu: ⋮ (bottom or top right), „Nainstalovat“ or „Přidat na plochu“ (both named:
   its menu has said each in recent versions), confirm.
 - **D143. A mistake in a song is reported in the app, as a note for the editors** (the owner's
-  calls, 2026-11-26; replaces D85's email; `.planning/ongoing/reports-and-song-comments.md`). A
+  calls, 2026-11-26; replaces D85's email; `.planning/done/reports-and-song-comments.md`). A
   note is its author's own, a playlist's, or a **report**: written at a line or on the whole
   song by anyone with a confirmed account, an editor too (a mistake for whoever gets to it, not
   a TODO of one's own), never on a private song. It is seen by its reporter, the songbook's
@@ -640,18 +640,18 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   email: the editors find it on the song and in the queue (D144). Signed out, "Nahlásit chybu"
   leads through signing in, back to the report. _After the review and walk: D146._
 - **D144. The editors' queue has a tab per kind of thing waiting** (the owner's call,
-  2026-11-26; `.planning/ongoing/reports-and-song-comments.md`): Čeká, Zamítnuté, and Hlášení,
+  2026-11-26; `.planning/done/reports-and-song-comments.md`): Čeká, Zamítnuté, and Hlášení,
   the open reports (D143) oldest first, each with the song, what, where, who and when, leading
   to its place in the song. The count on the overview's queue icon adds the open reports to the
   songs waiting. Suggested changes, when they come, are one more tab. _Grouped by song: D146._
 - **D145. Whoever may change a song writes comments into it from the song view** (the owner's
-  call, 2026-11-26; `.planning/ongoing/reports-and-song-comments.md`). The note dialog's "Pro
+  call, 2026-11-26; `.planning/done/reports-and-song-comments.md`). The note dialog's "Pro
   koho" offers them "Do písničky (uvidí všichni)": a `{comment: …}` line after the chosen line
   (after the `{chorus}` line in a repeated chorus; at the head of the song for the whole song),
   saved as an edit of the song (`seenAt`, a version, D86, D104, D106), never a note, never in
   Moje poznámky. The song's own comment is changed or removed from its line's menu ("Upravit
   komentář"), only that line, the rest of the text as written; removing it is undone from the
-  toast. The song's comments keep their look on the sheet, apart from the tinted notes (D139).
+  toast. The song's comments keep their look on the sheet, apart from the tinted notes (D139). _Above the line, not after it: D146._
 - **D146. Reports and song comments after the review and the walk** (the owner's calls,
   2026-11-26; refines D143–D145). The note dialog's title, field ("Text") and button follow whom
   the note is for: "Nahlásit chybu" / "Nahlásit", "Komentář do písničky" / "Zapsat do písničky";
@@ -661,4 +661,6 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   with "Upravit písničku", and the song's open reports wait above its text on the edit page,
   each resolved there. The queue's Hlášení are grouped by song, the song with the oldest first.
   "Nahlásit chybu" is in a line's menu for everyone, leading signed-out readers through signing
-  in. A song with someone else's open report can't go private (`SONG_REPORTED_BY_OTHERS`).
+  in. A comment written into the song at a line goes above it ("Nad řádek „…“"; before the
+  `{chorus}` line in a repeat), reading as about that line, not as the next one's heading. A
+  song with someone else's open report can't go private (`SONG_REPORTED_BY_OTHERS`).

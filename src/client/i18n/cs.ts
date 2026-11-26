@@ -196,6 +196,7 @@ export const cs = {
   'notes.editSong': 'Upravit písničku',
   'notes.confirmEmail': 'Potvrdit e-mail',
   'notes.reportsHere': 'Nahlášené chyby: {count}',
+  'notes.aboveLine': 'Nad řádek „{words}“',
   'notes.byAuthor': 'Autor: {name}',
   'notes.todo': 'TODO',
   'notes.done': 'Hotovo',

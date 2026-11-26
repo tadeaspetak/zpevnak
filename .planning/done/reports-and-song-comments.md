@@ -1,6 +1,6 @@
 # Reports and song comments, through the note dialog
 
-**State:** ongoing: phases 1 to 4 shipped (D143–D146); one question from the walk open (where a comment goes). Agreed in conversation on 2026-11-26 with the
+**State:** done (D143–D146), every phase shipped, the walk's last question settled (a comment goes above its line). Agreed in conversation on 2026-11-26 with the
 owner, who took the recommended pick on every question, then settled the rest (no email, a tab
 per kind, an account to report).
 
@@ -162,7 +162,8 @@ Each ships on its own, gates green.
    reason, the labels, the order and icons in the menus. Settled by the owner: the report's
    way to the editor and the song's open reports on the edit page; the queue's reports by song.
    Also: a song with someone's open report can't go private (`SONG_REPORTED_BY_OTHERS`); "Pro
-   všechny" on a private song says it's for whoever sees it.
+   všechny" on a private song says it's for whoever sees it. And, re-opening D145 on the walk's
+   finding: a comment written at a line goes above it, not after (`NotePlace.before`).
 
 ## Tests that matter most
 
