@@ -76,7 +76,7 @@ export function HomePage() {
   const waiting = useMemo(
     () =>
       [...songs.values()].filter((s) => s.status === 'pending').length +
-      openReports(notes).length,
+      openReports(notes, songs).length,
     [songs, notes],
   );
   // Song lists show what can be found: a rejected song only to its author (D77).

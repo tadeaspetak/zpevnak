@@ -1,6 +1,7 @@
 import { act, cleanup, fireEvent, renderHook, screen } from '@testing-library/react';
 import { notifications } from '@mantine/notifications';
 import { useMemo, useState } from 'react';
+import { useLocation } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { parseSong } from '#shared/chordpro/parse.ts';
 import { renderApp } from '#tests/client/render.tsx';
@@ -65,14 +66,17 @@ function Played({
 }) {
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
   const { loaded } = useCatalog();
-  const song = useMemo(() => parseSong(source), [source]);
+  // As the catalog does when the song is saved elsewhere meanwhile.
+  const [record, setRecord] = useState<SongRecord>({ ...APPROVED, source });
+  const song = useMemo(() => parseSong(record.source), [record.source]);
   const notes = useSongNotes({
     songId: SONG_ID,
     song,
-    record: { ...APPROVED, source },
+    record,
     playlist,
     container,
   });
+  const location = useLocation();
   // The page's own keys: Escape leaves the song.
   useKeys({ Escape: leftTheSong });
   return (
@@ -80,6 +84,19 @@ function Played({
       <button type="button" onClick={notes.startPicking}>
         začít vybírat
       </button>
+      <button
+        type="button"
+        onClick={() =>
+          setRecord({
+            ...record,
+            source: `{title: Píseň}\nnový první řádek\n${record.source.split('\n').slice(1).join('\n')}`,
+            updatedAt: '2026-11-26T12:00:00.000Z',
+          })
+        }
+      >
+        změnit jinde
+      </button>
+      <output aria-label="kde">{`${location.pathname}${location.search}`}</output>
       {/* As on the page: the sheet comes once the song is there, after a loader. */}
       {loaded ? (
         <div ref={setContainer} data-loaded>
@@ -182,7 +199,7 @@ describe('notes on the song view (D135)', () => {
     ]);
     fireEvent.click(screen.getByRole('button', { name: /refrén třikrát/ }));
     expect(await screen.findByText(/Autor: Bára/)).toBeTruthy();
-    expect(screen.getByRole('textbox', { name: 'Poznámka' })).toHaveProperty(
+    expect(screen.getByRole('textbox', { name: 'Text' })).toHaveProperty(
       'value',
       'refrén třikrát',
     );
@@ -267,7 +284,7 @@ describe('notes on the song view (D135)', () => {
     const sheet = await play(null, []);
     fireEvent.contextMenu(sheet.querySelector('[data-place="1"]') as HTMLElement);
     fireEvent.click(await screen.findByRole('menuitem', { name: 'Přidat poznámku' }));
-    fireEvent.change(await screen.findByRole('textbox', { name: 'Poznámka' }), {
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Text' }), {
       target: { value: 'zpomalit' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Uložit' }));
@@ -373,7 +390,7 @@ describe('notes on the song view (D135)', () => {
       const sheet = await play(null, []);
       fireEvent.contextMenu(sheet.querySelector('[data-place="1"]') as HTMLElement);
       fireEvent.click(await screen.findByRole('menuitem', { name: 'Přidat poznámku' }));
-      fireEvent.change(await screen.findByRole('textbox', { name: 'Poznámka' }), {
+      fireEvent.change(await screen.findByRole('textbox', { name: 'Text' }), {
         target: { value: 'kapodastr' },
       });
       fireEvent.click(screen.getByRole('button', { name: 'Uložit' }));
@@ -410,13 +427,13 @@ describe('notes on the song view (D135)', () => {
       fireEvent.click(await screen.findByRole('menuitem', { name: 'Nahlásit chybu' }));
       expect(
         (
-          await screen.findByRole('radio', { name: /Chyba v písničce, pro editory/ })
+          await screen.findByRole('radio', { name: /Pro editory: chyba v písničce/ })
         ).getAttribute('aria-checked') ?? '',
       ).not.toBe('false');
-      fireEvent.change(screen.getByRole('textbox', { name: 'Poznámka' }), {
+      fireEvent.change(screen.getByRole('textbox', { name: 'Text' }), {
         target: { value: 'má tu být Hm' },
       });
-      fireEvent.click(screen.getByRole('button', { name: 'Uložit' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Nahlásit' }));
       await vi.waitFor(() =>
         expect(sent('notes.create')).toEqual([
           {
@@ -436,7 +453,7 @@ describe('notes on the song view (D135)', () => {
       await play(null, [report]);
       expect(screen.getByRole('img', { name: 'Hlášení chyby' })).toBeTruthy();
       fireEvent.click(screen.getByRole('button', { name: /má tu být Hm/ }));
-      expect(await screen.findByRole('textbox', { name: 'Poznámka' })).toBeTruthy();
+      expect(await screen.findByRole('textbox', { name: 'Text' })).toBeTruthy();
       cleanup();
 
       asEditor();
@@ -445,6 +462,10 @@ describe('notes on the song view (D135)', () => {
       expect(await screen.findByText('Nahlásil(a): Bára')).toBeTruthy();
       expect(screen.queryByRole('textbox')).toBeNull();
       fireEvent.click(screen.getByRole('button', { name: 'Vyřešeno' }));
+      // At once off the song, sent when the toast goes without an undo (D139).
+      await vi.waitFor(() => expect(screen.queryByText('má tu být Hm')).toBeNull());
+      expect(sent('notes.resolve')).toEqual([]);
+      act(() => notifications.hide('note-resolved-1'));
       await vi.waitFor(() => expect(sent('notes.resolve')).toEqual([{ id: 1 }]));
     });
 
@@ -464,8 +485,12 @@ describe('notes on the song view (D135)', () => {
       fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' });
       // Their own: open to change, and resolved from there.
       fireEvent.click(screen.getByRole('button', { name: /má tu být Hm/ }));
-      expect(await screen.findByRole('textbox', { name: 'Poznámka' })).toBeTruthy();
+      expect(await screen.findByRole('textbox', { name: 'Text' })).toBeTruthy();
       fireEvent.click(screen.getByRole('button', { name: 'Vyřešeno' }));
+      // At once off the song, sent when the toast goes without an undo (D139).
+      await vi.waitFor(() => expect(screen.queryByText('má tu být Hm')).toBeNull());
+      expect(sent('notes.resolve')).toEqual([]);
+      act(() => notifications.hide('note-resolved-1'));
       await vi.waitFor(() => expect(sent('notes.resolve')).toEqual([{ id: 1 }]));
     });
   });
@@ -499,11 +524,11 @@ describe('notes on the song view (D135)', () => {
       asEditor();
       const sheet = await play(null, []);
       await atLine(sheet, 0, 'Přidat poznámku');
-      fireEvent.click(await screen.findByRole('radio', { name: /Do písničky/ }));
-      fireEvent.change(screen.getByRole('textbox', { name: 'Poznámka' }), {
+      fireEvent.click(await screen.findByRole('radio', { name: /zapsat do písničky/ }));
+      fireEvent.change(screen.getByRole('textbox', { name: 'Text' }), {
         target: { value: 'tiše' },
       });
-      fireEvent.click(screen.getByRole('button', { name: 'Uložit' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Zapsat do písničky' }));
       await vi.waitFor(() =>
         expect(saved()).toEqual([
           {
@@ -519,7 +544,7 @@ describe('notes on the song view (D135)', () => {
       const sheet = await play(null, []);
       await atLine(sheet, 0, 'Přidat poznámku');
       expect(await screen.findByRole('radio', { name: 'Jen pro mě' })).toBeTruthy();
-      expect(screen.queryByRole('radio', { name: /Do písničky/ })).toBeNull();
+      expect(screen.queryByRole('radio', { name: /zapsat do písničky/ })).toBeNull();
     });
 
     it('changes the song’s own comment where it is, and removes it with an undo', async () => {
@@ -527,7 +552,7 @@ describe('notes on the song view (D135)', () => {
       const commented = SOURCE.replace('lu lu [A]lu\n', 'lu lu [A]lu\n{c: pomalu}\n');
       const sheet = await play(null, [], undefined, true, commented);
       await atLine(sheet, 2, 'Upravit komentář');
-      const field = await screen.findByRole('textbox', { name: 'Komentář v písničce' });
+      const field = await screen.findByRole('textbox', { name: 'Text' });
       expect(field).toHaveProperty('value', 'pomalu');
       fireEvent.change(field, { target: { value: 'ještě pomaleji' } });
       fireEvent.click(screen.getByRole('button', { name: 'Uložit' }));
@@ -555,6 +580,181 @@ describe('notes on the song view (D135)', () => {
       fireEvent.contextMenu(sheet.querySelector('[data-place="2"]') as HTMLElement);
       const items = await screen.findAllByRole('menuitem');
       expect(items.map((item) => item.textContent)).not.toContain('Upravit komentář');
+    });
+  });
+
+  describe('reports and song comments, after the review and the walk (D143–D145)', () => {
+    const asEditor = () =>
+      localStorage.setItem(
+        'zpevnak.me',
+        JSON.stringify({
+          id: ME,
+          email: 'ja@example.com',
+          displayName: 'Já',
+          role: 'editor',
+          locale: 'cs',
+          emailVerified: true,
+        }),
+      );
+    const calls = (procedure: string) =>
+      vi
+        .mocked(fetch)
+        .mock.calls.filter(([input]) => String(input).includes(procedure))
+        .map(([, init]) => JSON.parse(String(init?.body))[0]);
+    /** The server answering `procedure`, the rest left waiting. */
+    const answer = <T,>(procedure: string, body: (input: T) => unknown, status = 200) =>
+      vi.mocked(fetch).mockImplementation(((url: string, init?: RequestInit) =>
+        String(url).includes(procedure)
+          ? Promise.resolve(
+              new Response(JSON.stringify([body(JSON.parse(String(init?.body))[0])]), {
+                status,
+                headers: { 'content-type': 'application/json' },
+              }),
+            )
+          : new Promise<Response>(() => {})) as typeof fetch);
+    /** Picks from a line's menu at once: in jsdom it doesn't stay open for long. */
+    const pick = async (sheet: HTMLElement, place: number, item: string) => {
+      fireEvent.contextMenu(
+        sheet.querySelector(`[data-place="${place}"]`) as HTMLElement,
+      );
+      fireEvent.click(await screen.findByRole('menuitem', { name: item }));
+    };
+
+    it('names the dialog, the field and the button after whom the note is for', async () => {
+      asEditor();
+      const sheet = await play(null, []);
+      await pick(sheet, 0, 'Přidat poznámku');
+      expect(await screen.findByRole('heading', { name: 'Nová poznámka' })).toBeTruthy();
+      expect(screen.getByRole('textbox', { name: 'Text' })).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Uložit' })).toBeTruthy();
+      fireEvent.click(screen.getByRole('radio', { name: /Pro editory/ }));
+      expect(screen.getByRole('heading', { name: 'Nahlásit chybu' })).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Nahlásit' })).toBeTruthy();
+      fireEvent.click(screen.getByRole('radio', { name: /Pro všechny/ }));
+      expect(screen.getByRole('heading', { name: 'Komentář do písničky' })).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Zapsat do písničky' })).toBeTruthy();
+    });
+
+    it('takes "Vyřešeno" back with one tap, sending nothing', async () => {
+      asEditor();
+      await play(null, [note(1, { kind: 'report', authorId: 9, text: 'má tu být Hm' })]);
+      fireEvent.click(screen.getByRole('button', { name: /má tu být Hm/ }));
+      fireEvent.click(await screen.findByRole('button', { name: 'Vyřešeno' }));
+      fireEvent.click(await screen.findByRole('button', { name: 'Beru zpátky' }));
+      await vi.waitFor(() => expect(screen.getByText('má tu být Hm')).toBeTruthy());
+      expect(calls('notes.resolve')).toEqual([]);
+    });
+
+    it('lets a report another editor resolved meanwhile go, saying so, not as an error', async () => {
+      asEditor();
+      answer(
+        'notes.resolve',
+        () => ({
+          error: {
+            message: 'NOT_FOUND',
+            code: -32004,
+            data: { code: 'NOT_FOUND', httpStatus: 404 },
+          },
+        }),
+        404,
+      );
+      await play(null, [note(1, { kind: 'report', authorId: 9, text: 'má tu být Hm' })]);
+      fireEvent.click(screen.getByRole('button', { name: /má tu být Hm/ }));
+      fireEvent.click(await screen.findByRole('button', { name: 'Vyřešeno' }));
+      act(() => notifications.hide('note-resolved-1'));
+      expect(await screen.findByText('Tohle hlášení už někdo vyřešil.')).toBeTruthy();
+      const { result } = renderHook(() => useCatalog());
+      expect(result.current.notes.has(1)).toBe(false);
+    });
+
+    it('keeps one’s own report, resolved, as the server returns it', async () => {
+      asEditor();
+      const own = note(1, { kind: 'report', text: 'opravím' });
+      answer('notes.resolve', () => ({
+        result: { data: { note: { ...own, resolvedAt: '2026-11-26T12:00:00.000Z' } } },
+      }));
+      await play(null, [own]);
+      fireEvent.click(screen.getByRole('button', { name: /opravím/ }));
+      fireEvent.click(await screen.findByRole('button', { name: 'Vyřešeno' }));
+      act(() => notifications.hide('note-resolved-1'));
+      const { result } = renderHook(() => useCatalog());
+      await vi.waitFor(() =>
+        expect(result.current.notes.get(1)?.resolvedAt).toBe('2026-11-26T12:00:00.000Z'),
+      );
+    });
+
+    it('offers reporting at a line to one signed out, through signing in', async () => {
+      localStorage.removeItem('zpevnak.me');
+      const sheet = await play(null, []);
+      fireEvent.contextMenu(sheet.querySelector('[data-place="1"]') as HTMLElement);
+      const items = await screen.findAllByRole('menuitem');
+      expect(items.map((item) => item.textContent)).toEqual([
+        'Nahlásit chybu',
+        'Kopírovat řádek',
+      ]);
+      fireEvent.click(items[0] as HTMLElement);
+      expect(screen.getByRole('status', { name: 'kde' }).textContent).toBe(
+        `/login?next=${encodeURIComponent('/?report=1')}`,
+      );
+    });
+
+    it('goes to the line of a report fixed since, the report no longer on the song', async () => {
+      const scrolled = vi.fn();
+      Element.prototype.scrollIntoView = scrolled;
+      const sheet = await play(
+        null,
+        [note(1, { kind: 'report', resolvedAt: '2026-11-26T10:00:00.000Z' })],
+        { backTo: '/account?tab=notes', note: 1 },
+      );
+      await vi.waitFor(() =>
+        expect(scrolled.mock.contexts).toEqual([sheet.querySelector('[data-place="1"]')]),
+      );
+    });
+
+    it('puts a removed song comment back with one tap, as a new version', async () => {
+      asEditor();
+      answer('songs.update', (input: { source: string }) => ({
+        result: {
+          data: {
+            ...APPROVED,
+            source: input.source,
+            updatedAt: '2026-11-26T12:00:00.000Z',
+          },
+        },
+      }));
+      const commented = SOURCE.replace('lu lu [A]lu\n', 'lu lu [A]lu\n{c: pomalu}\n');
+      const sheet = await play(null, [], undefined, true, commented);
+      await pick(sheet, 2, 'Upravit komentář');
+      fireEvent.click(await screen.findByRole('button', { name: 'Smazat' }));
+      fireEvent.click(await screen.findByRole('button', { name: 'Beru zpátky' }));
+      await vi.waitFor(() =>
+        expect(calls('songs.update')).toEqual([
+          { id: SONG_ID, source: SOURCE, seenAt: APPROVED.updatedAt },
+          { id: SONG_ID, source: commented, seenAt: '2026-11-26T12:00:00.000Z' },
+        ]),
+      );
+    });
+
+    it('writes into the song as it was when the dialog opened: a song changed since is refused, not edited at a moved line', async () => {
+      asEditor();
+      const sheet = await play(null, []);
+      await pick(sheet, 0, 'Přidat poznámku');
+      fireEvent.click(await screen.findByRole('radio', { name: /Pro všechny/ }));
+      fireEvent.change(screen.getByRole('textbox', { name: 'Text' }), {
+        target: { value: 'tiše' },
+      });
+      // Saved elsewhere meanwhile: the device's copy moves on under the open dialog.
+      fireEvent.click(screen.getByRole('button', { name: 'změnit jinde', hidden: true }));
+      fireEvent.click(screen.getByRole('button', { name: 'Zapsat do písničky' }));
+      await vi.waitFor(() =>
+        expect(calls('songs.update')).toEqual([
+          {
+            id: SONG_ID,
+            source: SOURCE.replace('la la [D]la\n', 'la la [D]la\n{comment: tiše}\n'),
+            seenAt: APPROVED.updatedAt,
+          },
+        ]),
+      );
     });
   });
 });

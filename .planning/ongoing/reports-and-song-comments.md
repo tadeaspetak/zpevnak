@@ -1,6 +1,6 @@
 # Reports and song comments, through the note dialog
 
-**State:** ongoing: phases 1 to 3 shipped (D143, D144, D145); the review and walk to come. Agreed in conversation on 2026-11-26 with the
+**State:** ongoing: phases 1 to 4 shipped (D143–D146); one question from the walk open (where a comment goes). Agreed in conversation on 2026-11-26 with the
 owner, who took the recommended pick on every question, then settled the rest (no email, a tab
 per kind, an account to report).
 
@@ -151,7 +151,18 @@ Each ships on its own, gates green.
    - **One line:** what's typed across lines is joined (`commentText`), as a `{comment}` is.
    - **The undo of a removal** saves the comment back, a new version again; if the song changed
      meanwhile, the toast says why it can't.
-4. **A review and a UX walk** of the three, as an editor, an author, a player and a reporter.
+4. **A review and a UX walk (shipped, D146)** of the three, as an editor, an author, a player and
+   a reporter. The review's five bugs fixed: a comment saved at a line moved meanwhile (the
+   dialog now edits the song as it opened, so a stale save is refused), one's own report lost
+   on resolving it (the server returns it), offline resolving and comment saving that waited
+   with the dialog, a report resolved by another editor meanwhile (it just goes), the unconfirmed
+   account back from signing in to report (told to confirm). The walk's: the dialog follows
+   whom it's for, "Vyřešeno" undone from the toast, reporting from the line's menu signed out,
+   a resolved report's line found from Moje poznámky, a toast after reporting, the account's
+   reason, the labels, the order and icons in the menus. Settled by the owner: the report's
+   way to the editor and the song's open reports on the edit page; the queue's reports by song.
+   Also: a song with someone's open report can't go private (`SONG_REPORTED_BY_OTHERS`); "Pro
+   všechny" on a private song says it's for whoever sees it.
 
 ## Tests that matter most
 

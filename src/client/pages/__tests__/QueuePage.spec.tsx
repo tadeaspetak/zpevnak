@@ -49,6 +49,7 @@ async function open(notes: NoteRecord[]) {
   await screen.findByRole('tab', { name: /Hlášení/, selected: true });
   act(() => {
     putSong(song);
+    putSong({ ...song, id: 8, title: 'Jiná' });
     notes.forEach((n) => putNote(n.id, n));
   });
 }
@@ -75,7 +76,7 @@ describe('QueuePage: reports (D143)', () => {
     vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
   });
   afterEach(() => {
-    act(() => [1, 2, 3].forEach((id) => putNote(id, null)));
+    act(() => [1, 2, 3, 4].forEach((id) => putNote(id, null)));
     localStorage.clear();
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
@@ -94,6 +95,17 @@ describe('QueuePage: reports (D143)', () => {
     expect(screen.getByRole('tab', { name: /Hlášení/ }).textContent).toContain('2');
     expect(screen.getAllByText('U řádku „la la la“')).toHaveLength(2);
     expect(screen.getAllByText(/^Nahlásil\(a\): Bára · /)).toHaveLength(2);
+  });
+
+  it('groups the reports by song, the song with the oldest one first', async () => {
+    await open([report(2, { songId: 8 }), report(1), report(3)]);
+    const titles = screen.getAllByText(/^(Píseň|Jiná)$/).map((el) => el.textContent);
+    expect(titles).toEqual(['Píseň', 'Jiná']);
+    expect(screen.queryAllByText(/^chyba \d$/).map((el) => el.textContent)).toEqual([
+      'chyba 1',
+      'chyba 3',
+      'chyba 2',
+    ]);
   });
 
   it('leads to the report in its song, and back to the reports', async () => {

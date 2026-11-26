@@ -327,6 +327,24 @@ describe('reports of a mistake (D143)', () => {
     ).rejects.toThrow('NOT_FOUND');
   });
 
+  it('is reported by an editor too, who may close their own once fixed, and keeps it', async () => {
+    const { editor, song, report } = await reported();
+    const own = await callerFor(editor).notes.create({
+      songId: song.id,
+      kind: 'report',
+      playlistId: null,
+      text: 'opravím později',
+      todo: false,
+      line: null,
+    });
+    const { note } = await callerFor(editor).notes.resolve({ id: own.id });
+    expect(note).toMatchObject({ id: own.id, resolvedAt: expect.any(String) });
+    // Someone else's: resolved, it's no longer theirs to see.
+    expect(await callerFor(editor).notes.resolve({ id: report.id })).toEqual({
+      note: null,
+    });
+  });
+
   it('is changed by its reporter only: the editors resolve it, they don’t rewrite it', async () => {
     const { editor, reporter, report } = await reported();
     const change = { id: report.id, text: 've třetí sloce', todo: false, done: false };

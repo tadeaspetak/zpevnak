@@ -167,22 +167,35 @@ export const en: Record<keyof typeof cs, string> = {
   'notes.noneUnverified': 'You can write notes once you’ve confirmed your email.',
   'notes.report': 'Mistake report',
   'notes.reportMark': 'Mistake report',
-  'notes.forEditors': 'A mistake in the song, for the editors',
+  'notes.forEditors': 'For the editors: a mistake in the song',
   'notes.forEditorsHint':
     'The editors and the song’s author see it. Once it’s fixed, you’ll see so in your account: Notes.',
   'notes.reportedBy': 'Reported by: {name}',
-  'notes.resolve': 'Fixed',
+  'notes.resolve': 'Mark fixed',
   'notes.resolvedMark': 'Fixed',
   'notes.resolvedDone': 'Fixed. The report has left the song.',
   'notes.reportUnverified': 'You can report a mistake once you confirm your email.',
-  'notes.forSong': 'Into the song (everyone sees it)',
+  'notes.forSong': 'For everyone: into the song',
   'notes.forSongHint':
-    'Written into the song’s text as a comment, for everyone who plays it.',
+    'Everyone who opens the song sees it, signed in or not. It’s saved as an edit of the song.',
   'notes.songComment': 'Comment in the song',
   'notes.songCommentHint': 'It’s part of the song: everyone who plays it sees it.',
   'notes.songCommentSaved': 'The comment is in the song.',
-  'notes.songCommentRemoved': 'The comment is out of the song.',
+  'notes.songCommentRemoved': 'Comment deleted.',
   'notes.editComment': 'Edit the comment',
+  'notes.alreadyResolved': 'Someone has already fixed this one.',
+  'notes.newForPlaylist': 'Note for the playlist',
+  'notes.newSongComment': 'Comment into the song',
+  'notes.reported': 'Reported. Once it’s fixed, you’ll see it in your account: Notes.',
+  'notes.textLabel': 'Text',
+  'notes.forSongPrivate': 'For everyone who sees it: into the song',
+  'notes.forSongPrivateHint':
+    'Everyone the song is shared with sees it. It’s saved as an edit of the song.',
+  'notes.sendReport': 'Report',
+  'notes.writeIntoSong': 'Write into the song',
+  'notes.editSong': 'Edit the song',
+  'notes.confirmEmail': 'Confirm the email',
+  'notes.reportsHere': 'Reported mistakes: {count}',
   'notes.byAuthor': 'By {name}',
   'notes.todo': 'TODO',
   'notes.done': 'Done',
@@ -428,7 +441,7 @@ export const en: Record<keyof typeof cs, string> = {
   'auth.verifyTitle': 'Confirming your email',
   'auth.verified': 'Your email is confirmed. You can add songs and playlists.',
   'auth.whyAccount':
-    'You can see songs and public playlists without an account. You need one for your own playlists and to add songs.',
+    'You can see songs and public playlists without an account. You need one for your own playlists, notes, adding songs and reporting mistakes.',
 
   'users.role': 'Role',
   'users.unverified': 'email not confirmed',
@@ -455,6 +468,8 @@ export const en: Record<keyof typeof cs, string> = {
     'Not everyone there can see this private song yet. Only its owner can add it there.',
   'error.SONG_EDITED_BY_OTHERS':
     'Someone else has worked on this song: it can’t be private.',
+  'error.SONG_REPORTED_BY_OTHERS':
+    'Someone reported a mistake in this song that isn’t fixed yet: it can’t go private now.',
   'error.SONG_IN_OTHERS_PLAYLISTS':
     'The song is in someone else’s playlist: it can’t be private.',
   'error.SONG_NOT_PRIVATE':
@@ -499,6 +514,8 @@ export const en: Record<keyof typeof cs, string> = {
   'songs.onlyYou': 'only you',
   'songs.cantGoPrivateEdited':
     'It can’t be private any more: someone else has worked on it.',
+  'songs.cantGoPrivateReported':
+    'It can’t go private now: someone reported a mistake in it that isn’t fixed yet.',
   'songs.cantGoPrivateUsed':
     'It can’t be private any more: it is in someone else’s playlist.',
   'songs.privateMark': 'Private',

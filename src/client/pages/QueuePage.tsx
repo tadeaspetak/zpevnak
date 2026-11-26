@@ -20,11 +20,11 @@ type Status = 'pending' | 'rejected' | 'reports';
 export function QueuePage() {
   const { t } = useI18n();
   const { isEditor, known } = useMe();
-  const { notes } = useCatalog();
+  const { notes, songs } = useCatalog();
   const [params, setParams] = useSearchParams();
   const asked = params.get('status');
   const status: Status = asked === 'rejected' || asked === 'reports' ? asked : 'pending';
-  const reports = useMemo(() => openReports(notes), [notes]);
+  const reports = useMemo(() => openReports(notes, songs), [notes, songs]);
   const pendingCount = trpc.songs.queue.useQuery(
     { status: 'pending' },
     { enabled: isEditor },
@@ -156,18 +156,20 @@ function SongQueue({ status }: { status: 'pending' | 'rejected' }) {
 }
 
 /**
- * The reports of mistakes, the oldest first (D143): the song, where in it, what, who and when.
- * Each leads to its place in the song, where it's fixed and resolved.
+ * The reports of mistakes by song (D144): the song with the oldest one first, its reports under
+ * its title, each with what, where, who and when, leading to its place in the song, where it's
+ * fixed and resolved.
  */
 function ReportList({ reports }: { reports: LocalNote[] }) {
   const { t, formatDate } = useI18n();
   const { songs } = useCatalog();
   const back = { backTo: url.queue('reports'), backName: t('queue.title') };
-  const shown = reports.flatMap((report) => {
-    const song = songs.get(report.songId);
-    return song ? [{ report, song }] : [];
-  });
-  if (shown.length === 0) {
+  // In the order of each song's oldest report: `reports` come oldest first.
+  const bySong = new Map<number, LocalNote[]>();
+  for (const report of reports) {
+    bySong.set(report.songId, [...(bySong.get(report.songId) ?? []), report]);
+  }
+  if (bySong.size === 0) {
     return (
       <Text c="dimmed" ta="center" py="xl">
         {t('queue.noReports')}
@@ -175,33 +177,44 @@ function ReportList({ reports }: { reports: LocalNote[] }) {
     );
   }
   return (
-    <Stack gap={0} mx="-md">
-      {shown.map(({ report, song }) => (
-        <UnstyledButton
-          key={report.id}
-          component={Link}
-          to={url.song(song)}
-          state={{ ...back, note: report.id } satisfies SongLinkState}
-          className={rowClasses.row}
-        >
-          <Text fw={600} truncate>
-            {song.title}
-          </Text>
-          <Text size="sm" lineClamp={3} style={{ whiteSpace: 'pre-line' }}>
-            {report.text}
-          </Text>
-          {/* Where, then who and when, a line each: on a phone the line's words would
-              push who reported it out of sight. */}
-          <Text size="sm" c="dimmed" truncate>
-            {report.line
-              ? t('notes.atLine', { words: report.line.text })
-              : t('notes.wholeSong')}
-          </Text>
-          <Text size="sm" c="dimmed" truncate>
-            {`${t('notes.reportedBy', { name: report.authorName })} · ${formatDate(report.createdAt)}`}
-          </Text>
-        </UnstyledButton>
-      ))}
+    <Stack gap="md">
+      {[...bySong].map(([songId, list]) => {
+        const song = songs.get(songId);
+        return (
+          song && (
+            <section key={songId}>
+              <Text fw={600} truncate>
+                {song.title}
+              </Text>
+              <Stack gap={0} mx="-md">
+                {list.map((report) => (
+                  <UnstyledButton
+                    key={report.id}
+                    component={Link}
+                    to={url.song(song)}
+                    state={{ ...back, note: report.id } satisfies SongLinkState}
+                    className={rowClasses.row}
+                  >
+                    <Text size="sm" lineClamp={3} style={{ whiteSpace: 'pre-line' }}>
+                      {report.text}
+                    </Text>
+                    {/* Where, then who and when, a line each: on a phone the line's words
+                        would push who reported it out of sight. */}
+                    <Text size="sm" c="dimmed" truncate>
+                      {report.line
+                        ? t('notes.atLine', { words: report.line.text })
+                        : t('notes.wholeSong')}
+                    </Text>
+                    <Text size="sm" c="dimmed" truncate>
+                      {`${t('notes.reportedBy', { name: report.authorName })} · ${formatDate(report.createdAt)}`}
+                    </Text>
+                  </UnstyledButton>
+                ))}
+              </Stack>
+            </section>
+          )
+        );
+      })}
     </Stack>
   );
 }

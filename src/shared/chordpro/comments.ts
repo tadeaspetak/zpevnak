@@ -16,7 +16,8 @@ export function commentText(text: string): string {
 function linesOf(source: string) {
   return {
     lines: source.split(/\r\n|\r|\n/),
-    newline: /\r\n/.test(source) ? '\r\n' : '\n',
+    // Line ends as the song has them: Windows', old Macs', or Unix's.
+    newline: /\r\n/.test(source) ? '\r\n' : /\r/.test(source) ? '\r' : '\n',
   };
 }
 
@@ -43,7 +44,6 @@ function bodyStart(lines: string[]): number {
     }
     return (
       COMMENT_DIRECTIVES.has(directive.name) ||
-      directive.name === 'highlight' ||
       directive.name === 'chorus' ||
       directive.name === 'column_break' ||
       /^start_of_/.test(directive.name)
@@ -68,11 +68,17 @@ export function addComment(source: string, after: number | null, text: string): 
   return lines.join(newline);
 }
 
-/** Rewrites the comment on source line `at`, keeping how it's written (`{c:}`, italic, …). */
+/**
+ * Rewrites the comment on source line `at`, keeping how it's written (`{c:}`, italic, …). An
+ * empty one would be a line nobody sees: removing it is `removeComment`'s.
+ */
 export function replaceComment(source: string, at: number, text: string): string {
   const { lines, newline } = linesOf(source);
   if (!commentAt(lines, at)) {
     throw new Error(`No comment on line ${at}`);
+  }
+  if (!commentText(text)) {
+    throw new Error('An empty comment');
   }
   const raw = lines[at - 1] ?? '';
   // The directive's own name as written: `c`, `comment_italic`, …
@@ -88,8 +94,13 @@ export function removeComment(source: string, at: number): string {
     throw new Error(`No comment on line ${at}`);
   }
   lines.splice(at - 1, 1);
-  // One added at the head of the song came with a blank line: it goes with it.
-  if (lines[at - 2]?.trim() === '' && lines[at - 1]?.trim() === '') {
+  // One added at the head of the song came with a blank line: it goes with it. Not one
+  // between two blank lines in the song, whose spacing is the song's.
+  if (
+    lines[at - 2]?.trim() === '' &&
+    lines[at - 1]?.trim() === '' &&
+    bodyStart(lines) >= at - 1
+  ) {
     lines.splice(at - 1, 1);
   }
   return lines.join(newline);

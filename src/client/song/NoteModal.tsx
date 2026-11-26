@@ -9,7 +9,10 @@ import {
   Textarea,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
+import { IconPencil } from '@tabler/icons-react';
 import { useState } from 'react';
+import { Link } from 'react-router';
+import { url } from '#shared/urls.ts';
 import type { NotePlace } from '#shared/notes.ts';
 import { NOTE_TEXT_MAX } from '#shared/validators/index.ts';
 import {
@@ -80,6 +83,19 @@ export function useNoteRequests() {
     onError: (error) => onError(error),
     onSettled: (_result, _error, input) => settleNote(input.id),
   });
+  const resolve = trpc.notes.resolve.useMutation({
+    onSuccess: ({ note }, { id }) => putNote(id, note),
+    onError: (error, { id }) => {
+      const code = (error as { message?: string }).message;
+      if (code === 'NOT_FOUND' || code === 'NOTE_RESOLVED') {
+        putNote(id, null);
+        notifications.show({ message: t('notes.alreadyResolved') });
+      } else {
+        onError(error);
+      }
+    },
+    onSettled: (_result, _error, { id }) => settleNote(id),
+  });
   return {
     create: trpc.notes.create.useMutation({
       onMutate: (input) => {
@@ -132,14 +148,24 @@ export function useNoteRequests() {
       onError: (error) => onError(error),
       onSettled: (_note, _error, input) => settleNote(input.id),
     }),
-    /** A report fixed (D143): it leaves the song for whoever resolved it. */
-    resolve: trpc.notes.resolve.useMutation({
-      onSuccess: (_, { id }) => {
-        putNote(id, null);
-        notifications.show({ message: t('notes.resolvedDone') });
-      },
-      onError: (error) => onError(error),
-    }),
+    /**
+     * A report fixed (D143), at once and taken back by one tap (D139), as a note is deleted:
+     * it goes from sight while the toast says so, and is sent when the toast closes. Its
+     * reporter keeps it, resolved (the server returns it to them); for anyone else it's gone.
+     * Resolved meanwhile by another editor, it just goes.
+     */
+    resolveWithUndo: (note: NoteRecord) => {
+      waitNote(note.id, null);
+      showUndoToast({
+        id: `note-resolved-${note.id}`,
+        message: t('notes.resolvedDone'),
+        onUndo: async () => settleNote(note.id),
+        onKept: () => {
+          resolve.mutate({ id: note.id });
+          notifyIfQueued(t('common.savesWhenOnline'));
+        },
+      });
+    },
     /**
      * Deleted at once, taken back by one tap (D139): the note goes from sight while the toast
      * says so, and the request is sent only when the toast closes without an undo. Closed with
@@ -205,8 +231,10 @@ type SongComments = ReturnType<typeof useSongComments>;
 
 /**
  * Writing a note on a song, or changing one (D135): its text, who it's for (one's own, the
- * playlist's, or a report for the editors, D143; chosen when it's written), and for one's own,
- * TODO and done. A report also opens here for whoever may fix the song, to resolve it. The
+ * playlist's, a report for the editors, D143, or a comment into the song, D145; chosen when
+ * it's written), and for one's own, TODO and done. The title, the field and the button follow
+ * that choice: the one place a private thought could be published by mistake. A report also
+ * opens here for whoever may fix the song, to resolve it; and the song's own comment. The
  * requests live here, kept mounted, not in the form: one waiting for the connection (D133)
  * outlives the form, closed meanwhile, and still lands in the catalog, or says why it didn't.
  */
@@ -222,13 +250,21 @@ export function NoteModal({ target, ...props }: Props) {
         : target.kind === 'comment'
           ? `comment-${target.at}`
           : `${target.kind}-${target.note.id}`;
+  // Whom a new note is for, chosen in its form; as it was asked for until then.
+  const [chosen, setChosen] = useState<{ key: string; audience: Audience } | null>(null);
+  const audience: Audience =
+    chosen?.key === key
+      ? chosen.audience
+      : target?.kind === 'edit' || target?.kind === 'review'
+        ? target.note.kind
+        : target?.kind === 'new' && target.report
+          ? 'report'
+          : 'own';
   const title =
     target === null
       ? ''
       : target.kind === 'new'
-        ? target.report
-          ? t('song.reportMistake')
-          : t('notes.new')
+        ? t(NEW_TITLE[audience])
         : target.kind === 'comment'
           ? t('notes.songComment')
           : target.note.kind === 'report'
@@ -239,20 +275,19 @@ export function NoteModal({ target, ...props }: Props) {
     requests.deleteWithUndo(note);
     props.onClose();
   };
+  const resolveNote = (note: NoteRecord) => {
+    requests.resolveWithUndo(note);
+    props.onClose();
+  };
   return (
     <Modal opened={target !== null} onClose={props.onClose} title={title}>
       {target?.kind === 'review' && (
-        <ReportReview
-          key={key}
-          note={target.note}
-          resolve={requests.resolve}
-          onClose={props.onClose}
-        />
+        <ReportReview key={key} note={target.note} onResolve={resolveNote} />
       )}
       {target?.kind === 'comment' && props.fixing && (
         <SongCommentForm
           key={key}
-          song={props.fixing}
+          fixing={props.fixing}
           at={target.at}
           text={target.text}
           comments={comments}
@@ -264,9 +299,12 @@ export function NoteModal({ target, ...props }: Props) {
         <NoteForm
           key={key}
           target={target}
+          audience={audience}
+          onAudience={(next) => setChosen({ key, audience: next })}
           requests={requests}
           comments={comments}
           onDelete={deleteNote}
+          onResolve={resolveNote}
           {...props}
         />
       )}
@@ -274,33 +312,55 @@ export function NoteModal({ target, ...props }: Props) {
   );
 }
 
+/** A new note's title, by whom it's for. */
+const NEW_TITLE = {
+  own: 'notes.new',
+  playlist: 'notes.newForPlaylist',
+  report: 'song.reportMistake',
+  song: 'notes.newSongComment',
+} as const;
+
+/** What saves a new note, by whom it's for: saying what will happen. */
+const SUBMIT = {
+  own: 'common.save',
+  playlist: 'common.save',
+  report: 'notes.sendReport',
+  song: 'notes.writeIntoSong',
+} as const;
+
 function NoteForm({
   target,
+  audience,
+  onAudience,
   playlist,
   canReport,
   fixing,
   onClose,
   onSaved,
-  requests: { create, update, resolve },
+  requests: { create, update },
   comments,
   onDelete,
+  onResolve,
 }: Props & {
   target: Extract<NoteTarget, { kind: 'new' | 'edit' }>;
+  audience: Audience;
+  onAudience: (audience: Audience) => void;
   requests: NoteRequests;
   comments: SongComments;
   onDelete: (note: NoteRecord) => void;
+  onResolve: (note: NoteRecord) => void;
 }) {
   const { t } = useI18n();
   const { playlists } = useCatalog();
+  // The song as it was when the dialog opened: a comment goes where the reader saw the line,
+  // and a song changed meanwhile is refused (`seenAt`, D106), not written at a moved line.
+  const [song] = useState(fixing);
   const existing = target.kind === 'edit' ? target.note : null;
   const ownPlaylist =
     existing && existing.playlistId !== null
       ? playlists.get(existing.playlistId)
       : undefined;
   const [text, setText] = useState(existing?.text ?? '');
-  const [audience, setAudience] = useState<Audience>(
-    existing?.kind ?? (target.kind === 'new' && target.report ? 'report' : 'own'),
-  );
   const [todo, setTodo] = useState(existing?.todo ?? false);
   const [done, setDone] = useState(existing !== null && existing.doneAt !== null);
 
@@ -310,12 +370,16 @@ function NoteForm({
     'own',
     ...(playlist ? (['playlist'] as const) : []),
     ...(canReport ? (['report'] as const) : []),
-    ...(fixing ? (['song'] as const) : []),
+    ...(song ? (['song'] as const) : []),
   ];
   const saved = (note: NoteRecord) => {
     // Done, it leaves the song: say where it went.
     if (note.doneAt !== null && existing?.doneAt === null) {
       notifications.show({ message: t('notes.doneMoved') });
+    }
+    // A report sent: say so, and where its fix will show.
+    if (!existing && note.kind === 'report') {
+      notifications.show({ message: t('notes.reported') });
     }
     onSaved?.();
     onClose();
@@ -323,10 +387,10 @@ function NoteForm({
 
   const save = () => {
     if (audience === 'song') {
-      // Offered only for a new note, to whoever may change the song (`fixing`).
-      if (fixing && target.kind === 'new') {
-        const source = addComment(fixing.source, target.place?.after ?? null, text);
-        comments.save(fixing, source, () => {
+      // Offered only for a new note, to whoever may change the song.
+      if (song && target.kind === 'new') {
+        const source = addComment(song.source, target.place?.after ?? null, text);
+        comments.save(song, source, () => {
           notifications.show({ message: t('notes.songCommentSaved') });
           onClose();
         });
@@ -368,6 +432,8 @@ function NoteForm({
     }
   };
 
+  // One's own report, by whoever may fix the song: closed here once fixed.
+  const resolvable = existing?.kind === 'report' && song !== null;
   const busy = create.isPending || update.isPending || comments.pending;
   return (
     <form
@@ -381,7 +447,7 @@ function NoteForm({
           {words ? t('notes.atLine', { words }) : t('notes.wholeSong')}
         </Text>
         <Textarea
-          label={t('notes.text')}
+          label={t('notes.textLabel')}
           value={text}
           onChange={(e) => setText(e.currentTarget.value)}
           autosize
@@ -391,14 +457,12 @@ function NoteForm({
           required
         />
         {/* Who it's for is chosen once: a private note made the band's, or back, would
-            change who has seen it. */}
-        {/* The whole name, and who will see it: the one place a private thought could be
-            published by mistake. */}
+            change who has seen it. Each choice says first who will see it. */}
         {!existing && choices.length > 1 && (
           <Radio.Group
             label={t('notes.audience')}
             value={audience}
-            onChange={(v) => setAudience(v as Audience)}
+            onChange={(v) => onAudience(v as Audience)}
           >
             <Stack gap="xs" mt={4}>
               <Radio value="own" label={t('notes.forMe')} />
@@ -420,11 +484,20 @@ function NoteForm({
                   description={t('notes.forEditorsHint')}
                 />
               )}
-              {fixing && (
+              {song && (
+                // A private song's "everyone" is whoever it's shared with (D127).
                 <Radio
                   value="song"
-                  label={t('notes.forSong')}
-                  description={t('notes.forSongHint')}
+                  label={
+                    song.status === 'private'
+                      ? t('notes.forSongPrivate')
+                      : t('notes.forSong')
+                  }
+                  description={
+                    song.status === 'private'
+                      ? t('notes.forSongPrivateHint')
+                      : t('notes.forSongHint')
+                  }
                 />
               )}
             </Stack>
@@ -463,34 +536,26 @@ function NoteForm({
         )}
         <Group justify="space-between">
           {existing ? (
-            <Group gap="sm">
-              <Button variant="default" onClick={() => onDelete(existing)}>
-                {t('common.delete')}
-              </Button>
-              {/* One's own report, by whoever may fix the song: closed here once fixed. */}
-              {existing.kind === 'report' && fixing && (
-                <Button
-                  variant="default"
-                  loading={resolve.isPending}
-                  onClick={() => {
-                    resolve.mutate({ id: existing.id }, { onSuccess: onClose });
-                    notifyIfQueued(t('common.savesWhenOnline'));
-                  }}
-                >
-                  {t('notes.resolve')}
-                </Button>
-              )}
-            </Group>
+            <Button variant="default" onClick={() => onDelete(existing)}>
+              {t('common.delete')}
+            </Button>
           ) : (
             <span />
           )}
-          {/* On the right, wrapped below the rest on a phone too. */}
+          {/* On the right, wrapped below the rest on a phone too. With "Vyřešeno" there,
+              no "Zrušit": the × closes, and four buttons won't fit a phone's row. */}
           <Group gap="sm" ml="auto">
-            <Button variant="default" onClick={onClose}>
-              {t('common.cancel')}
-            </Button>
+            {resolvable ? (
+              <Button variant="default" onClick={() => onResolve(existing)}>
+                {t('notes.resolve')}
+              </Button>
+            ) : (
+              <Button variant="default" onClick={onClose}>
+                {t('common.cancel')}
+              </Button>
+            )}
             <Button type="submit" disabled={!text.trim()} loading={busy}>
-              {t('common.save')}
+              {existing ? t('common.save') : t(SUBMIT[audience])}
             </Button>
           </Group>
         </Group>
@@ -500,17 +565,15 @@ function NoteForm({
 }
 
 /**
- * A report as whoever may fix the song reads it (D143): where, what, who; resolved once the
- * song is fixed. Not rewritten here: it's its reporter's.
+ * A report as whoever may fix the song reads it (D143): where, what, who; the way to the song's
+ * editor to fix it; resolved once fixed. Not rewritten here: it's its reporter's.
  */
 function ReportReview({
   note,
-  resolve,
-  onClose,
+  onResolve,
 }: {
   note: NoteRecord;
-  resolve: NoteRequests['resolve'];
-  onClose: () => void;
+  onResolve: (note: NoteRecord) => void;
 }) {
   const { t } = useI18n();
   return (
@@ -522,19 +585,17 @@ function ReportReview({
       <Text size="sm" c="dimmed">
         {t('notes.reportedBy', { name: note.authorName })}
       </Text>
+      {/* The × closes: two buttons, to fix it and to say it's fixed. */}
       <Group justify="flex-end" gap="sm">
-        <Button variant="default" onClick={onClose}>
-          {t('common.close')}
-        </Button>
         <Button
-          loading={resolve.isPending}
-          onClick={() => {
-            resolve.mutate({ id: note.id }, { onSuccess: onClose });
-            notifyIfQueued(t('common.savesWhenOnline'));
-          }}
+          variant="default"
+          component={Link}
+          to={url.editSong(note.songId)}
+          leftSection={<IconPencil size={16} />}
         >
-          {t('notes.resolve')}
+          {t('notes.editSong')}
         </Button>
+        <Button onClick={() => onResolve(note)}>{t('notes.resolve')}</Button>
       </Group>
     </Stack>
   );
@@ -542,28 +603,37 @@ function ReportReview({
 
 /**
  * The song's own comment (D145), by whoever may change the song: its text rewritten in place,
- * or removed, with an undo. Saved as an edit of the song, as everyone will read it.
+ * or removed, with an undo. Saved as an edit of the song, as everyone will read it, against the
+ * song as it was when the dialog opened (`seenAt`, D106).
  */
 function SongCommentForm({
-  song,
+  fixing,
   at,
   text: written,
   comments,
   onClose,
 }: {
-  song: SongRecord;
+  fixing: SongRecord;
   at: number;
   text: string;
   comments: SongComments;
   onClose: () => void;
 }) {
   const { t } = useI18n();
+  const [song] = useState(fixing);
   const [text, setText] = useState(written);
+  const closeOffline = () => {
+    // Offline, the change waits for the connection (D133): the dialog doesn't wait with it.
+    if (!navigator.onLine) {
+      onClose();
+    }
+  };
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
         comments.save(song, replaceComment(song.source, at, text), onClose);
+        closeOffline();
       }}
     >
       <Stack>
@@ -571,7 +641,7 @@ function SongCommentForm({
           {t('notes.songCommentHint')}
         </Text>
         <Textarea
-          label={t('notes.songComment')}
+          label={t('notes.textLabel')}
           value={text}
           onChange={(e) => setText(e.currentTarget.value)}
           autosize
@@ -583,7 +653,10 @@ function SongCommentForm({
         <Group justify="space-between">
           <Button
             variant="default"
-            onClick={() => comments.removeWithUndo(song, at, onClose)}
+            onClick={() => {
+              comments.removeWithUndo(song, at, onClose);
+              closeOffline();
+            }}
           >
             {t('common.delete')}
           </Button>

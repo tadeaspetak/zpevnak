@@ -1,10 +1,9 @@
-import { Button, Group, Menu, Paper, Text } from '@mantine/core';
+import { Anchor, Button, Group, Menu, Paper, Text } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import {
   IconCopy,
   IconFlag,
-  IconMessageReport,
   IconPencil,
   IconNote,
   IconNotes,
@@ -12,7 +11,9 @@ import {
   IconSquare,
 } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
+import { url } from '#shared/urls.ts';
+import { reportOffer } from './reportOffer.ts';
 import type { SongLinkState } from '../components/SongRow.tsx';
 import type { Song } from '#shared/chordpro/types.ts';
 import { notePlaces, placeOf, type NotePlace } from '#shared/notes.ts';
@@ -67,6 +68,7 @@ export function useSongNotes({
   const { notes } = useCatalog();
   const { me } = useMe();
   const prefs = usePrefs();
+  const location = useLocation();
   const coarse = useMediaQuery('(pointer: coarse)');
   const places = useMemo(() => (song ? notePlaces(song) : []), [song]);
   const lines = useMemo(
@@ -80,6 +82,36 @@ export function useSongNotes({
   // may fix the song resolves the reports (D143). Not on a private song: no editor reviews it.
   const canFix = record !== null && canChangeSong(me, record);
   const canReport = canWrite && record !== null && record.status !== 'private';
+  const navigate = useNavigate();
+  // "Nahlásit chybu" for anyone (D143): the report here, or the way to it (signing in, or
+  // confirming the email first). The same in ⋯ and in a line's menu.
+  const offer = reportOffer({
+    isPrivate: record?.status === 'private',
+    signedIn: me !== null,
+    start: canReport ? () => addAt(null, true) : undefined,
+    path: location.pathname,
+    unconfirmed: () => {
+      const id = 'report-unconfirmed';
+      notifications.show({
+        id,
+        message: (
+          <>
+            {t('notes.reportUnverified')}{' '}
+            <Anchor
+              component="button"
+              size="sm"
+              onClick={() => {
+                notifications.hide(id);
+                navigate(url.account());
+              }}
+            >
+              {t('notes.confirmEmail')}
+            </Anchor>
+          </>
+        ),
+      });
+    },
+  });
   const canChange = (note: NoteRecord) => canChangeNote(note, playlist, me);
   const canReview = (note: LocalNote) =>
     note.kind === 'report' && !note.waiting && canFix && !canChange(note);
@@ -236,19 +268,28 @@ export function useSongNotes({
 
   // Come from one's notes to read one (D135): it is scrolled into sight once it's on the page,
   // the device's notes being read just after the song.
-  const goTo = (useLocation().state as SongLinkState | null)?.note;
+  // A note not drawn (a report since fixed, notes switched off): its line, where it was.
+  const goTo = (location.state as SongLinkState | null)?.note;
   const wentTo = useRef<number | null>(null);
   useEffect(() => {
-    if (goTo === undefined || wentTo.current === goTo) {
+    if (goTo === undefined || wentTo.current === goTo || !container) {
       return;
     }
-    const el = container?.querySelector(`[data-note-id="${goTo}"]`);
+    const el = container.querySelector(`[data-note-id="${goTo}"]`);
     if (el) {
       wentTo.current = goTo;
       el.scrollIntoView({ block: 'center' });
       // Which of the notes there it was: lit up for a moment.
       el.setAttribute('data-flash', '');
       setTimeout(() => el.removeAttribute('data-flash'), 1600);
+      return;
+    }
+    const line = notes.get(goTo)?.line;
+    const place = line ? placeOf(places, line) : null;
+    const at = place === null ? null : container.querySelector(`[data-place="${place}"]`);
+    if (at) {
+      wentTo.current = goTo;
+      at.scrollIntoView({ block: 'center' });
     }
   });
 
@@ -313,23 +354,8 @@ export function useSongNotes({
           {menu && (
             <>
               <Menu.Label className={classes.menuLine}>{menu.words}</Menu.Label>
-              {canWrite && (
-                <Menu.Item
-                  leftSection={<IconNotes size={16} />}
-                  onClick={() => addAt(menu)}
-                >
-                  {t('notes.add')}
-                </Menu.Item>
-              )}
-              {canReport && (
-                <Menu.Item
-                  leftSection={<IconMessageReport size={16} />}
-                  onClick={() => addAt(menu, true)}
-                >
-                  {t('song.reportMistake')}
-                </Menu.Item>
-              )}
-              {/* The song's own comment, by whoever may change the song (D145). */}
+              {/* The song's own comment, by whoever may change the song (D145): on its line,
+                  changing it comes first. */}
               {canFix && menu.comment !== null && (
                 <Menu.Item
                   leftSection={<IconPencil size={16} />}
@@ -342,6 +368,29 @@ export function useSongNotes({
                   }}
                 >
                   {t('notes.editComment')}
+                </Menu.Item>
+              )}
+              {canWrite && (
+                <Menu.Item
+                  leftSection={<IconNotes size={16} />}
+                  onClick={() => addAt(menu)}
+                >
+                  {t('notes.add')}
+                </Menu.Item>
+              )}
+              {/* At this line for whoever can write it; else the way there (D143). */}
+              {offer && (
+                <Menu.Item
+                  leftSection={<IconFlag size={16} />}
+                  onClick={() =>
+                    canReport
+                      ? addAt(menu, true)
+                      : 'to' in offer
+                        ? navigate(offer.to)
+                        : offer.onClick()
+                  }
+                >
+                  {t('song.reportMistake')}
                 </Menu.Item>
               )}
               <Menu.Item
@@ -412,8 +461,8 @@ export function useSongNotes({
     overlay,
     /** Starts picking a line, for the ⋯ menu; undefined for whoever can't write notes. */
     startPicking: canWrite ? () => setPicking(true) : undefined,
-    /** "Nahlásit chybu" on the whole song (D143); undefined for whoever can't report it here. */
-    startReport: canReport ? () => addAt(null, true) : undefined,
+    /** "Nahlásit chybu" in ⋯ (D143): the report, the way to it, or null (a private song). */
+    report: offer,
   };
 }
 

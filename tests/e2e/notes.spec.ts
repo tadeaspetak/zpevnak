@@ -23,7 +23,7 @@ test('a band note, written at a line, is read by a visitor without an account (D
   const line = owner.locator('[data-place="1"]');
   await line.click({ button: 'right' });
   await owner.getByRole('menuitem', { name: 'Add a note' }).click();
-  await owner.getByRole('textbox', { name: 'Note' }).fill('Chorus three times, end on G');
+  await owner.getByRole('textbox', { name: 'Text' }).fill('Chorus three times, end on G');
   await owner.getByRole('radio', { name: `For playlist “${name}”` }).check();
   await owner.getByRole('button', { name: 'Save' }).click();
   await expect(owner.getByRole('button', { name: /Chorus three times/ })).toBeVisible();
@@ -64,14 +64,14 @@ test('a reader signs in to report a mistake, lands in the report, and an editor 
   await reader.getByRole('textbox', { name: 'Password' }).fill('zpevnak-dev-password');
   await reader.getByRole('button', { name: 'Log in' }).click();
   const text = `The second chord is Am ${Date.now()}`;
-  await reader.getByRole('textbox', { name: 'Note' }).fill(text);
-  await reader.getByRole('button', { name: 'Save' }).click();
+  await reader.getByRole('textbox', { name: 'Text' }).fill(text);
+  await reader.getByRole('button', { name: 'Report', exact: true }).click();
   await expect(reader.getByRole('button', { name: new RegExp(text) })).toBeVisible();
   await expect(reader).not.toHaveURL(/report=/);
 
   const editor = await signedIn(browser, 'editor@zpevnak.test');
   await editor.goto(`/song/${song?.id}`);
   await editor.getByRole('button', { name: new RegExp(text) }).click();
-  await editor.getByRole('button', { name: 'Fixed' }).click();
+  await editor.getByRole('button', { name: 'Mark fixed' }).click();
   await expect(editor.getByText(text)).toHaveCount(0);
 });

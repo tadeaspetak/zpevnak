@@ -14,7 +14,7 @@ import {
   IconDeviceFloppy,
   IconDots,
   IconEdit,
-  IconMessageReport,
+  IconFlag,
   IconMinus,
   IconNotes,
   IconPlaylist,
@@ -66,7 +66,7 @@ type Props = {
   onAddNote?: () => void;
   /**
    * "Nahlásit chybu" (D143): opens the report, or leads where it can be written (signing in).
-   * Null: not offered (the reader may fix the song themselves, or it's private).
+   * Null: not offered (a private song, which no editor reviews).
    */
   report: ReportOffer;
   /** Out of the way: scrolled away, or the reader tapped the song (`useHideOnScroll`). */
@@ -248,13 +248,13 @@ export function SongToolbar(props: Props) {
                   <Menu.Item
                     component={Link}
                     to={report.to}
-                    leftSection={<IconMessageReport size={16} />}
+                    leftSection={<IconFlag size={16} />}
                   >
                     {t('song.reportMistake')}
                   </Menu.Item>
                 ) : (
                   <Menu.Item
-                    leftSection={<IconMessageReport size={16} />}
+                    leftSection={<IconFlag size={16} />}
                     onClick={report.onClick}
                   >
                     {t('song.reportMistake')}

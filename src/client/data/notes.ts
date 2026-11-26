@@ -47,11 +47,17 @@ export function canChangeNote(
 
 /**
  * The reports waiting for an editor (D143), the oldest first: the queue's "Hlášení" and its
- * count. An editor's device has every one (`notes.visible`), so it counts them itself.
+ * count (D144). An editor's device has every one (`notes.visible`), so it counts them itself:
+ * the server's, on songs the device has, so the count and the list agree.
  */
-export function openReports(notes: Map<number, LocalNote>): LocalNote[] {
+export function openReports(
+  notes: Map<number, LocalNote>,
+  songs: Map<number, SongRecord>,
+): LocalNote[] {
   return [...notes.values()]
-    .filter((n) => n.kind === 'report' && !isResolved(n))
+    .filter(
+      (n) => n.kind === 'report' && !isResolved(n) && !n.waiting && songs.has(n.songId),
+    )
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id - b.id);
 }
 

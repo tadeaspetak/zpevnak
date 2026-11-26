@@ -30,7 +30,6 @@ import { useI18n } from '../i18n/index.tsx';
 import { SongSheet } from '../song/SongSheet.tsx';
 import { SongStatusBanner } from '../song/SongStatusBanner.tsx';
 import { SongToolbar } from '../song/SongToolbar.tsx';
-import { reportOffer } from '../song/reportOffer.ts';
 import { useSongNotes } from '../song/SongNotes.tsx';
 import { PlaylistBar } from '../song/PlaylistBar.tsx';
 import { trpc } from '../trpc.ts';
@@ -164,7 +163,6 @@ function SongPlayer({
   const { session } = usePlayer();
   const prefs = usePrefs();
   const { me } = useMe();
-  const location = useLocation();
   useWakeLock();
   const back = useBack(playlist);
   const toolbar = useHideOnScroll();
@@ -254,11 +252,11 @@ function SongPlayer({
     container: sheetEl,
   });
   // Back from signing in to report a mistake (D143): the report opens, once, and the address
-  // forgets it. Only once someone is signed in: just after signing in, the last answer may
-  // still be "nobody". Whoever turned out to be able to fix the song just reads it.
+  // forgets it; an account yet to confirm its email is told to, as from ⋯. Only once someone
+  // is signed in: just after signing in, the last answer may still be "nobody".
   const [params, setParams] = useSearchParams();
   const asksReport = params.has(REPORT_PARAM);
-  const startReport = notes.startReport;
+  const report = notes.report;
   // Once per arrival: the address forgets it a moment after, and renders come between.
   const reportOpened = useRef(false);
   useEffect(() => {
@@ -270,7 +268,9 @@ function SongPlayer({
       return;
     }
     reportOpened.current = true;
-    startReport?.();
+    if (report && 'onClick' in report) {
+      report.onClick();
+    }
     setParams(
       (was) => {
         const next = new URLSearchParams(was);
@@ -279,7 +279,7 @@ function SongPlayer({
       },
       { replace: true },
     );
-  }, [asksReport, song, me, startReport, setParams]);
+  }, [asksReport, song, me, report, setParams]);
   useKeys(
     useMemo(
       () => ({
@@ -317,13 +317,6 @@ function SongPlayer({
   }
 
   const canEdit = canChangeSong(me, song);
-  const report = reportOffer({
-    isPrivate: song.status === 'private',
-    signedIn: me !== null,
-    start: notes.startReport,
-    path: location.pathname,
-    unconfirmed: () => notifications.show({ message: t('notes.reportUnverified') }),
-  });
   // Jumped out of a playlist to play something else: keep the way back in reach.
   const showPill = !playlist && session !== null;
 

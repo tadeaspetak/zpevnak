@@ -92,8 +92,21 @@ describe('song comments (D145)', () => {
     expect(removeComment(addComment(SONG, null, 'capo 2'), 6)).toBe(SONG);
   });
 
-  it('refuses to change or remove a line that isn’t a comment', () => {
+  it('refuses to change or remove a line that isn’t a comment, or to empty one', () => {
     expect(() => replaceComment(SONG, 7, 'x')).toThrow();
     expect(() => removeComment(SONG, 7)).toThrow();
+    expect(() => replaceComment(addComment(SONG, 7, 'pomalu'), 8, '  ')).toThrow();
+  });
+
+  it('keeps a song’s old Mac line ends', () => {
+    const cr = SONG.replace(/\n/g, '\r');
+    expect(addComment(cr, 8, 'konec')).toContain('lu lu [C]lu\r{comment: konec}\r');
+  });
+
+  it('keeps the song’s own spacing around a comment it removes inside the song', () => {
+    const spaced = SONG.replace('la la [Am]la\n', 'la la [Am]la\n\n{c: pauza}\n\n');
+    expect(removeComment(spaced, 9)).toBe(
+      SONG.replace('la la [Am]la\n', 'la la [Am]la\n\n\n'),
+    );
   });
 });

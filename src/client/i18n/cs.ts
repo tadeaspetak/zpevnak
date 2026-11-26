@@ -167,7 +167,7 @@ export const cs = {
   'notes.noneUnverified': 'Poznámky si můžeš psát, až potvrdíš e-mail.',
   'notes.report': 'Hlášení chyby',
   'notes.reportMark': 'Hlášení chyby',
-  'notes.forEditors': 'Chyba v písničce, pro editory',
+  'notes.forEditors': 'Pro editory: chyba v písničce',
   'notes.forEditorsHint':
     'Uvidí ji editoři a autor písničky. Až chybu opraví, uvidíš to v účtu: Poznámky.',
   'notes.reportedBy': 'Nahlásil(a): {name}',
@@ -175,14 +175,27 @@ export const cs = {
   'notes.resolvedMark': 'Vyřešeno',
   'notes.resolvedDone': 'Vyřešeno. Hlášení zmizelo z písničky.',
   'notes.reportUnverified': 'Chybu nahlásíš, až potvrdíš e-mail.',
-  'notes.forSong': 'Do písničky (uvidí všichni)',
+  'notes.forSong': 'Pro všechny: zapsat do písničky',
   'notes.forSongHint':
-    'Zapíše se do textu písničky jako komentář, pro každého, kdo ji hraje.',
+    'Uvidí ho každý, kdo písničku otevře, i bez účtu. Uloží se jako úprava písničky.',
   'notes.songComment': 'Komentář v písničce',
   'notes.songCommentHint': 'Je součástí písničky: uvidí ho každý, kdo ji hraje.',
   'notes.songCommentSaved': 'Komentář je v písničce.',
-  'notes.songCommentRemoved': 'Komentář už v písničce není.',
+  'notes.songCommentRemoved': 'Komentář je smazaný.',
   'notes.editComment': 'Upravit komentář',
+  'notes.alreadyResolved': 'Tohle hlášení už někdo vyřešil.',
+  'notes.newForPlaylist': 'Poznámka pro playlist',
+  'notes.newSongComment': 'Komentář do písničky',
+  'notes.reported': 'Nahlášeno. Až chybu opraví, uvidíš to v účtu: Poznámky.',
+  'notes.textLabel': 'Text',
+  'notes.forSongPrivate': 'Pro všechny, kdo ji vidí: zapsat do písničky',
+  'notes.forSongPrivateHint':
+    'Uvidí ho každý, s kým je písnička sdílená. Uloží se jako úprava písničky.',
+  'notes.sendReport': 'Nahlásit',
+  'notes.writeIntoSong': 'Zapsat do písničky',
+  'notes.editSong': 'Upravit písničku',
+  'notes.confirmEmail': 'Potvrdit e-mail',
+  'notes.reportsHere': 'Nahlášené chyby: {count}',
   'notes.byAuthor': 'Autor: {name}',
   'notes.todo': 'TODO',
   'notes.done': 'Hotovo',
@@ -421,7 +434,7 @@ export const cs = {
   'auth.verifyTitle': 'Potvrzení e-mailu',
   'auth.verified': 'E-mail je potvrzený. Můžeš přidávat písničky a playlisty.',
   'auth.whyAccount':
-    'Písničky a veřejné playlisty uvidíš i bez účtu. Účet potřebuješ na vlastní playlisty a přidávání písniček.',
+    'Písničky a veřejné playlisty uvidíš i bez účtu. Účet potřebuješ na vlastní playlisty, poznámky, přidávání písniček a hlášení chyb.',
 
   'users.role': 'Role',
   'users.unverified': 'nepotvrzený e-mail',
@@ -448,6 +461,8 @@ export const cs = {
     'Tuhle soukromou písničku tam ještě všichni nevidí. Přidat ji tam může jen její vlastník.',
   'error.SONG_EDITED_BY_OTHERS':
     'Na písničce už pracoval někdo další, soukromá být nemůže.',
+  'error.SONG_REPORTED_BY_OTHERS':
+    'Někdo v písničce nahlásil chybu, která ještě není vyřešená: soukromá teď být nemůže.',
   'error.SONG_IN_OTHERS_PLAYLISTS':
     'Písnička je v playlistu někoho dalšího, soukromá být nemůže.',
   'error.SONG_NOT_PRIVATE':
@@ -492,6 +507,8 @@ export const cs = {
   'songs.inNoPlaylist': 'Zatím v žádném tvém playlistu.',
   'songs.onlyYou': 'jen ty',
   'songs.cantGoPrivateEdited': 'Soukromá už být nemůže: pracoval na ní někdo další.',
+  'songs.cantGoPrivateReported':
+    'Soukromá teď být nemůže: někdo v ní nahlásil chybu, která ještě není vyřešená.',
   'songs.cantGoPrivateUsed': 'Soukromá už být nemůže: je v playlistu někoho dalšího.',
   'songs.privateMark': 'Soukromá',
   'songs.seenByListmates': 'Uvidí ji i {listmates}, i kdo se přidá později',

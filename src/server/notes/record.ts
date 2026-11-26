@@ -92,17 +92,23 @@ export async function loadVisibleNotes(db: Knex, viewer: SessionUser | null) {
   return rows.map(toNoteRecord);
 }
 
-/** The note, if the viewer may see it; else NOT_FOUND, whatever it is (hide existence). */
-export async function loadNote(db: Knex, id: number, viewer: SessionUser | null) {
+/** The note, if the viewer may see it; else null. */
+export async function findNote(db: Knex, id: number, viewer: SessionUser | null) {
   const { rows } = await db.raw<{ rows: NoteRow[] }>(
     /* sql */ `${NOTE_SELECT} AND n.id = :id`,
     { id, viewerId: viewer?.id ?? null },
   );
   const row = rows[0];
-  if (!row) {
+  return row ? toNoteRecord(row) : null;
+}
+
+/** The note, if the viewer may see it; else NOT_FOUND, whatever it is (hide existence). */
+export async function loadNote(db: Knex, id: number, viewer: SessionUser | null) {
+  const note = await findNote(db, id, viewer);
+  if (!note) {
     fail('NOT_FOUND', 'NOT_FOUND');
   }
-  return toNoteRecord(row);
+  return note;
 }
 
 /**

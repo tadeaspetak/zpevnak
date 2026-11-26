@@ -285,7 +285,11 @@ describe('making a song public or private', () => {
     });
     await expect(
       callerFor(owner).songs.privateBlockers({ id: song.id }),
-    ).resolves.toEqual({ editedByOthers: false, inOthersPlaylists: false });
+    ).resolves.toEqual({
+      editedByOthers: false,
+      inOthersPlaylists: false,
+      reportedByOthers: false,
+    });
     await expect(
       callerFor(owner).songs.setVisibility({ id: song.id, isPrivate: true }),
     ).resolves.toMatchObject({ status: 'private' });
@@ -327,6 +331,29 @@ describe('making a song public or private', () => {
     await expect(
       callerFor(owner).songs.setVisibility({ id: song.id, isPrivate: true }),
     ).rejects.toThrow('SONG_IN_OTHERS_PLAYLISTS');
+  });
+
+  it('not while someone’s report of a mistake in it waits for a fix; again once it’s fixed (D143)', async () => {
+    const owner = await createUser();
+    const reader = await createUser();
+    const song = await callerFor(owner).songs.create({ source: SONG('Nahlášená') });
+    const report = await callerFor(reader).notes.create({
+      songId: song.id,
+      kind: 'report',
+      playlistId: null,
+      text: 'chyba',
+      todo: false,
+      line: null,
+    });
+    await expect(
+      callerFor(owner).songs.privateBlockers({ id: song.id }),
+    ).resolves.toMatchObject({ reportedByOthers: true });
+    await expect(
+      callerFor(owner).songs.setVisibility({ id: song.id, isPrivate: true }),
+    ).rejects.toThrow('SONG_REPORTED_BY_OTHERS');
+    // Fixed by its author (a pending song is theirs to fix), it may go private.
+    await callerFor(owner).notes.resolve({ id: report.id });
+    await callerFor(owner).songs.setVisibility({ id: song.id, isPrivate: true });
   });
 
   it('only by its owner', async () => {

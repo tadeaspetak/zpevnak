@@ -20,13 +20,20 @@ async function privateBlockers(db: Knex, songId: number, ownerId: number) {
         EXISTS (
           SELECT 1 FROM playlist_songs ps JOIN playlists p ON p.id = ps.playlist_id
           WHERE ps.song_id = :songId AND p.owner_id <> :ownerId
-        ) AS in_others_playlists
+        ) AS in_others_playlists,
+        -- Someone's report waiting for a fix: never on a private song (D143).
+        EXISTS (
+          SELECT 1 FROM song_notes n
+          WHERE n.song_id = :songId AND n.kind = 'report' AND n.resolved_at IS NULL
+            AND n.author_id <> :ownerId
+        ) AS reported_by_others
     `,
     { songId, ownerId },
   );
   return {
     editedByOthers: rows[0].edited_by_others as boolean,
     inOthersPlaylists: rows[0].in_others_playlists as boolean,
+    reportedByOthers: rows[0].reported_by_others as boolean,
   };
 }
 
@@ -70,6 +77,9 @@ export const setVisibility = verifiedProcedure
       }
       if (blockers.inOthersPlaylists) {
         fail('BAD_REQUEST', 'SONG_IN_OTHERS_PLAYLISTS');
+      }
+      if (blockers.reportedByOthers) {
+        fail('BAD_REQUEST', 'SONG_REPORTED_BY_OTHERS');
       }
       await trx.raw(
         /* sql */ `

@@ -638,12 +638,12 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   song resolves it ("Vyřešeno", in their own report's dialog too): it leaves the song, and stays
   with its reporter, struck through, to delete. Only its reporter rewrites it, while open. No
   email: the editors find it on the song and in the queue (D144). Signed out, "Nahlásit chybu"
-  leads through signing in, back to the report.
+  leads through signing in, back to the report. _After the review and walk: D146._
 - **D144. The editors' queue has a tab per kind of thing waiting** (the owner's call,
   2026-11-26; `.planning/ongoing/reports-and-song-comments.md`): Čeká, Zamítnuté, and Hlášení,
   the open reports (D143) oldest first, each with the song, what, where, who and when, leading
   to its place in the song. The count on the overview's queue icon adds the open reports to the
-  songs waiting. Suggested changes, when they come, are one more tab.
+  songs waiting. Suggested changes, when they come, are one more tab. _Grouped by song: D146._
 - **D145. Whoever may change a song writes comments into it from the song view** (the owner's
   call, 2026-11-26; `.planning/ongoing/reports-and-song-comments.md`). The note dialog's "Pro
   koho" offers them "Do písničky (uvidí všichni)": a `{comment: …}` line after the chosen line
@@ -652,3 +652,13 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   Moje poznámky. The song's own comment is changed or removed from its line's menu ("Upravit
   komentář"), only that line, the rest of the text as written; removing it is undone from the
   toast. The song's comments keep their look on the sheet, apart from the tinted notes (D139).
+- **D146. Reports and song comments after the review and the walk** (the owner's calls,
+  2026-11-26; refines D143–D145). The note dialog's title, field ("Text") and button follow whom
+  the note is for: "Nahlásit chybu" / "Nahlásit", "Komentář do písničky" / "Zapsat do písničky";
+  each choice says first who sees it ("Pro editory: chyba v písničce", "Pro všechny: zapsat do
+  písničky", on a private song "Pro všechny, kdo ji vidí"). "Vyřešeno" is undone from the toast,
+  as deleting is (D139); a report already resolved by another editor just goes. A report opens
+  with "Upravit písničku", and the song's open reports wait above its text on the edit page,
+  each resolved there. The queue's Hlášení are grouped by song, the song with the oldest first.
+  "Nahlásit chybu" is in a line's menu for everyone, leading signed-out readers through signing
+  in. A song with someone else's open report can't go private (`SONG_REPORTED_BY_OTHERS`).

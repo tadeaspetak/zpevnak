@@ -18,6 +18,7 @@ import { useDraft } from '../hooks/useDraft.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { ChordProEditor, type ChordProEditorHandle } from '../song/ChordProEditor.tsx';
+import { SongReports } from '../components/SongReports.tsx';
 import { SongStatusBanner } from '../song/SongStatusBanner.tsx';
 import { trpc } from '../trpc.ts';
 import { url } from '#shared/urls.ts';
@@ -188,6 +189,8 @@ export function EditSongPage() {
         >
           <Stack gap="sm">
             {resubmits && <SongStatusBanner song={song} inForm />}
+            {/* What was reported, where it's fixed (D146). */}
+            <SongReports songId={song.id} />
             <ErrorText error={update.error} />
             <ChordProEditor
               ref={editor}

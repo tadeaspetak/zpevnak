@@ -50,7 +50,9 @@ export function SongShareModal({ song, opened, onClose }: Props) {
     ? t('songs.cantGoPrivateEdited')
     : blockers.data?.inOthersPlaylists
       ? t('songs.cantGoPrivateUsed')
-      : null;
+      : blockers.data?.reportedByOthers
+        ? t('songs.cantGoPrivateReported')
+        : null;
   // Until the server has said, the way back isn't offered.
   const privateClosed = !isPrivate && (!blockers.data || whyNotPrivate !== null);
 

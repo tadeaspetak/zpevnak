@@ -314,7 +314,7 @@ describe('Moje poznámky, the account’s tab (D135, D139)', () => {
       note(2, { kind: 'report', resolvedAt: '2026-11-26T10:00:00.000Z' }),
     ]);
     expect(screen.getAllByRole('img', { name: 'Hlášení chyby' })).toHaveLength(2);
-    expect(screen.getByText('Chyba v písničce, pro editory · Vyřešeno')).toBeTruthy();
+    expect(screen.getByText('Pro editory: chyba v písničce · Vyřešeno')).toBeTruthy();
     expect(
       screen.getByRole('button', { name: 'Upravit poznámku: poznámka 1' }),
     ).toBeTruthy();
