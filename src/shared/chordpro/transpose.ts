@@ -13,7 +13,7 @@ function transposeLine(line: Line, map: (chord: string) => string): Line {
     return line;
   }
   return {
-    type: 'lyrics',
+    ...line,
     segments: line.segments.map((s) => ({ ...s, chord: s.chord && map(s.chord) })),
   };
 }

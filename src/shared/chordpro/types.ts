@@ -6,10 +6,15 @@ export type Segment = {
   text: string;
 };
 
-export type Line =
+/**
+ * A line of a section, with the source line it was read from (1-based, as `Block.line`): where
+ * a `{comment}` written on the song goes after it, or is changed in place (D145).
+ */
+export type Line = { source: number } & (
   | { type: 'lyrics'; segments: Segment[] }
   | { type: 'comment'; text: string; style: 'plain' | 'italic' | 'box' }
-  | { type: 'tab'; text: string };
+  | { type: 'tab'; text: string }
+);
 
 export type SectionKind = 'verse' | 'chorus' | 'bridge' | 'tab' | 'grid' | 'other';
 

@@ -294,18 +294,22 @@ export function parseSong(source: string): Song {
       : null;
     if (!directive) {
       if (current?.kind === 'tab' || current?.kind === 'grid') {
-        current.lines.push({ type: 'tab', text: line });
+        current.lines.push({ type: 'tab', text: line, source: lineNo });
         return;
       }
       if (line.trim() === '') {
         if (explicit && current) {
-          current.lines.push({ type: 'lyrics', segments: [] });
+          current.lines.push({ type: 'lyrics', segments: [], source: lineNo });
         } else {
           closeImplicit();
         }
         return;
       }
-      target().lines.push({ type: 'lyrics', segments: parseLyricsLine(line) });
+      target().lines.push({
+        type: 'lyrics',
+        segments: parseLyricsLine(line),
+        source: lineNo,
+      });
       return;
     }
 
@@ -393,7 +397,7 @@ export function parseSong(source: string): Song {
         const style =
           name === 'comment' ? 'plain' : name === 'comment_italic' ? 'italic' : 'box';
         if (value) {
-          target().lines.push({ type: 'comment', text: value, style });
+          target().lines.push({ type: 'comment', text: value, style, source: lineNo });
         }
         return;
       }
