@@ -1,6 +1,6 @@
 # Reports and song comments, through the note dialog
 
-**State:** ongoing: phases 1 and 2 shipped (D143, D144). Agreed in conversation on 2026-11-26 with the
+**State:** ongoing: phases 1 to 3 shipped (D143, D144, D145); the review and walk to come. Agreed in conversation on 2026-11-26 with the
 owner, who took the recommended pick on every question, then settled the rest (no email, a tab
 per kind, an account to report).
 
@@ -139,9 +139,18 @@ Each ships on its own, gates green.
    - **A report in the list:** the song, the report's text, where in the song, then who and
      when on a line of their own (on a phone, the line's words pushed the reporter out of
      sight). A tap leads to the song scrolled to the report, the back arrow to the tab.
-3. **Song comments through the dialog.** The parser's source lines and the pure functions
-   first (a refactor with no change in behaviour, shipped on its own); then the dialog's
-   choice, the comment opened from the sheet, delete with undo.
+3. **Song comments through the dialog (shipped, D145).** The parser's source lines and the
+   pure functions first (a refactor with no change in behaviour, shipped on its own); then the
+   dialog's choice, the comment opened from the sheet, delete with undo.
+   **As built:**
+   - **Opened from the line's menu, not a tap:** "Upravit komentář" in the long-press or
+     right-click menu on the comment, beside the note and the report. A tap on the song stays
+     the bars' (D93); the line menu is where a line's actions are (D135).
+   - **In a recalled chorus,** a comment written at one of its lines goes after the `{chorus}`
+     line, not into the chorus itself, where every repeat would show it (`NotePlace.after`).
+   - **One line:** what's typed across lines is joined (`commentText`), as a `{comment}` is.
+   - **The undo of a removal** saves the comment back, a new version again; if the song changed
+     meanwhile, the toast says why it can't.
 4. **A review and a UX walk** of the three, as an editor, an author, a player and a reporter.
 
 ## Tests that matter most

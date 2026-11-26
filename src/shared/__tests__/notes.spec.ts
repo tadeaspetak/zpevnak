@@ -36,6 +36,32 @@ describe('notePlaces (D135)', () => {
     ]);
   });
 
+  it('says where a song comment written at a line goes, and which lines are one (D145)', () => {
+    const at = notePlaces(parseSong(SONG))
+      .flat()
+      .map((p) => p && [p.after, p.comment]);
+    expect(at).toEqual([
+      [3, null],
+      [6, null],
+      [7, null],
+      null,
+      // The song's own comment: changed where it is.
+      [9, 9],
+      [12, null],
+      // In a recalled chorus, after the {chorus}: not copied into every repeat.
+      [14, null],
+    ]);
+  });
+
+  it('moves the notes below a new song comment a place, and finds them again by their words', () => {
+    const places = notePlaces(parseSong(SONG));
+    const commented = notePlaces(
+      parseSong(SONG.replace('la la [D]la', 'la la [D]la\n{comment: tiše}')),
+    );
+    expect(placeOf(places, { index: 2, text: 'lu lu lu' })).toBe(2);
+    expect(placeOf(commented, { index: 2, text: 'lu lu lu' })).toBe(3);
+  });
+
   it('reads a line’s words as written: transposing doesn’t move a note', () => {
     expect(words(SONG.replace('[A] [D] [E]', '[A]  [D]   [E]'))[0]).toEqual([0, 'A D E']);
   });

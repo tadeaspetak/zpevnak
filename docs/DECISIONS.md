@@ -644,3 +644,11 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   the open reports (D143) oldest first, each with the song, what, where, who and when, leading
   to its place in the song. The count on the overview's queue icon adds the open reports to the
   songs waiting. Suggested changes, when they come, are one more tab.
+- **D145. Whoever may change a song writes comments into it from the song view** (the owner's
+  call, 2026-11-26; `.planning/ongoing/reports-and-song-comments.md`). The note dialog's "Pro
+  koho" offers them "Do písničky (uvidí všichni)": a `{comment: …}` line after the chosen line
+  (after the `{chorus}` line in a repeated chorus; at the head of the song for the whole song),
+  saved as an edit of the song (`seenAt`, a version, D86, D104, D106), never a note, never in
+  Moje poznámky. The song's own comment is changed or removed from its line's menu ("Upravit
+  komentář"), only that line, the rest of the text as written; removing it is undone from the
+  toast. The song's comments keep their look on the sheet, apart from the tinted notes (D139).

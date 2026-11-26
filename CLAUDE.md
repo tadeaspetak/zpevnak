@@ -54,8 +54,9 @@ printed to the server log.
   spelling with one `tagKey`; `setTags` edits the `{tag}` lines), transposing a song's text
   (`transposeSource`, the same mapping as the view), playlist edits (`playlistOps.ts`:
   `applyOp`, `toggleOp`), where a note on a song sits (`notes.ts`: `notePlaces`, `placeOf`,
-  found again after an edit by its line's words). Never re-derive one of these in a page or a
-  procedure.
+  found again after an edit by its line's words), a comment written into a song from the song
+  view (`chordpro/comments.ts`: `addComment`, `replaceComment`, `removeComment`, D145). Never
+  re-derive one of these in a page or a procedure.
 - **Offline first.** The whole catalog (songs, playlists and notes the viewer can see) lives in
   IndexedDB (`src/client/data/`) and is searched on the device with MiniSearch. `songs.sync`
   sends what changed since a cursor; `playlists.all` and `notes.visible` send everything (they

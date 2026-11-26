@@ -5,6 +5,7 @@ import {
   IconCopy,
   IconFlag,
   IconMessageReport,
+  IconPencil,
   IconNote,
   IconNotes,
   IconPlaylist,
@@ -46,7 +47,7 @@ const byAge = (a: NoteRecord, b: NoteRecord) =>
 export function useSongNotes({
   songId,
   song,
-  access,
+  record,
   playlist,
   container,
 }: {
@@ -54,8 +55,11 @@ export function useSongNotes({
   songId: number | null;
   /** As written, not transposed: notes are placed by its lines. */
   song: Song | null;
-  /** Who may fix the song, and so who reports a mistake in it instead (D143). */
-  access: Pick<SongRecord, 'status' | 'createdBy' | 'role'> | null;
+  /**
+   * The song as loaded: who may fix it (they resolve reports, D143, and write comments into it,
+   * D145), and the text a comment is written into.
+   */
+  record: SongRecord | null;
   playlist: Playing | null;
   container: HTMLDivElement | null;
 }) {
@@ -74,8 +78,8 @@ export function useSongNotes({
   const writesForPlaylist = Boolean(playlist && canWrite && editsAsMember(playlist.role));
   // Anyone with an account reports a mistake, an editor too, for whoever gets to it; whoever
   // may fix the song resolves the reports (D143). Not on a private song: no editor reviews it.
-  const canFix = access !== null && canChangeSong(me, access);
-  const canReport = canWrite && access !== null && access.status !== 'private';
+  const canFix = record !== null && canChangeSong(me, record);
+  const canReport = canWrite && record !== null && record.status !== 'private';
   const canChange = (note: NoteRecord) => canChangeNote(note, playlist, me);
   const canReview = (note: LocalNote) =>
     note.kind === 'report' && !note.waiting && canFix && !canChange(note);
@@ -119,6 +123,19 @@ export function useSongNotes({
     null,
   );
   const lineAt = (place: number) => lines.find((l) => l.place === place) ?? null;
+  // A song comment's whole text, from the song: a place keeps only so many of its words.
+  const commentOn = (source: number) => {
+    for (const block of song?.blocks ?? []) {
+      const found =
+        block.type === 'section'
+          ? block.lines.find((l) => l.type === 'comment' && l.source === source)
+          : undefined;
+      if (found?.type === 'comment') {
+        return found.text;
+      }
+    }
+    return null;
+  };
   const addAt = (place: NotePlace | null, report = false) => {
     setPicking(false);
     if (songId !== null) {
@@ -312,6 +329,21 @@ export function useSongNotes({
                   {t('song.reportMistake')}
                 </Menu.Item>
               )}
+              {/* The song's own comment, by whoever may change the song (D145). */}
+              {canFix && menu.comment !== null && (
+                <Menu.Item
+                  leftSection={<IconPencil size={16} />}
+                  onClick={() => {
+                    const at = menu.comment;
+                    const text = at === null ? null : commentOn(at);
+                    if (at !== null && text !== null) {
+                      setTarget({ kind: 'comment', at, text });
+                    }
+                  }}
+                >
+                  {t('notes.editComment')}
+                </Menu.Item>
+              )}
               <Menu.Item
                 leftSection={<IconCopy size={16} />}
                 onClick={() => copy(menu.words)}
@@ -346,7 +378,7 @@ export function useSongNotes({
         target={target}
         playlist={writesForPlaylist && playlist ? playlist : null}
         canReport={canReport}
-        canResolve={canFix}
+        fixing={canFix ? record : null}
         onClose={() => setTarget(null)}
         // Notes switched off come back into sight, to show the one just saved.
         onSaved={() => {

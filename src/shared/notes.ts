@@ -9,8 +9,18 @@ import type { Line, Song } from './chordpro/types.ts';
 /** Kept to what a note stores of its line (`noteLineTextSchema`). */
 const MAX_WORDS = 500;
 
-/** A line a note can be at: its place, and its words. */
-export type NotePlace = { place: number; words: string };
+/**
+ * A line a note can be at: its place, and its words. For a comment written into the song from
+ * here (D145): the source line it goes after (`after`: the line itself; in a recalled chorus,
+ * the `{chorus}` line, so it isn't copied into every repeat), and, a line that is the song's
+ * own comment, its source line (`comment`), to change or remove it.
+ */
+export type NotePlace = {
+  place: number;
+  words: string;
+  after: number;
+  comment: number | null;
+};
 
 /**
  * A line's words, as a note remembers them: the lyrics without chords; a line of chords alone
@@ -35,15 +45,23 @@ function lineWords(line: Line): string {
 export function notePlaces(song: Song): (NotePlace | null)[][] {
   let place = 0;
   return song.blocks.map((block) => {
+    const recalled = block.type === 'chorusRecall';
     const lines =
       block.type === 'section'
         ? block.lines
-        : block.type === 'chorusRecall' && block.chorus?.type === 'section'
+        : recalled && block.chorus?.type === 'section'
           ? block.chorus.lines
           : [];
     return lines.map((line) => {
       const words = lineWords(line);
-      return words ? { place: place++, words } : null;
+      return words
+        ? {
+            place: place++,
+            words,
+            after: recalled ? block.line : line.source,
+            comment: line.type === 'comment' ? line.source : null,
+          }
+        : null;
     });
   });
 }

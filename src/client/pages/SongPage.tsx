@@ -244,7 +244,7 @@ function SongPlayer({
   const notes = useSongNotes({
     songId: song?.id ?? null,
     song: parsed,
-    access: song ?? null,
+    record: song ?? null,
     playlist: playlist && {
       id: playlist.id,
       name: playlist.name,

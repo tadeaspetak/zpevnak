@@ -12,13 +12,19 @@ import { notifications } from '@mantine/notifications';
 import { useState } from 'react';
 import type { NotePlace } from '#shared/notes.ts';
 import { NOTE_TEXT_MAX } from '#shared/validators/index.ts';
-import { putNote, settleNote, useCatalog, waitNote } from '../data/catalog.ts';
+import {
+  addComment,
+  commentText,
+  removeComment,
+  replaceComment,
+} from '#shared/chordpro/comments.ts';
+import { putNote, putSong, settleNote, useCatalog, waitNote } from '../data/catalog.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { notifyIfQueued } from '../data/offline.ts';
-import type { NoteRecord } from '../data/store.ts';
+import type { NoteRecord, SongRecord } from '../data/store.ts';
 import { showUndoToast } from '../components/UndoToast.tsx';
 import { useI18n } from '../i18n/index.tsx';
-import { trpc } from '../trpc.ts';
+import { trpc, trpcClient } from '../trpc.ts';
 
 /**
  * What the dialog is about: a new note at a line (null: the whole song), asked for as a report
@@ -28,9 +34,12 @@ import { trpc } from '../trpc.ts';
 export type NoteTarget =
   | { kind: 'new'; songId: number; place: NotePlace | null; report?: boolean }
   | { kind: 'edit'; note: NoteRecord }
-  | { kind: 'review'; note: NoteRecord };
+  | { kind: 'review'; note: NoteRecord }
+  /** The song's own comment on source line `at` (D145), to change or remove. */
+  | { kind: 'comment'; at: number; text: string };
 
-type Audience = NoteRecord['kind'];
+/** Whom a new note is for, or, `song`, a comment written into the song itself (D145). */
+type Audience = NoteRecord['kind'] | 'song';
 
 type Props = {
   target: NoteTarget | null;
@@ -38,8 +47,11 @@ type Props = {
   playlist: { id: number; name: string; isPublic: boolean } | null;
   /** The reader may report a mistake in this song (D143). */
   canReport: boolean;
-  /** The reader may fix the song, and so resolve a report of their own here too (D143). */
-  canResolve: boolean;
+  /**
+   * The song, as loaded, for whoever may change it: they resolve reports, their own here too
+   * (D143), and write comments into it (D145). Null for anyone else.
+   */
+  fixing: SongRecord | null;
   onClose: () => void;
   /** After a note is saved. */
   onSaved?: () => void;
@@ -151,6 +163,47 @@ export function useNoteRequests() {
 type NoteRequests = ReturnType<typeof useNoteRequests>;
 
 /**
+ * A comment written into the song itself (D145): an edit of its ChordPro like any other,
+ * against the song as it was loaded (`seenAt`, D106), recorded as a version (D86). What the
+ * server returns goes into the catalog.
+ */
+function useSongComments() {
+  const { t, tError } = useI18n();
+  const update = trpc.songs.update.useMutation({
+    onSuccess: (song) => putSong(song),
+    onError: (error) => notifications.show({ color: 'red', message: tError(error) }),
+  });
+  const save = (song: SongRecord, source: string, then: (saved: SongRecord) => void) => {
+    update.mutate({ id: song.id, source, seenAt: song.updatedAt }, { onSuccess: then });
+    notifyIfQueued(t('common.savesWhenOnline'));
+  };
+  return {
+    pending: update.isPending,
+    save,
+    /** Removed at once, and put back by one tap (D139), as a new version again. */
+    removeWithUndo: (song: SongRecord, at: number, then: () => void) =>
+      save(song, removeComment(song.source, at), (saved) => {
+        then();
+        showUndoToast({
+          id: `comment-removed-${song.id}-${at}`,
+          message: t('notes.songCommentRemoved'),
+          onUndo: async () => {
+            putSong(
+              await trpcClient.songs.update.mutate({
+                id: song.id,
+                source: song.source,
+                seenAt: saved.updatedAt,
+              }),
+            );
+          },
+        });
+      }),
+  };
+}
+
+type SongComments = ReturnType<typeof useSongComments>;
+
+/**
  * Writing a note on a song, or changing one (D135): its text, who it's for (one's own, the
  * playlist's, or a report for the editors, D143; chosen when it's written), and for one's own,
  * TODO and done. A report also opens here for whoever may fix the song, to resolve it. The
@@ -160,12 +213,15 @@ type NoteRequests = ReturnType<typeof useNoteRequests>;
 export function NoteModal({ target, ...props }: Props) {
   const { t } = useI18n();
   const requests = useNoteRequests();
+  const comments = useSongComments();
   const key =
     target === null
       ? 'closed'
       : target.kind === 'new'
         ? `new-${target.place?.place ?? 'song'}-${target.report ? 'report' : 'note'}`
-        : `${target.kind}-${target.note.id}`;
+        : target.kind === 'comment'
+          ? `comment-${target.at}`
+          : `${target.kind}-${target.note.id}`;
   const title =
     target === null
       ? ''
@@ -173,9 +229,11 @@ export function NoteModal({ target, ...props }: Props) {
         ? target.report
           ? t('song.reportMistake')
           : t('notes.new')
-        : target.note.kind === 'report'
-          ? t('notes.report')
-          : t('notes.edit');
+        : target.kind === 'comment'
+          ? t('notes.songComment')
+          : target.note.kind === 'report'
+            ? t('notes.report')
+            : t('notes.edit');
   // Deleted at once, as in Moje poznámky, taken back from the toast (D139): the dialog closes.
   const deleteNote = (note: NoteRecord) => {
     requests.deleteWithUndo(note);
@@ -191,12 +249,23 @@ export function NoteModal({ target, ...props }: Props) {
           onClose={props.onClose}
         />
       )}
+      {target?.kind === 'comment' && props.fixing && (
+        <SongCommentForm
+          key={key}
+          song={props.fixing}
+          at={target.at}
+          text={target.text}
+          comments={comments}
+          onClose={props.onClose}
+        />
+      )}
       {/* A fresh form for each note: nothing typed for one carries over to the next. */}
-      {target && target.kind !== 'review' && (
+      {(target?.kind === 'new' || target?.kind === 'edit') && (
         <NoteForm
           key={key}
           target={target}
           requests={requests}
+          comments={comments}
           onDelete={deleteNote}
           {...props}
         />
@@ -209,14 +278,16 @@ function NoteForm({
   target,
   playlist,
   canReport,
-  canResolve,
+  fixing,
   onClose,
   onSaved,
   requests: { create, update, resolve },
+  comments,
   onDelete,
 }: Props & {
-  target: Exclude<NoteTarget, { kind: 'review' }>;
+  target: Extract<NoteTarget, { kind: 'new' | 'edit' }>;
   requests: NoteRequests;
+  comments: SongComments;
   onDelete: (note: NoteRecord) => void;
 }) {
   const { t } = useI18n();
@@ -239,6 +310,7 @@ function NoteForm({
     'own',
     ...(playlist ? (['playlist'] as const) : []),
     ...(canReport ? (['report'] as const) : []),
+    ...(fixing ? (['song'] as const) : []),
   ];
   const saved = (note: NoteRecord) => {
     // Done, it leaves the song: say where it went.
@@ -250,6 +322,20 @@ function NoteForm({
   };
 
   const save = () => {
+    if (audience === 'song') {
+      // Offered only for a new note, to whoever may change the song (`fixing`).
+      if (fixing && target.kind === 'new') {
+        const source = addComment(fixing.source, target.place?.after ?? null, text);
+        comments.save(fixing, source, () => {
+          notifications.show({ message: t('notes.songCommentSaved') });
+          onClose();
+        });
+        if (!navigator.onLine) {
+          onClose();
+        }
+      }
+      return;
+    }
     if (existing) {
       update.mutate(
         {
@@ -282,7 +368,7 @@ function NoteForm({
     }
   };
 
-  const busy = create.isPending || update.isPending;
+  const busy = create.isPending || update.isPending || comments.pending;
   return (
     <form
       onSubmit={(e) => {
@@ -334,6 +420,13 @@ function NoteForm({
                   description={t('notes.forEditorsHint')}
                 />
               )}
+              {fixing && (
+                <Radio
+                  value="song"
+                  label={t('notes.forSong')}
+                  description={t('notes.forSongHint')}
+                />
+              )}
             </Stack>
           </Radio.Group>
         )}
@@ -375,7 +468,7 @@ function NoteForm({
                 {t('common.delete')}
               </Button>
               {/* One's own report, by whoever may fix the song: closed here once fixed. */}
-              {existing.kind === 'report' && canResolve && (
+              {existing.kind === 'report' && fixing && (
                 <Button
                   variant="default"
                   loading={resolve.isPending}
@@ -444,5 +537,70 @@ function ReportReview({
         </Button>
       </Group>
     </Stack>
+  );
+}
+
+/**
+ * The song's own comment (D145), by whoever may change the song: its text rewritten in place,
+ * or removed, with an undo. Saved as an edit of the song, as everyone will read it.
+ */
+function SongCommentForm({
+  song,
+  at,
+  text: written,
+  comments,
+  onClose,
+}: {
+  song: SongRecord;
+  at: number;
+  text: string;
+  comments: SongComments;
+  onClose: () => void;
+}) {
+  const { t } = useI18n();
+  const [text, setText] = useState(written);
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        comments.save(song, replaceComment(song.source, at, text), onClose);
+      }}
+    >
+      <Stack>
+        <Text size="sm" c="dimmed">
+          {t('notes.songCommentHint')}
+        </Text>
+        <Textarea
+          label={t('notes.songComment')}
+          value={text}
+          onChange={(e) => setText(e.currentTarget.value)}
+          autosize
+          minRows={1}
+          maxLength={NOTE_TEXT_MAX}
+          data-autofocus
+          required
+        />
+        <Group justify="space-between">
+          <Button
+            variant="default"
+            onClick={() => comments.removeWithUndo(song, at, onClose)}
+          >
+            {t('common.delete')}
+          </Button>
+          <Group gap="sm" ml="auto">
+            <Button variant="default" onClick={onClose}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              type="submit"
+              disabled={!commentText(text) || commentText(text) === written}
+              loading={comments.pending}
+            >
+              {t('common.save')}
+            </Button>
+          </Group>
+        </Group>
+      </Stack>
+    </form>
   );
 }

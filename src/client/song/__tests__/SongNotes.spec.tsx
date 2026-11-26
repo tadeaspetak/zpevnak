@@ -1,17 +1,17 @@
 import { act, cleanup, fireEvent, renderHook, screen } from '@testing-library/react';
 import { notifications } from '@mantine/notifications';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { parseSong } from '#shared/chordpro/parse.ts';
 import { renderApp } from '#tests/client/render.tsx';
 import { putNote, putPlaylist, settleNote, useCatalog } from '../../data/catalog.ts';
 import { usePrefs } from '../../data/prefs.ts';
-import type { NoteRecord, PlaylistRecord } from '../../data/store.ts';
+import type { NoteRecord, PlaylistRecord, SongRecord } from '../../data/store.ts';
 import { useKeys } from '../../hooks/useKeys.ts';
 import { SongSheet } from '../SongSheet.tsx';
 import { useSongNotes } from '../SongNotes.tsx';
 
-const SONG = parseSong(`{title: Píseň}
+const SOURCE = `{title: Píseň}
 {start_of_verse}
 la la [D]la
 lu lu [A]lu
@@ -19,7 +19,7 @@ lu lu [A]lu
 {start_of_outro: Dohra}
 [A] [D]
 {end_of_outro}
-`);
+`;
 const SONG_ID = 7;
 const ME = 3;
 
@@ -43,21 +43,33 @@ const note = (id: number, fields: Partial<NoteRecord>): NoteRecord => ({
 
 /** The song as SongPage plays it, with its notes. */
 /** An approved song someone else wrote: the reader can't fix it, an editor can. */
-const APPROVED = { status: 'verified', createdBy: 99, role: null } as const;
+const APPROVED = {
+  id: 7,
+  title: 'Píseň',
+  artist: null,
+  source: SOURCE,
+  status: 'verified',
+  createdBy: 99,
+  role: null,
+  updatedAt: '2026-11-25T09:00:00.000Z',
+} as SongRecord;
 
 function Played({
   playlist,
   showChords = true,
+  source = SOURCE,
 }: {
   playlist: Pick<PlaylistRecord, 'id' | 'name' | 'role' | 'isPublic'> | null;
+  source?: string;
   showChords?: boolean;
 }) {
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
   const { loaded } = useCatalog();
+  const song = useMemo(() => parseSong(source), [source]);
   const notes = useSongNotes({
     songId: SONG_ID,
-    song: SONG,
-    access: APPROVED,
+    song,
+    record: { ...APPROVED, source },
     playlist,
     container,
   });
@@ -73,7 +85,7 @@ function Played({
         <div ref={setContainer} data-loaded>
           <SongSheet
             instrument="guitar"
-            song={SONG}
+            song={song}
             fontScale={1}
             showDiagrams={false}
             showChords={showChords}
@@ -96,9 +108,10 @@ async function play(
   notes: NoteRecord[],
   state?: unknown,
   showChords = true,
+  source = SOURCE,
 ) {
   const { container } = renderApp(
-    <Played playlist={playlist} showChords={showChords} />,
+    <Played playlist={playlist} showChords={showChords} source={source} />,
     { state },
   );
   // The device's copy (none here) is read first; the notes come after, as from a sync.
@@ -454,6 +467,94 @@ describe('notes on the song view (D135)', () => {
       expect(await screen.findByRole('textbox', { name: 'Poznámka' })).toBeTruthy();
       fireEvent.click(screen.getByRole('button', { name: 'Vyřešeno' }));
       await vi.waitFor(() => expect(sent('notes.resolve')).toEqual([{ id: 1 }]));
+    });
+  });
+
+  describe('comments written into the song (D145)', () => {
+    const asEditor = () =>
+      localStorage.setItem(
+        'zpevnak.me',
+        JSON.stringify({
+          id: ME,
+          email: 'ja@example.com',
+          displayName: 'Já',
+          role: 'editor',
+          locale: 'cs',
+          emailVerified: true,
+        }),
+      );
+    const saved = () =>
+      vi
+        .mocked(fetch)
+        .mock.calls.filter(([input]) => String(input).includes('songs.update'))
+        .map(([, init]) => JSON.parse(String(init?.body))[0]);
+    const atLine = async (sheet: HTMLElement, place: number, item: string) => {
+      fireEvent.contextMenu(
+        sheet.querySelector(`[data-place="${place}"]`) as HTMLElement,
+      );
+      fireEvent.click(await screen.findByRole('menuitem', { name: item }));
+    };
+
+    it('lets whoever may change the song write a comment into it, after the line', async () => {
+      asEditor();
+      const sheet = await play(null, []);
+      await atLine(sheet, 0, 'Přidat poznámku');
+      fireEvent.click(await screen.findByRole('radio', { name: /Do písničky/ }));
+      fireEvent.change(screen.getByRole('textbox', { name: 'Poznámka' }), {
+        target: { value: 'tiše' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: 'Uložit' }));
+      await vi.waitFor(() =>
+        expect(saved()).toEqual([
+          {
+            id: SONG_ID,
+            source: SOURCE.replace('la la [D]la\n', 'la la [D]la\n{comment: tiše}\n'),
+            seenAt: APPROVED.updatedAt,
+          },
+        ]),
+      );
+    });
+
+    it('offers it to nobody else', async () => {
+      const sheet = await play(null, []);
+      await atLine(sheet, 0, 'Přidat poznámku');
+      expect(await screen.findByRole('radio', { name: 'Jen pro mě' })).toBeTruthy();
+      expect(screen.queryByRole('radio', { name: /Do písničky/ })).toBeNull();
+    });
+
+    it('changes the song’s own comment where it is, and removes it with an undo', async () => {
+      asEditor();
+      const commented = SOURCE.replace('lu lu [A]lu\n', 'lu lu [A]lu\n{c: pomalu}\n');
+      const sheet = await play(null, [], undefined, true, commented);
+      await atLine(sheet, 2, 'Upravit komentář');
+      const field = await screen.findByRole('textbox', { name: 'Komentář v písničce' });
+      expect(field).toHaveProperty('value', 'pomalu');
+      fireEvent.change(field, { target: { value: 'ještě pomaleji' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Uložit' }));
+      await vi.waitFor(() =>
+        expect(saved().map((input) => input.source)).toEqual([
+          commented.replace('{c: pomalu}', '{c: ještě pomaleji}'),
+        ]),
+      );
+    });
+
+    it('removes the song’s own comment from its dialog, at once', async () => {
+      asEditor();
+      const commented = SOURCE.replace('lu lu [A]lu\n', 'lu lu [A]lu\n{c: pomalu}\n');
+      const sheet = await play(null, [], undefined, true, commented);
+      await atLine(sheet, 2, 'Upravit komentář');
+      fireEvent.click(await screen.findByRole('button', { name: 'Smazat' }));
+      await vi.waitFor(() =>
+        expect(saved().map((input) => input.source)).toEqual([SOURCE]),
+      );
+    });
+
+    it('offers no one else the song’s comment to change', async () => {
+      const commented = SOURCE.replace('lu lu [A]lu\n', 'lu lu [A]lu\n{c: pomalu}\n');
+      const sheet = await play(null, [], undefined, true, commented);
+      fireEvent.contextMenu(sheet.querySelector('[data-place="2"]') as HTMLElement);
+      const items = await screen.findAllByRole('menuitem');
+      expect(items.map((item) => item.textContent)).not.toContain('Upravit komentář');
     });
   });
 });
