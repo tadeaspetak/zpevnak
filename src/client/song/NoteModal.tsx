@@ -36,8 +36,10 @@ type Props = {
   target: NoteTarget | null;
   /** The playlist being played from, where the reader may write its notes (D135). */
   playlist: { id: number; name: string; isPublic: boolean } | null;
-  /** The reader may report a mistake in this song: they can't fix it themselves (D143). */
+  /** The reader may report a mistake in this song (D143). */
   canReport: boolean;
+  /** The reader may fix the song, and so resolve a report of their own here too (D143). */
+  canResolve: boolean;
   onClose: () => void;
   /** After a note is saved. */
   onSaved?: () => void;
@@ -207,9 +209,10 @@ function NoteForm({
   target,
   playlist,
   canReport,
+  canResolve,
   onClose,
   onSaved,
-  requests: { create, update },
+  requests: { create, update, resolve },
   onDelete,
 }: Props & {
   target: Exclude<NoteTarget, { kind: 'review' }>;
@@ -367,13 +370,29 @@ function NoteForm({
         )}
         <Group justify="space-between">
           {existing ? (
-            <Button variant="default" onClick={() => onDelete(existing)}>
-              {t('common.delete')}
-            </Button>
+            <Group gap="sm">
+              <Button variant="default" onClick={() => onDelete(existing)}>
+                {t('common.delete')}
+              </Button>
+              {/* One's own report, by whoever may fix the song: closed here once fixed. */}
+              {existing.kind === 'report' && canResolve && (
+                <Button
+                  variant="default"
+                  loading={resolve.isPending}
+                  onClick={() => {
+                    resolve.mutate({ id: existing.id }, { onSuccess: onClose });
+                    notifyIfQueued(t('common.savesWhenOnline'));
+                  }}
+                >
+                  {t('notes.resolve')}
+                </Button>
+              )}
+            </Group>
           ) : (
             <span />
           )}
-          <Group gap="sm">
+          {/* On the right, wrapped below the rest on a phone too. */}
+          <Group gap="sm" ml="auto">
             <Button variant="default" onClick={onClose}>
               {t('common.cancel')}
             </Button>

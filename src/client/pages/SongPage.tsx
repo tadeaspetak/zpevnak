@@ -318,7 +318,6 @@ function SongPlayer({
 
   const canEdit = canChangeSong(me, song);
   const report = reportOffer({
-    canFix: canEdit,
     isPrivate: song.status === 'private',
     signedIn: me !== null,
     start: notes.startReport,

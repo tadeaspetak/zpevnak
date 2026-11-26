@@ -44,7 +44,6 @@ function toolbar(
       canDelete={canDelete}
       canAddToPlaylist={false}
       report={reportOffer({
-        canFix: canEdit,
         isPrivate: shown.status === 'private',
         signedIn: true,
         start: () => {},

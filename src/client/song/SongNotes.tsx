@@ -72,10 +72,10 @@ export function useSongNotes({
 
   const canWrite = Boolean(me?.emailVerified);
   const writesForPlaylist = Boolean(playlist && canWrite && editsAsMember(playlist.role));
-  // Whoever may fix the song resolves its reports; whoever can't, reports (D143). Not a
-  // private song: no editor reviews it.
+  // Anyone with an account reports a mistake, an editor too, for whoever gets to it; whoever
+  // may fix the song resolves the reports (D143). Not on a private song: no editor reviews it.
   const canFix = access !== null && canChangeSong(me, access);
-  const canReport = canWrite && access !== null && !canFix && access.status !== 'private';
+  const canReport = canWrite && access !== null && access.status !== 'private';
   const canChange = (note: NoteRecord) => canChangeNote(note, playlist, me);
   const canReview = (note: LocalNote) =>
     note.kind === 'report' && !note.waiting && canFix && !canChange(note);
@@ -346,6 +346,7 @@ export function useSongNotes({
         target={target}
         playlist={writesForPlaylist && playlist ? playlist : null}
         canReport={canReport}
+        canResolve={canFix}
         onClose={() => setTarget(null)}
         // Notes switched off come back into sight, to show the one just saved.
         onSaved={() => {

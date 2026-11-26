@@ -629,13 +629,13 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   D141, the owner plays from it). Like an iPhone it can't be asked to install, so the steps go
   through its menu: ⋮ (bottom or top right), „Nainstalovat“ or „Přidat na plochu“ (both named:
   its menu has said each in recent versions), confirm.
-- **D143. A mistake in a song is reported in the app, as a note for the editors** (the
-  owner's calls, 2026-11-26; replaces D85's email;
-  `.planning/ongoing/reports-and-song-comments.md`). A note is its author's own, a
-  playlist's, or a **report**: written at a line or on the whole song by someone with a
-  confirmed account who can't fix the song themselves, never on a private song. It is seen by
-  its reporter, the songbook's editors and the song's author, never by players; marked with a
-  flag. Whoever may change the song resolves it ("Vyřešeno"): it leaves the song, and stays
+- **D143. A mistake in a song is reported in the app, as a note for the editors** (the owner's
+  calls, 2026-11-26; replaces D85's email; `.planning/ongoing/reports-and-song-comments.md`). A
+  note is its author's own, a playlist's, or a **report**: written at a line or on the whole
+  song by anyone with a confirmed account, an editor too (a mistake for whoever gets to it, not
+  a TODO of one's own), never on a private song. It is seen by its reporter, the songbook's
+  editors and the song's author, never by players; marked with a flag. Whoever may change the
+  song resolves it ("Vyřešeno", in their own report's dialog too): it leaves the song, and stays
   with its reporter, struck through, to delete. Only its reporter rewrites it, while open. No
-  email: the editors find it on the song (and, next, in the queue). Signed out, "Nahlásit
-  chybu" leads through signing in, back to the report.
+  email: the editors find it on the song (and, next, in the queue). Signed out, "Nahlásit chybu"
+  leads through signing in, back to the report.

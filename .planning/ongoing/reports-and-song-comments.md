@@ -124,6 +124,9 @@ Each ships on its own, gates green.
      address. Signed in but unconfirmed, a toast says to confirm the email first.
    - **Notes kept on a device from before** have no `kind`: read from their playlist when
      loaded (`noteFromDevice`), as playlists get fields added since (`fromDevice`).
+   - **Editors report too** (the owner's call, 2026-11-26, refining Decided 1): a mistake
+     found while playing is for whoever gets to it, not a TODO of one's own. Their own report
+     opens to change, with "Vyřešeno" beside it.
    - **Along the way:** the e2e suite signed in 31 times from one address, one over the sign-in
      limit, which explains the private-song test that failed now and then. The limit is now a
      setting (`AUTH_LIMIT`, 30 by default), raised for the e2e server only.

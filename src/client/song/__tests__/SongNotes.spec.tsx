@@ -435,15 +435,25 @@ describe('notes on the song view (D135)', () => {
       await vi.waitFor(() => expect(sent('notes.resolve')).toEqual([{ id: 1 }]));
     });
 
-    it('keeps a fixed report off the song, and offers an editor no report of their own', async () => {
-      asEditor();
-      const sheet = await play(null, [
+    it('keeps a fixed report off the song', async () => {
+      await play(null, [
         note(1, { kind: 'report', resolvedAt: '2026-11-26T10:00:00.000Z' }),
       ]);
       expect(screen.queryByText('poznámka 1')).toBeNull();
+    });
+
+    it('lets an editor report a mistake too, and close their own report once fixed', async () => {
+      asEditor();
+      const sheet = await play(null, [note(1, { kind: 'report', text: 'má tu být Hm' })]);
       fireEvent.contextMenu(sheet.querySelector('[data-place="1"]') as HTMLElement);
       const items = await screen.findAllByRole('menuitem');
-      expect(items.map((item) => item.textContent)).not.toContain('Nahlásit chybu');
+      expect(items.map((item) => item.textContent)).toContain('Nahlásit chybu');
+      fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' });
+      // Their own: open to change, and resolved from there.
+      fireEvent.click(screen.getByRole('button', { name: /má tu být Hm/ }));
+      expect(await screen.findByRole('textbox', { name: 'Poznámka' })).toBeTruthy();
+      fireEvent.click(screen.getByRole('button', { name: 'Vyřešeno' }));
+      await vi.waitFor(() => expect(sent('notes.resolve')).toEqual([{ id: 1 }]));
     });
   });
 });

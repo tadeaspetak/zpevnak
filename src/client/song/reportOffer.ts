@@ -4,20 +4,18 @@ import { url } from '#shared/urls.ts';
 export type ReportOffer = { onClick: () => void } | { to: string } | null;
 
 /**
- * Who can't fix a song reports a mistake in it to its editors, with an account (D143): signed
- * in and confirmed, the report opens (`start`, there when `useSongNotes` lets them write one);
- * signed out, signing in leads back to it; not yet confirmed, they're told to confirm first.
- * Not offered to whoever may fix the song, nor on a private song, which no editor reviews.
+ * Anyone reports a mistake in a song to its editors, with an account (D143), an editor too, for
+ * whoever gets to it: signed in and confirmed, the report opens (`start`, there when
+ * `useSongNotes` lets them write one); signed out, signing in leads back to it; not yet
+ * confirmed, they're told to confirm first. Not on a private song, which no editor reviews.
  */
 export function reportOffer({
-  canFix,
   isPrivate,
   signedIn,
   start,
   path,
   unconfirmed,
 }: {
-  canFix: boolean;
   isPrivate: boolean;
   signedIn: boolean;
   start: (() => void) | undefined;
@@ -25,7 +23,7 @@ export function reportOffer({
   path: string;
   unconfirmed: () => void;
 }): ReportOffer {
-  if (canFix || isPrivate) {
+  if (isPrivate) {
     return null;
   }
   if (start) {

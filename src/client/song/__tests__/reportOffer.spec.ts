@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { reportOffer } from '../reportOffer.ts';
 
 const reader = {
-  canFix: false,
   isPrivate: false,
   signedIn: true,
   start: vi.fn(),
@@ -11,7 +10,7 @@ const reader = {
 };
 
 describe('reportOffer (D143)', () => {
-  it('opens the report for a confirmed reader who can’t fix the song', () => {
+  it('opens the report for a confirmed reader, an editor as well as a player', () => {
     expect(reportOffer(reader)).toEqual({ onClick: reader.start });
   });
 
@@ -27,8 +26,7 @@ describe('reportOffer (D143)', () => {
     });
   });
 
-  it('offers nothing to whoever may fix the song, nor on a private song', () => {
-    expect(reportOffer({ ...reader, canFix: true })).toBeNull();
+  it('offers nothing on a private song, which no editor reviews', () => {
     expect(reportOffer({ ...reader, isPrivate: true })).toBeNull();
     expect(reportOffer({ ...reader, isPrivate: true, signedIn: false })).toBeNull();
   });
