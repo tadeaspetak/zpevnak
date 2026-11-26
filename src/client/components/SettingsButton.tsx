@@ -156,9 +156,12 @@ export function SettingsButton({ size = 'lg' }: Props) {
                 onChange={fullscreen.toggle}
               />
             )}
-            <InstallButton fullWidth variant="default" />
           </Part>
-          <RefreshAction playlistIds={playlistIds} />
+          {/* The panel's two actions, together under the settings. */}
+          <Stack gap="xs">
+            <InstallButton fullWidth variant="default" />
+            <RefreshAction playlistIds={playlistIds} />
+          </Stack>
         </Stack>
       </Popover.Dropdown>
     </Popover>
