@@ -662,5 +662,7 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   each resolved there. The queue's Hlášení are grouped by song, the song with the oldest first.
   "Nahlásit chybu" is in a line's menu for everyone, leading signed-out readers through signing
   in. A comment written into the song at a line goes above it ("Nad řádek „…“"; before the
-  `{chorus}` line in a repeat), reading as about that line, not as the next one's heading. A
-  song with someone else's open report can't go private (`SONG_REPORTED_BY_OTHERS`).
+  `{chorus}` line in a repeat), reading as about that line, not as the next one's heading. On
+  the song's own comment no note is offered (a note on a comment makes no sense): whoever may
+  change the song gets "Upravit komentář" there, on hover too, to change or remove it. A song
+  with someone else's open report can't go private (`SONG_REPORTED_BY_OTHERS`).

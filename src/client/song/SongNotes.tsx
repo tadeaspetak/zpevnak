@@ -155,6 +155,13 @@ export function useSongNotes({
     null,
   );
   const lineAt = (place: number) => lines.find((l) => l.place === place) ?? null;
+  // The song's own comment opened to change or remove (D145), by its source line.
+  const editComment = (at: number) => {
+    const text = commentOn(at);
+    if (text !== null) {
+      setTarget({ kind: 'comment', at, text });
+    }
+  };
   // A song comment's whole text, from the song: a place keeps only so many of its words.
   const commentOn = (source: number) => {
     for (const block of song?.blocks ?? []) {
@@ -307,20 +314,31 @@ export function useSongNotes({
   };
 
   // Inside the sheet's box, which it is placed in.
+  // On the song's own comment a note makes no sense: whoever may change the song gets the
+  // comment to change or remove instead, anyone else nothing (D146).
+  const hovered = hover ? lineAt(hover.place) : null;
+  const hoverAction =
+    hovered !== null && hovered.comment !== null
+      ? canFix && {
+          label: t('notes.editComment'),
+          icon: <IconPencil size={16} />,
+          run: () => hovered.comment !== null && editComment(hovered.comment),
+        }
+      : {
+          label: t('notes.addAtLine'),
+          icon: <IconNotes size={16} />,
+          run: () => addAt(hovered),
+        };
   const hoverButton =
-    hover && !picking ? (
+    hover && !picking && hoverAction ? (
       // Placed by its wrapper: the button's own transform is Mantine's, nudging it as it's pressed.
       <div
         className={classes.hoverAdd}
         style={{ top: hover.top, left: hover.left }}
         data-note-add
       >
-        <IconButton
-          label={t('notes.addAtLine')}
-          size="sm"
-          onClick={() => addAt(lineAt(hover.place))}
-        >
-          <IconNotes size={16} />
+        <IconButton label={hoverAction.label} size="sm" onClick={hoverAction.run}>
+          {hoverAction.icon}
         </IconButton>
       </div>
     ) : null;
@@ -359,18 +377,13 @@ export function useSongNotes({
               {canFix && menu.comment !== null && (
                 <Menu.Item
                   leftSection={<IconPencil size={16} />}
-                  onClick={() => {
-                    const at = menu.comment;
-                    const text = at === null ? null : commentOn(at);
-                    if (at !== null && text !== null) {
-                      setTarget({ kind: 'comment', at, text });
-                    }
-                  }}
+                  onClick={() => menu.comment !== null && editComment(menu.comment)}
                 >
                   {t('notes.editComment')}
                 </Menu.Item>
               )}
-              {canWrite && (
+              {/* Not on the song's own comment: a note on a comment makes no sense. */}
+              {canWrite && menu.comment === null && (
                 <Menu.Item
                   leftSection={<IconNotes size={16} />}
                   onClick={() => addAt(menu)}

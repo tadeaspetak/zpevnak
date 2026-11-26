@@ -757,4 +757,60 @@ describe('notes on the song view (D135)', () => {
       );
     });
   });
+
+  describe('the song’s own comment, not a line to take notes on (D146)', () => {
+    const commented = SOURCE.replace('lu lu [A]lu\n', 'lu lu [A]lu\n{c: pomalu}\n');
+    const hover = (sheet: HTMLElement, place: number) =>
+      fireEvent.pointerMove(
+        sheet.querySelector(`[data-place="${place}"]`) as HTMLElement,
+        {
+          pointerType: 'mouse',
+        },
+      );
+    const asEditor = () =>
+      localStorage.setItem(
+        'zpevnak.me',
+        JSON.stringify({
+          id: ME,
+          email: 'ja@example.com',
+          displayName: 'Já',
+          role: 'editor',
+          locale: 'cs',
+          emailVerified: true,
+        }),
+      );
+
+    it('offers whoever may change the song the comment to change or remove, on hover', async () => {
+      asEditor();
+      const sheet = await play(null, [], undefined, true, commented);
+      hover(sheet, 2);
+      fireEvent.click(await screen.findByRole('button', { name: 'Upravit komentář' }));
+      expect(await screen.findByRole('button', { name: 'Smazat' })).toBeTruthy();
+      expect(
+        screen.queryByRole('button', { name: 'Přidat poznámku k řádku' }),
+      ).toBeNull();
+    });
+
+    it('offers a player nothing on hover there, and a note on a sung line as before', async () => {
+      const sheet = await play(null, [], undefined, true, commented);
+      hover(sheet, 2);
+      expect(
+        screen.queryByRole('button', { name: /Upravit komentář|Přidat poznámku/ }),
+      ).toBeNull();
+      hover(sheet, 1);
+      expect(
+        await screen.findByRole('button', { name: 'Přidat poznámku k řádku' }),
+      ).toBeTruthy();
+    });
+
+    it('leaves a note out of the comment’s line menu', async () => {
+      const sheet = await play(null, [], undefined, true, commented);
+      fireEvent.contextMenu(sheet.querySelector('[data-place="2"]') as HTMLElement);
+      const items = await screen.findAllByRole('menuitem');
+      expect(items.map((item) => item.textContent)).toEqual([
+        'Nahlásit chybu',
+        'Kopírovat řádek',
+      ]);
+    });
+  });
 });
