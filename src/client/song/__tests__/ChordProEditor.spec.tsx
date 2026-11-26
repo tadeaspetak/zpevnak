@@ -1,7 +1,8 @@
-import { act, fireEvent, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, renderHook, screen } from '@testing-library/react';
 import { createRef, useState } from 'react';
 import { renderApp } from '#tests/client/render.tsx';
 import { describe, expect, it } from 'vitest';
+import { usePrefs } from '../../data/prefs.ts';
 import { cs } from '../../i18n/cs.ts';
 import { ChordProEditor, type ChordProEditorHandle } from '../ChordProEditor.tsx';
 
@@ -110,5 +111,27 @@ describe('ChordProEditor: tags (D118)', () => {
       ?.querySelector('button');
     fireEvent.click(remove as HTMLButtonElement);
     expect(source.value).toBe('{title: Píseň}\n{tag: Vánoční}\nla la');
+  });
+});
+
+describe('ChordProEditor: the preview’s diagrams (D132)', () => {
+  const source =
+    '{title: Píseň}\n{define: Aaddb9 base-fret 1 frets x 0 2 3 2 0}\nla [Aaddb9]la';
+  // On a phone, as in jsdom, the preview is one tap away from the source.
+  const caption = () => {
+    fireEvent.click(screen.getByText('Náhled'));
+    return screen.getByLabelText('Diagramy akordů').textContent ?? '';
+  };
+
+  it('draws them on the instrument the song view draws them for', () => {
+    // On guitar the song's own shape; a ukulele has no such shape (the song defines a guitar's).
+    open(source);
+    expect(caption()).not.toContain('bez diagramu');
+    cleanup();
+    const prefs = renderHook(() => usePrefs()).result;
+    act(() => prefs.current.setInstrument('ukulele'));
+    open(source);
+    expect(caption()).toContain('bez diagramu');
+    act(() => prefs.current.setInstrument('guitar'));
   });
 });

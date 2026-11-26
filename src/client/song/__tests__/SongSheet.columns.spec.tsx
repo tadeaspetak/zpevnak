@@ -22,6 +22,7 @@ function body(room: boolean, showColumns: boolean) {
   }));
   const { container } = renderApp(
     <SongSheet
+      instrument="guitar"
       song={song}
       fontScale={1}
       showDiagrams={false}

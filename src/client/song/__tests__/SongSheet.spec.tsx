@@ -21,6 +21,7 @@ function sheet(showChords: boolean) {
   return renderApp(
     // One column: the hidden copy measured for columns would hold the same text twice.
     <SongSheet
+      instrument="guitar"
       song={song}
       fontScale={1}
       showDiagrams
@@ -52,6 +53,7 @@ describe('SongSheet: a chord on a pause', () => {
   it('takes no room of its own: its empty text is zero-width', () => {
     const { container } = renderApp(
       <SongSheet
+        instrument="guitar"
         song={parseSong('{title: T}\nSvítá, [F] rozum šel [C]spát.')}
         fontScale={1}
         showDiagrams={false}
@@ -69,6 +71,7 @@ describe('SongSheet: choruses', () => {
     localStorage.setItem('zpevnak.locale', 'cs');
     renderApp(
       <SongSheet
+        instrument="guitar"
         song={parseSong(
           [
             '{title: T}',
@@ -99,6 +102,7 @@ describe('SongSheet: notation and diagrams (D132)', () => {
     localStorage.setItem('zpevnak.locale', 'cs');
     renderApp(
       <SongSheet
+        instrument="guitar"
         song={english}
         fontScale={1}
         showDiagrams={false}

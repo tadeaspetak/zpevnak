@@ -33,6 +33,7 @@ import {
 } from '#shared/chordpro/fromChordsOverLyrics.ts';
 import { parseSong } from '#shared/chordpro/parse.ts';
 import { setTags, spellAsKnown, tagKey, tagsIn } from '#shared/chordpro/tags.ts';
+import { usePrefs } from '../data/prefs.ts';
 import { useTags } from '../data/tags.ts';
 import { useWide } from '../hooks/useBreakpoints.ts';
 import { useI18n } from '../i18n/index.tsx';
@@ -72,6 +73,7 @@ export function ChordProEditor({
   ref,
 }: Props) {
   const { t } = useI18n();
+  const prefs = usePrefs();
   const wide = useWide();
   const [view, setView] = useState<'source' | 'preview'>('source');
   const [cheatSheet, { toggle: toggleCheatSheet }] = useDisclosure(false);
@@ -227,7 +229,9 @@ export function ChordProEditor({
       className={wide ? classes.previewPane : classes.preview}
       aria-label={t('editor.preview')}
     >
-      <SongSheet song={song} fontScale={0.9} showDiagrams />
+      {/* Diagrams always, to check the song's own shapes; on the instrument the song view
+          would draw them for (D132). */}
+      <SongSheet song={song} fontScale={0.9} showDiagrams instrument={prefs.instrument} />
     </div>
   );
 

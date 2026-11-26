@@ -44,8 +44,11 @@ type Props = {
   showColumns?: boolean;
   /** How this reader spells chords (D132); the song's own spelling when not given. */
   notation?: NoteSystem;
-  /** Whose diagrams (D132). */
-  instrument?: Instrument;
+  /**
+   * Whose diagrams (D132): the reader's setting, on the song and in the editor's preview alike,
+   * so the preview shows what the song will.
+   */
+  instrument: Instrument;
   /**
    * Each block's lines' places for notes (`notePlaces`, D135), read from the song as written:
    * the song shown may be transposed. Without them, the sheet has no notes.
@@ -307,7 +310,7 @@ export function SongSheet({
   showChords = true,
   isPrivate = false,
   notation,
-  instrument = 'guitar',
+  instrument,
   places,
   notesAt,
   topNotes,

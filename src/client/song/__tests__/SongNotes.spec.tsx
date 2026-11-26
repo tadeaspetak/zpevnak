@@ -72,6 +72,7 @@ function Played({
       {loaded ? (
         <div ref={setContainer} data-loaded>
           <SongSheet
+            instrument="guitar"
             song={SONG}
             fontScale={1}
             showDiagrams={false}
