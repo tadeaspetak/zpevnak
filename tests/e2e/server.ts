@@ -26,6 +26,8 @@ const env = {
   APP_URL: 'http://localhost:3101',
   // No live reload: its port would collide with a dev server, and tests don't need it.
   VITE_HMR: 'off',
+  // Every test signs in from this one address; the limit itself is tested in rateLimit.spec.
+  AUTH_LIMIT: '1000',
 };
 execFileSync('node', ['src/server/db/migrate.ts', 'latest'], { env, stdio: 'inherit' });
 execFileSync('node', ['src/server/db/seed.ts'], { env, stdio: 'inherit' });

@@ -115,8 +115,6 @@ export const cs = {
   'song.transposedSaved': 'Uloženo transponované.',
   'song.rejectedWaiting': 'Tahle písnička byla zamítnuta a čeká na opravu.',
   'song.reportMistake': 'Nahlásit chybu',
-  'song.reportSubject': 'Chyba v písničce: {title}',
-  'song.reportBody': 'Písnička: {link}\n\nCo je špatně:\n',
   'song.addToPlaylist': 'Přidat do playlistu',
   'song.diagrams': 'Diagramy akordů',
   'song.noDiagram': 'bez diagramu',
@@ -167,6 +165,16 @@ export const cs = {
   'notes.forPlaylistHint': 'Uvidí ji každý, kdo playlist vidí.',
   'notes.forPublicPlaylistHint': 'Playlist je veřejný: uvidí ji každý, kdo ho otevře.',
   'notes.noneUnverified': 'Poznámky si můžeš psát, až potvrdíš e-mail.',
+  'notes.report': 'Hlášení chyby',
+  'notes.reportMark': 'Hlášení chyby',
+  'notes.forEditors': 'Chyba v písničce, pro editory',
+  'notes.forEditorsHint':
+    'Uvidí ji editoři a autor písničky. Až chybu opraví, uvidíš to v účtu: Poznámky.',
+  'notes.reportedBy': 'Nahlásil(a): {name}',
+  'notes.resolve': 'Vyřešeno',
+  'notes.resolvedMark': 'Vyřešeno',
+  'notes.resolvedDone': 'Vyřešeno. Hlášení zmizelo z písničky.',
+  'notes.reportUnverified': 'Chybu nahlásíš, až potvrdíš e-mail.',
   'notes.byAuthor': 'Autor: {name}',
   'notes.todo': 'TODO',
   'notes.done': 'Hotovo',
@@ -436,6 +444,9 @@ export const cs = {
     'Sdílet s lidmi jde jen soukromou písničku. Veřejnou vidí všichni.',
   'error.NOTE_TODO_PRIVATE':
     'TODO může mít jen tvoje vlastní poznámka, ne poznámka pro playlist.',
+  'error.NOTE_REPORT_PRIVATE':
+    'Soukromou písničku editoři nekontrolují: opravit ji může ten, kdo ji smí upravovat.',
+  'error.NOTE_RESOLVED': 'Tahle chyba už je vyřešená.',
   'error.crashed':
     'Tady se něco pokazilo. Písničky máš v zařízení, načtení znovu pomůže.',
   'error.reload': 'Načíst znovu',

@@ -119,7 +119,8 @@ Every change to behaviour ships with its tests in the same commit.
   may not see it, not FORBIDDEN; a private song does so to the songbook's editors too. Song
   reads go through `loadSongRow` / `SONG_READABLE` (`src/server/songs/`), never a bare SELECT;
   notes through `loadNote` / `loadVisibleNotes` (`src/server/notes/`), which keep a private
-  song's notes to those who may read it.
+  song's notes to those who may read it, and a report (D143) to its reporter, the editors and
+  the song's author.
 - **Sharing is one router** (`sharing`, with a `kind`: playlist or song): invites, joining,
   people, roles. Each kind's tables are in `SHARED_TABLES` (`src/server/sharing/`).
 - **URLs come from `src/shared/urls.ts`** (`url.song(…)`, `routes`), on the client and in the

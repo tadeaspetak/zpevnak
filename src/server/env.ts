@@ -5,6 +5,9 @@ const schema = z.object({
   PORT: z.coerce.number().int().default(3100),
   DATABASE_URL: z.string().default('postgres://zpevnak:zpevnak@127.0.0.1:5434/zpevnak'),
   APP_URL: z.string().url().default('http://localhost:3100'),
+  // Sign-ins and the like from one address, a quarter of an hour. The e2e server raises it: its
+  // every browser comes from one address.
+  AUTH_LIMIT: z.coerce.number().int().positive().default(30),
   RESEND_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().default('Zpěvňák <noreply@zpevnak.tadeaspetak.com>'),
 });

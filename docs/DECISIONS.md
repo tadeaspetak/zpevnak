@@ -228,7 +228,7 @@ entry that says which it replaces and what changed.
 - **D85. Small consistencies:** a song's status banner is as wide as the song; a dialog's title
   is a real heading (set once in the theme); "Nahlásit chybu" shows only to people who can't
   edit the song themselves; delete asks "Opravdu chceš smazat …? Nejde to vzít zpátky."
-  (2026-11-09)
+  (2026-11-09) _"Nahlásit chybu" writes a report in the app now, not an email: D143._
 
 - **D86. Every song keeps its versions** (replaces D5), recorded quietly before anyone uses the
   app, so credits, suggested changes and rollback can be built on them later
@@ -559,7 +559,7 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   playlist's note is for everyone who sees the playlist (its people, and a public one's
   visitors), never a TODO, added, changed and deleted by whoever may edit the playlist. A note
   goes with its song; a playlist's notes go with the playlist, and hide while their song is out
-  of it. Nobody sees a note on a song they can't read (a private song's, D126). (2026-11-25) _The UX walk's calls (by song, offline at once, done off the song, small edits): D138. Louder on the song, a tab, changed in the list: D139._
+  of it. Nobody sees a note on a song they can't read (a private song's, D126). (2026-11-25) _The UX walk's calls (by song, offline at once, done off the song, small edits): D138. Louder on the song, a tab, changed in the list: D139. Reports for the editors: D143._
 - **D136. The bars count where they are shown, slid away or not** (narrows D129). Whether a song
   fits in columns is decided with the bars at the bottom in place (the playlist's bar, the
   pill), so the song doesn't rearrange itself as a scroll hides them (D109). Songs that would
@@ -629,3 +629,13 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   D141, the owner plays from it). Like an iPhone it can't be asked to install, so the steps go
   through its menu: ⋮ (bottom or top right), „Nainstalovat“ or „Přidat na plochu“ (both named:
   its menu has said each in recent versions), confirm.
+- **D143. A mistake in a song is reported in the app, as a note for the editors** (the
+  owner's calls, 2026-11-26; replaces D85's email;
+  `.planning/ongoing/reports-and-song-comments.md`). A note is its author's own, a
+  playlist's, or a **report**: written at a line or on the whole song by someone with a
+  confirmed account who can't fix the song themselves, never on a private song. It is seen by
+  its reporter, the songbook's editors and the song's author, never by players; marked with a
+  flag. Whoever may change the song resolves it ("Vyřešeno"): it leaves the song, and stays
+  with its reporter, struck through, to delete. Only its reporter rewrites it, while open. No
+  email: the editors find it on the song (and, next, in the queue). Signed out, "Nahlásit
+  chybu" leads through signing in, back to the report.

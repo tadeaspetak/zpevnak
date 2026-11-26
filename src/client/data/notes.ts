@@ -20,24 +20,34 @@ export function notesBy(
 }
 
 /**
- * Whether the viewer may change a note they see (D135): their own, always (once the server has
- * it); a playlist's, while
- * they may edit that playlist (`playlist`: the one it's for, if the device has it). As the
- * server decides it (`assertCanChangeNote`), so nobody is offered what would be refused.
+ * Whether the viewer may change or delete a note they see (D135): their own, always (once the
+ * server has it); a playlist's, while they may edit that playlist (`playlist`: the one it's
+ * for, if the device has it); a report, its author (D143), whom the editors who see it don't
+ * replace. As the server decides it (`assertCanChangeNote`), so nobody is offered what would
+ * be refused. A report resolved can still be deleted, not rewritten (`isResolved`).
  */
 export function canChangeNote(
   note: LocalNote,
   playlist: Pick<PlaylistRecord, 'id' | 'role'> | null | undefined,
-  verified: boolean,
+  viewer: { id: number; emailVerified: boolean } | null,
 ): boolean {
   // Waiting for the connection, it isn't the server's yet: nothing to change.
-  if (!verified || note.waiting) {
+  if (!viewer?.emailVerified || note.waiting) {
     return false;
   }
-  return (
-    note.playlistId === null ||
-    (playlist?.id === note.playlistId && editsAsMember(playlist.role))
-  );
+  switch (note.kind) {
+    case 'own':
+      return true;
+    case 'playlist':
+      return playlist?.id === note.playlistId && editsAsMember(playlist.role);
+    case 'report':
+      return note.authorId === viewer.id;
+  }
+}
+
+/** A report of a mistake that has been fixed (D143): off the song, kept by its author. */
+export function isResolved(note: NoteRecord): boolean {
+  return note.resolvedAt !== null;
 }
 
 export function inFilter(note: NoteRecord, filter: NoteFilter): boolean {

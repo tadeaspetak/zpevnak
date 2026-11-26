@@ -3,6 +3,8 @@ import { useMediaQuery } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import {
   IconCopy,
+  IconFlag,
+  IconMessageReport,
   IconNote,
   IconNotes,
   IconPlaylist,
@@ -14,11 +16,12 @@ import type { SongLinkState } from '../components/SongRow.tsx';
 import type { Song } from '#shared/chordpro/types.ts';
 import { notePlaces, placeOf, type NotePlace } from '#shared/notes.ts';
 import { editsAsMember } from '#shared/roles.ts';
+import { canChangeSong } from '#shared/songs.ts';
 import { IconButton } from '../components/IconButton.tsx';
 import { useCatalog, type LocalNote } from '../data/catalog.ts';
-import { canChangeNote, inFilter } from '../data/notes.ts';
+import { canChangeNote, inFilter, isResolved } from '../data/notes.ts';
 import { usePrefs } from '../data/prefs.ts';
-import type { NoteRecord, PlaylistRecord } from '../data/store.ts';
+import type { NoteRecord, PlaylistRecord, SongRecord } from '../data/store.ts';
 import { useLinePress, type LinePress } from '../hooks/useLinePress.ts';
 import { useMe } from '../hooks/useMe.ts';
 import { useI18n } from '../i18n/index.tsx';
@@ -43,6 +46,7 @@ const byAge = (a: NoteRecord, b: NoteRecord) =>
 export function useSongNotes({
   songId,
   song,
+  access,
   playlist,
   container,
 }: {
@@ -50,6 +54,8 @@ export function useSongNotes({
   songId: number | null;
   /** As written, not transposed: notes are placed by its lines. */
   song: Song | null;
+  /** Who may fix the song, and so who reports a mistake in it instead (D143). */
+  access: Pick<SongRecord, 'status' | 'createdBy' | 'role'> | null;
   playlist: Playing | null;
   container: HTMLDivElement | null;
 }) {
@@ -66,7 +72,13 @@ export function useSongNotes({
 
   const canWrite = Boolean(me?.emailVerified);
   const writesForPlaylist = Boolean(playlist && canWrite && editsAsMember(playlist.role));
-  const canChange = (note: NoteRecord) => canChangeNote(note, playlist, canWrite);
+  // Whoever may fix the song resolves its reports; whoever can't, reports (D143). Not a
+  // private song: no editor reviews it.
+  const canFix = access !== null && canChangeSong(me, access);
+  const canReport = canWrite && access !== null && !canFix && access.status !== 'private';
+  const canChange = (note: NoteRecord) => canChangeNote(note, playlist, me);
+  const canReview = (note: LocalNote) =>
+    note.kind === 'report' && !note.waiting && canFix && !canChange(note);
 
   const { atPlace, top } = useMemo(() => {
     const atPlace = new Map<number, LocalNote[]>();
@@ -76,8 +88,9 @@ export function useSongNotes({
         (n) =>
           n.songId === songId &&
           (n.playlistId === null || n.playlistId === playlist?.id) &&
-          // A TODO done is off the song, kept in Moje poznámky → Hotové.
-          !inFilter(n, 'done'),
+          // A TODO done is off the song, kept in Moje poznámky → Hotové; so is a report fixed.
+          !inFilter(n, 'done') &&
+          !isResolved(n),
       )
       .sort(byAge);
     for (const note of mine) {
@@ -106,10 +119,10 @@ export function useSongNotes({
     null,
   );
   const lineAt = (place: number) => lines.find((l) => l.place === place) ?? null;
-  const addAt = (place: NotePlace | null) => {
+  const addAt = (place: NotePlace | null, report = false) => {
     setPicking(false);
     if (songId !== null) {
-      setTarget({ kind: 'new', songId, place });
+      setTarget({ kind: 'new', songId, place, report });
     }
   };
 
@@ -222,7 +235,11 @@ export function useSongNotes({
     }
   });
 
-  const open = (note: NoteRecord) => setTarget({ kind: 'edit', note });
+  // One's own to change; a report, for whoever may fix the song, to resolve (D143).
+  const opens = (note: LocalNote) =>
+    (canChange(note) || canReview(note)) && !note.waiting;
+  const open = (note: NoteRecord) =>
+    setTarget(canChange(note) ? { kind: 'edit', note } : { kind: 'review', note });
   const shown = prefs.showNotes;
   const copy = (words: string) => {
     void navigator.clipboard?.writeText(words).then(
@@ -287,6 +304,14 @@ export function useSongNotes({
                   {t('notes.add')}
                 </Menu.Item>
               )}
+              {canReport && (
+                <Menu.Item
+                  leftSection={<IconMessageReport size={16} />}
+                  onClick={() => addAt(menu, true)}
+                >
+                  {t('song.reportMistake')}
+                </Menu.Item>
+              )}
               <Menu.Item
                 leftSection={<IconCopy size={16} />}
                 onClick={() => copy(menu.words)}
@@ -320,6 +345,7 @@ export function useSongNotes({
       <NoteModal
         target={target}
         playlist={writesForPlaylist && playlist ? playlist : null}
+        canReport={canReport}
         onClose={() => setTarget(null)}
         // Notes switched off come back into sight, to show the one just saved.
         onSaved={() => {
@@ -337,16 +363,14 @@ export function useSongNotes({
       picking,
       notesAt: (place: number) => {
         const here = shown ? atPlace.get(place) : undefined;
-        return here ? (
-          <NoteList notes={here} canChange={canChange} onOpen={open} />
-        ) : null;
+        return here ? <NoteList notes={here} opens={opens} onOpen={open} /> : null;
       },
       topNotes:
         shown && top.length > 0 ? (
           <NoteList
             notes={top.map(({ note }) => note)}
             moved={new Set(top.filter((n) => n.moved).map((n) => n.note.id))}
-            canChange={canChange}
+            opens={opens}
             onOpen={open}
           />
         ) : null,
@@ -355,20 +379,25 @@ export function useSongNotes({
     overlay,
     /** Starts picking a line, for the ⋯ menu; undefined for whoever can't write notes. */
     startPicking: canWrite ? () => setPicking(true) : undefined,
+    /** "Nahlásit chybu" on the whole song (D143); undefined for whoever can't report it here. */
+    startReport: canReport ? () => addAt(null, true) : undefined,
   };
 }
 
-/** Notes at one place on the sheet, set apart from the song: tapped, one opens to change it. */
+/**
+ * Notes at one place on the sheet, set apart from the song: tapped, one opens, to change it or,
+ * a report, to resolve it (`opens`).
+ */
 function NoteList({
   notes,
   moved,
-  canChange,
+  opens,
   onOpen,
 }: {
   notes: LocalNote[];
   /** Notes whose line has gone from the song: shown at the top, with the words they were at. */
   moved?: ReadonlySet<number>;
-  canChange: (note: NoteRecord) => boolean;
+  opens: (note: LocalNote) => boolean;
   onOpen: (note: NoteRecord) => void;
 }) {
   const { t } = useI18n();
@@ -376,7 +405,9 @@ function NoteList({
     <div className={classes.notes} data-notes>
       {notes.map((note) => {
         const icon =
-          note.playlistId !== null ? (
+          note.kind === 'report' ? (
+            <IconFlag role="img" aria-label={t('notes.reportMark')} />
+          ) : note.kind === 'playlist' ? (
             <IconPlaylist role="img" aria-label={t('notes.playlistMark')} />
           ) : note.todo ? (
             // Only open ones: a TODO done is off the song (D138).
@@ -401,7 +432,7 @@ function NoteList({
           </>
         );
         // Waiting for the connection, it can't be opened yet: the server hasn't got it.
-        return canChange(note) && !note.waiting ? (
+        return opens(note) ? (
           <button
             key={note.id}
             data-note-id={note.id}

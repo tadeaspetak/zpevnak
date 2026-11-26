@@ -114,8 +114,6 @@ export const en: Record<keyof typeof cs, string> = {
   'song.transposedSaved': 'Saved transposed.',
   'song.rejectedWaiting': 'This song was rejected and is waiting to be fixed.',
   'song.reportMistake': 'Report a mistake',
-  'song.reportSubject': 'Mistake in a song: {title}',
-  'song.reportBody': 'Song: {link}\n\nWhat is wrong:\n',
   'song.addToPlaylist': 'Add to playlist',
   'song.diagrams': 'Chord diagrams',
   'song.noDiagram': 'no diagram',
@@ -167,6 +165,16 @@ export const en: Record<keyof typeof cs, string> = {
   'notes.forPublicPlaylistHint':
     'The playlist is public: anyone who opens it will see it.',
   'notes.noneUnverified': 'You can write notes once you’ve confirmed your email.',
+  'notes.report': 'Mistake report',
+  'notes.reportMark': 'Mistake report',
+  'notes.forEditors': 'A mistake in the song, for the editors',
+  'notes.forEditorsHint':
+    'The editors and the song’s author see it. Once it’s fixed, you’ll see so in your account: Notes.',
+  'notes.reportedBy': 'Reported by: {name}',
+  'notes.resolve': 'Fixed',
+  'notes.resolvedMark': 'Fixed',
+  'notes.resolvedDone': 'Fixed. The report has left the song.',
+  'notes.reportUnverified': 'You can report a mistake once you confirm your email.',
   'notes.byAuthor': 'By {name}',
   'notes.todo': 'TODO',
   'notes.done': 'Done',
@@ -442,6 +450,9 @@ export const en: Record<keyof typeof cs, string> = {
   'error.SONG_NOT_PRIVATE':
     'Only a private song is shared with people. A public one is everyone’s.',
   'error.NOTE_TODO_PRIVATE': 'Only your own note can be a TODO, not a playlist’s.',
+  'error.NOTE_REPORT_PRIVATE':
+    'Editors don’t check private songs: whoever may edit it can fix it.',
+  'error.NOTE_RESOLVED': 'This mistake has already been fixed.',
   'error.crashed':
     'Something broke here. Your songs are on the device; reloading will help.',
   'error.reload': 'Reload',

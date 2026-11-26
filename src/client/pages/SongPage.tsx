@@ -1,7 +1,7 @@
 import { Alert, Button, Center, Group, Stack, Text } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useLocation, useNavigate, useParams } from 'react-router';
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
 import type { SongLinkState } from '../components/SongRow.tsx';
 import { parseSong } from '#shared/chordpro/parse.ts';
 import { PlaylistPill } from '../components/PlaylistPill.tsx';
@@ -30,10 +30,11 @@ import { useI18n } from '../i18n/index.tsx';
 import { SongSheet } from '../song/SongSheet.tsx';
 import { SongStatusBanner } from '../song/SongStatusBanner.tsx';
 import { SongToolbar } from '../song/SongToolbar.tsx';
+import { reportOffer } from '../song/reportOffer.ts';
 import { useSongNotes } from '../song/SongNotes.tsx';
 import { PlaylistBar } from '../song/PlaylistBar.tsx';
 import { trpc } from '../trpc.ts';
-import { idFromRef, url } from '#shared/urls.ts';
+import { idFromRef, REPORT_PARAM, url } from '#shared/urls.ts';
 import { followSong, playlistSteps } from '../song/followSong.ts';
 import { useCanonicalPath } from '../hooks/useCanonicalPath.ts';
 import classes from './SongPage.module.css';
@@ -163,6 +164,7 @@ function SongPlayer({
   const { session } = usePlayer();
   const prefs = usePrefs();
   const { me } = useMe();
+  const location = useLocation();
   useWakeLock();
   const back = useBack(playlist);
   const toolbar = useHideOnScroll();
@@ -242,6 +244,7 @@ function SongPlayer({
   const notes = useSongNotes({
     songId: song?.id ?? null,
     song: parsed,
+    access: song ?? null,
     playlist: playlist && {
       id: playlist.id,
       name: playlist.name,
@@ -250,6 +253,33 @@ function SongPlayer({
     },
     container: sheetEl,
   });
+  // Back from signing in to report a mistake (D143): the report opens, once, and the address
+  // forgets it. Only once someone is signed in: just after signing in, the last answer may
+  // still be "nobody". Whoever turned out to be able to fix the song just reads it.
+  const [params, setParams] = useSearchParams();
+  const asksReport = params.has(REPORT_PARAM);
+  const startReport = notes.startReport;
+  // Once per arrival: the address forgets it a moment after, and renders come between.
+  const reportOpened = useRef(false);
+  useEffect(() => {
+    if (!asksReport) {
+      reportOpened.current = false;
+      return;
+    }
+    if (reportOpened.current || !song || !me) {
+      return;
+    }
+    reportOpened.current = true;
+    startReport?.();
+    setParams(
+      (was) => {
+        const next = new URLSearchParams(was);
+        next.delete(REPORT_PARAM);
+        return next;
+      },
+      { replace: true },
+    );
+  }, [asksReport, song, me, startReport, setParams]);
   useKeys(
     useMemo(
       () => ({
@@ -287,6 +317,14 @@ function SongPlayer({
   }
 
   const canEdit = canChangeSong(me, song);
+  const report = reportOffer({
+    canFix: canEdit,
+    isPrivate: song.status === 'private',
+    signedIn: me !== null,
+    start: notes.startReport,
+    path: location.pathname,
+    unconfirmed: () => notifications.show({ message: t('notes.reportUnverified') }),
+  });
   // Jumped out of a playlist to play something else: keep the way back in reach.
   const showPill = !playlist && session !== null;
 
@@ -344,6 +382,7 @@ function SongPlayer({
         canDelete={canDeleteSong(me, song)}
         canAddToPlaylist={Boolean(me?.emailVerified)}
         onAddNote={notes.startPicking}
+        report={report}
         hidden={toolbar.hidden}
       />
       <SongStatusBanner

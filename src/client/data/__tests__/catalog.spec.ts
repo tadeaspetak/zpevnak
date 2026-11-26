@@ -9,6 +9,7 @@ import {
 } from '../catalog.ts';
 import {
   fromDevice,
+  noteFromDevice,
   type NoteRecord,
   type PlaylistRecord,
   type SongRecord,
@@ -117,6 +118,20 @@ describe('fromDevice', () => {
     expect(fromDevice(old).songKeys).toEqual({});
     const current = { ...old, songKeys: { 1: { semitones: 2, from: 0 } } };
     expect(fromDevice(current).songKeys).toEqual({ 1: { semitones: 2, from: 0 } });
+  });
+});
+
+describe('noteFromDevice', () => {
+  it('reads a note kept from before reports by its playlist, never resolved (D143)', () => {
+    const old = { id: 1, playlistId: null } as unknown as NoteRecord;
+    expect(noteFromDevice(old)).toMatchObject({ kind: 'own', resolvedAt: null });
+    expect(noteFromDevice({ ...old, playlistId: 4 })).toMatchObject({ kind: 'playlist' });
+    const report = {
+      ...old,
+      kind: 'report',
+      resolvedAt: '2026-11-26T10:00:00.000Z',
+    } as const;
+    expect(noteFromDevice(report)).toMatchObject(report);
   });
 });
 

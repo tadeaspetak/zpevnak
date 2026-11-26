@@ -28,7 +28,6 @@ import { Link } from 'react-router';
 import { AddToPlaylistModal } from '../components/AddToPlaylistModal.tsx';
 import { DeleteSongModal } from '../components/DeleteSongModal.tsx';
 import { SongShareModal } from '../components/SongShareModal.tsx';
-import { mailtoAuthor } from '../contact.ts';
 import { SearchButton } from '../components/SearchButton.tsx';
 import { SettingsButton } from '../components/SettingsButton.tsx';
 import { usePrefs } from '../data/prefs.ts';
@@ -36,6 +35,7 @@ import { songText } from '../data/songText.ts';
 import type { SongRecord } from '../data/store.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { url } from '#shared/urls.ts';
+import type { ReportOffer } from './reportOffer.ts';
 import { SaveKeyModal } from './SaveKeyModal.tsx';
 import classes from './SongToolbar.module.css';
 import { IconButton } from '../components/IconButton.tsx';
@@ -64,6 +64,11 @@ type Props = {
    * long-press or the right-click, and for a keyboard. Undefined: no notes for this reader.
    */
   onAddNote?: () => void;
+  /**
+   * "Nahlásit chybu" (D143): opens the report, or leads where it can be written (signing in).
+   * Null: not offered (the reader may fix the song themselves, or it's private).
+   */
+  report: ReportOffer;
   /** Out of the way: scrolled away, or the reader tapped the song (`useHideOnScroll`). */
   hidden: boolean;
   /** Played inside a playlist: its key for the song can be set there, by whoever edits it. */
@@ -100,6 +105,7 @@ export function SongToolbar(props: Props) {
     canDelete,
     canAddToPlaylist,
     onAddNote,
+    report,
     hidden,
     playlist,
   } = props;
@@ -236,24 +242,24 @@ export function SongToolbar(props: Props) {
                   {t('songs.share')}
                 </Menu.Item>
               )}
-              {/* Who can edit the song fixes it; everyone else tells the author. Not about a
-                  private song: the author doesn't see those. */}
-              {!canEdit && !isPrivate && (
-                <Menu.Item
-                  component="a"
-                  href={mailtoAuthor(
-                    t('song.reportSubject', {
-                      title: song.artist ? `${song.title} – ${song.artist}` : song.title,
-                    }),
-                    t('song.reportBody', {
-                      link: `${window.location.origin}${url.song(song)}`,
-                    }),
-                  )}
-                  leftSection={<IconMessageReport size={16} />}
-                >
-                  {t('song.reportMistake')}
-                </Menu.Item>
-              )}
+              {/* Who can edit the song fixes it; everyone else reports it to the editors. */}
+              {report &&
+                ('to' in report ? (
+                  <Menu.Item
+                    component={Link}
+                    to={report.to}
+                    leftSection={<IconMessageReport size={16} />}
+                  >
+                    {t('song.reportMistake')}
+                  </Menu.Item>
+                ) : (
+                  <Menu.Item
+                    leftSection={<IconMessageReport size={16} />}
+                    onClick={report.onClick}
+                  >
+                    {t('song.reportMistake')}
+                  </Menu.Item>
+                ))}
               {/* What can be done with the key it's played in, under one heading (it names
                   the key, so the items needn't): kept for everyone, by who may edit the song,
                   only a key they came to themselves (D119); in a playlist, by who edits it, kept

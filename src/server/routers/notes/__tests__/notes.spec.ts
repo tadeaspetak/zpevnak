@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { SessionUser } from '../../../auth/sessions.ts';
-import { callerFor, createUser, SONG, useCleanDatabase } from '#tests/server/helpers.ts';
+import {
+  callerFor,
+  createUser,
+  seenAt,
+  SONG,
+  useCleanDatabase,
+} from '#tests/server/helpers.ts';
 
 useCleanDatabase();
 
@@ -41,6 +47,7 @@ async function band(isPublic = false) {
 
 const note = (songId: number, playlistId: number | null = null) => ({
   songId,
+  kind: playlistId === null ? ('own' as const) : ('playlist' as const),
   playlistId,
   text: 'refrén třikrát, konec na G',
   todo: false,
@@ -242,5 +249,125 @@ describe('notes on songs (D135)', () => {
     const admin = await createUser({ role: 'admin' });
     await callerFor(admin).songs.delete({ id: a.id });
     expect(await visibleIds(owner)).toEqual([kept.id]);
+  });
+});
+
+describe('reports of a mistake (D143)', () => {
+  /** An approved song by its author, someone who reports a mistake in it, and the rest. */
+  async function reported({ approved = true } = {}) {
+    const author = await createUser();
+    const editor = await createUser({ role: 'editor' });
+    const reporter = await createUser();
+    const player = await createUser();
+    const song = await callerFor(author).songs.create({ source: SONG('Píseň') });
+    if (approved) {
+      await callerFor(editor).songs.verify({
+        id: song.id,
+        seenAt: await seenAt(song.id),
+      });
+    }
+    const report = await callerFor(reporter).notes.create({
+      songId: song.id,
+      kind: 'report',
+      playlistId: null,
+      text: 've druhé sloce má být Hm, ne D',
+      todo: false,
+      line: { index: 1, text: 'la la la' },
+    });
+    return { author, editor, reporter, player, song, report };
+  }
+
+  it('shows an open report to its author, the editors and the song’s author, not to players', async () => {
+    const { author, editor, reporter, player, report } = await reported();
+    expect(report).toMatchObject({ kind: 'report', playlistId: null, resolvedAt: null });
+    const admin = await createUser({ role: 'admin' });
+    for (const sees of [reporter, editor, admin, author]) {
+      expect(await visibleIds(sees)).toEqual([report.id]);
+    }
+    for (const doesNot of [player, null]) {
+      expect(await visibleIds(doesNot)).toEqual([]);
+    }
+  });
+
+  it('is resolved by an editor: it leaves the editors and the author, and stays its reporter’s', async () => {
+    const { author, editor, reporter, report } = await reported();
+    await callerFor(editor).notes.resolve({ id: report.id });
+    expect(await visibleIds(editor)).toEqual([]);
+    expect(await visibleIds(author)).toEqual([]);
+    const [kept] = await callerFor(reporter).notes.visible();
+    expect(kept?.resolvedAt).toEqual(expect.any(String));
+    // What was reported is kept as it was; its reporter may still delete it.
+    await expect(
+      callerFor(reporter).notes.update({
+        id: report.id,
+        text: 'jinak',
+        todo: false,
+        done: false,
+      }),
+    ).rejects.toThrow('NOTE_RESOLVED');
+    await callerFor(reporter).notes.delete({ id: report.id });
+    expect(await visibleIds(reporter)).toEqual([]);
+  });
+
+  it('is resolved by whoever may change the song: its author while it isn’t approved', async () => {
+    const pending = await reported({ approved: false });
+    await callerFor(pending.author).notes.resolve({ id: pending.report.id });
+    expect(await visibleIds(pending.editor)).toEqual([]);
+
+    // An approved song is the songbook's: its author sees the report, an editor fixes it.
+    const approved = await reported();
+    await expect(
+      callerFor(approved.author).notes.resolve({ id: approved.report.id }),
+    ).rejects.toThrow('FORBIDDEN');
+    await expect(
+      callerFor(approved.reporter).notes.resolve({ id: approved.report.id }),
+    ).rejects.toThrow('FORBIDDEN');
+    await expect(
+      callerFor(approved.player).notes.resolve({ id: approved.report.id }),
+    ).rejects.toThrow('NOT_FOUND');
+  });
+
+  it('is changed by its reporter only: the editors resolve it, they don’t rewrite it', async () => {
+    const { editor, reporter, report } = await reported();
+    const change = { id: report.id, text: 've třetí sloce', todo: false, done: false };
+    await expect(callerFor(editor).notes.update(change)).rejects.toThrow('FORBIDDEN');
+    await expect(callerFor(editor).notes.delete({ id: report.id })).rejects.toThrow(
+      'FORBIDDEN',
+    );
+    expect(await callerFor(reporter).notes.update(change)).toMatchObject({
+      text: 've třetí sloce',
+    });
+    await expect(
+      callerFor(reporter).notes.update({ ...change, todo: true }),
+    ).rejects.toThrow('NOTE_TODO_PRIVATE');
+  });
+
+  it('isn’t made on a private song, which no editor reviews', async () => {
+    const owner = await createUser();
+    const song = await callerFor(owner).songs.create({ source: SONG(), isPrivate: true });
+    await expect(
+      callerFor(owner).notes.create({
+        songId: song.id,
+        kind: 'report',
+        playlistId: null,
+        text: 'chyba',
+        todo: false,
+        line: null,
+      }),
+    ).rejects.toThrow('NOTE_REPORT_PRIVATE');
+  });
+
+  it('names a playlist for a playlist’s note, and for no other', async () => {
+    const { owner, a, playlist } = await band();
+    await expect(
+      callerFor(owner).notes.create({
+        ...note(a.id),
+        kind: 'report',
+        playlistId: playlist.id,
+      }),
+    ).rejects.toThrow();
+    await expect(
+      callerFor(owner).notes.create({ ...note(a.id), kind: 'playlist' }),
+    ).rejects.toThrow();
   });
 });

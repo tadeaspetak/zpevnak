@@ -1,4 +1,4 @@
-import { act, fireEvent, renderHook, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, renderHook, screen } from '@testing-library/react';
 import { notifications } from '@mantine/notifications';
 import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -33,12 +33,18 @@ const note = (id: number, fields: Partial<NoteRecord>): NoteRecord => ({
   todo: false,
   doneAt: null,
   line: { index: 1, text: 'lu lu lu' },
+  resolvedAt: null,
   createdAt: `2026-11-25T10:00:0${id}.000Z`,
   updatedAt: `2026-11-25T10:00:0${id}.000Z`,
   ...fields,
+  // A playlist's note when it names one, unless the test says what it is.
+  kind: fields.kind ?? (fields.playlistId ? 'playlist' : 'own'),
 });
 
 /** The song as SongPage plays it, with its notes. */
+/** An approved song someone else wrote: the reader can't fix it, an editor can. */
+const APPROVED = { status: 'verified', createdBy: 99, role: null } as const;
+
 function Played({
   playlist,
   showChords = true,
@@ -48,7 +54,13 @@ function Played({
 }) {
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
   const { loaded } = useCatalog();
-  const notes = useSongNotes({ songId: SONG_ID, song: SONG, playlist, container });
+  const notes = useSongNotes({
+    songId: SONG_ID,
+    song: SONG,
+    access: APPROVED,
+    playlist,
+    container,
+  });
   // The page's own keys: Escape leaves the song.
   useKeys({ Escape: leftTheSong });
   return (
@@ -196,8 +208,10 @@ describe('notes on the song view (D135)', () => {
     fireEvent.contextMenu(sheet.querySelector('[data-place="1"]') as HTMLElement);
     // Read the open menu at once: in jsdom it doesn't stay open for long.
     const items = await screen.findAllByRole('menuitem');
+    // A reader who can't fix this approved song may report a mistake at the line (D143).
     expect(items.map((item) => item.textContent)).toEqual([
       'Přidat poznámku',
+      'Nahlásit chybu',
       'Kopírovat řádek',
     ]);
   });
@@ -355,5 +369,80 @@ describe('notes on the song view (D135)', () => {
     } finally {
       online.mockRestore();
     }
+  });
+
+  describe('reports of a mistake (D143)', () => {
+    const asEditor = () =>
+      localStorage.setItem(
+        'zpevnak.me',
+        JSON.stringify({
+          id: ME,
+          email: 'ja@example.com',
+          displayName: 'Já',
+          role: 'editor',
+          locale: 'cs',
+          emailVerified: true,
+        }),
+      );
+    const sent = (procedure: string) =>
+      vi
+        .mocked(fetch)
+        .mock.calls.filter(([input]) => String(input).includes(procedure))
+        .map(([, init]) => JSON.parse(String(init?.body))[0]);
+
+    it('reports a mistake at a line from its menu, as a report for the editors', async () => {
+      const sheet = await play(null, []);
+      fireEvent.contextMenu(sheet.querySelector('[data-place="1"]') as HTMLElement);
+      fireEvent.click(await screen.findByRole('menuitem', { name: 'Nahlásit chybu' }));
+      expect(
+        (
+          await screen.findByRole('radio', { name: /Chyba v písničce, pro editory/ })
+        ).getAttribute('aria-checked') ?? '',
+      ).not.toBe('false');
+      fireEvent.change(screen.getByRole('textbox', { name: 'Poznámka' }), {
+        target: { value: 'má tu být Hm' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: 'Uložit' }));
+      await vi.waitFor(() =>
+        expect(sent('notes.create')).toEqual([
+          {
+            songId: SONG_ID,
+            kind: 'report',
+            playlistId: null,
+            text: 'má tu být Hm',
+            todo: false,
+            line: { index: 1, text: 'lu lu lu' },
+          },
+        ]),
+      );
+    });
+
+    it('lets its reporter change it, flagged, and an editor resolve it without rewriting it', async () => {
+      const report = note(1, { kind: 'report', text: 'má tu být Hm' });
+      await play(null, [report]);
+      expect(screen.getByRole('img', { name: 'Hlášení chyby' })).toBeTruthy();
+      fireEvent.click(screen.getByRole('button', { name: /má tu být Hm/ }));
+      expect(await screen.findByRole('textbox', { name: 'Poznámka' })).toBeTruthy();
+      cleanup();
+
+      asEditor();
+      await play(null, [{ ...report, authorId: 9, authorName: 'Bára' }]);
+      fireEvent.click(screen.getByRole('button', { name: /má tu být Hm/ }));
+      expect(await screen.findByText('Nahlásil(a): Bára')).toBeTruthy();
+      expect(screen.queryByRole('textbox')).toBeNull();
+      fireEvent.click(screen.getByRole('button', { name: 'Vyřešeno' }));
+      await vi.waitFor(() => expect(sent('notes.resolve')).toEqual([{ id: 1 }]));
+    });
+
+    it('keeps a fixed report off the song, and offers an editor no report of their own', async () => {
+      asEditor();
+      const sheet = await play(null, [
+        note(1, { kind: 'report', resolvedAt: '2026-11-26T10:00:00.000Z' }),
+      ]);
+      expect(screen.queryByText('poznámka 1')).toBeNull();
+      fireEvent.contextMenu(sheet.querySelector('[data-place="1"]') as HTMLElement);
+      const items = await screen.findAllByRole('menuitem');
+      expect(items.map((item) => item.textContent)).not.toContain('Nahlásit chybu');
+    });
   });
 });

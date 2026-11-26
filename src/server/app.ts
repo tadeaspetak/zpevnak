@@ -17,13 +17,13 @@ const LIMITED_PROCEDURES = [
 ];
 
 /**
- * At most 30 of those a quarter of an hour from one address. Refused in tRPC's own error shape,
+ * At most `AUTH_LIMIT` (30) of those a quarter of an hour from one address. Refused in tRPC's own error shape,
  * one per call in a batch, so the client reads the code and says it in the reader's language.
  */
 function authLimiter() {
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    limit: 30,
+    limit: env.AUTH_LIMIT,
     standardHeaders: 'draft-8',
     legacyHeaders: false,
     handler: (req, res) => {

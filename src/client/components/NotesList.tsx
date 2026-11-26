@@ -8,7 +8,13 @@ import {
   Textarea,
   UnstyledButton,
 } from '@mantine/core';
-import { IconArrowRight, IconNote, IconPlaylist, IconTrash } from '@tabler/icons-react';
+import {
+  IconArrowRight,
+  IconFlag,
+  IconNote,
+  IconPlaylist,
+  IconTrash,
+} from '@tabler/icons-react';
 import { useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import type { Me } from '#server/auth/me.ts';
@@ -16,7 +22,13 @@ import { url } from '#shared/urls.ts';
 import { NOTE_TEXT_MAX } from '#shared/validators/index.ts';
 import { useCatalog, type LocalNote } from '../data/catalog.ts';
 import { notifyIfQueued } from '../data/offline.ts';
-import { canChangeNote, inFilter, notesBy, type NoteFilter } from '../data/notes.ts';
+import {
+  canChangeNote,
+  inFilter,
+  isResolved,
+  notesBy,
+  type NoteFilter,
+} from '../data/notes.ts';
 import type { NoteRecord, PlaylistRecord } from '../data/store.ts';
 import { useI18n } from '../i18n/index.tsx';
 import { useNoteRequests } from '../song/NoteModal.tsx';
@@ -130,7 +142,7 @@ export function NotesList({ me }: { me: Me }) {
                           key={note.id}
                           note={note}
                           playlist={playlist}
-                          canChange={canChangeNote(note, playlist, me.emailVerified)}
+                          canChange={canChangeNote(note, playlist, me)}
                           to={noteLink(note, playlist, url.song(song))}
                           linkState={{ ...back, note: note.id }}
                           requests={requests}
@@ -170,6 +182,9 @@ function NoteRow({
 }) {
   const { t } = useI18n();
   const done = note.doneAt !== null;
+  // A report fixed is kept as it was reported: deleted, not rewritten (D143).
+  const resolved = isResolved(note);
+  const editable = canChange && !resolved;
   // What is being typed, while the note is open in place.
   const [draft, setDraft] = useState<string | null>(null);
   // What was saved, shown until its request ends: online, the catalog changes only then.
@@ -216,7 +231,7 @@ function NoteRow({
   const shownText = (
     <Text
       size="sm"
-      td={done ? 'line-through' : undefined}
+      td={done || resolved ? 'line-through' : undefined}
       style={{ whiteSpace: 'pre-line' }}
     >
       {text}
@@ -241,7 +256,9 @@ function NoteRow({
               void save({ done: e.currentTarget.checked }).catch(() => undefined)
             }
           />
-        ) : note.playlistId !== null ? (
+        ) : note.kind === 'report' ? (
+          <IconFlag size={18} role="img" aria-label={t('notes.reportMark')} />
+        ) : note.kind === 'playlist' ? (
           <IconPlaylist size={18} role="img" aria-label={t('notes.playlistMark')} />
         ) : (
           <IconNote size={18} role="img" aria-label={t('notes.mark')} />
@@ -276,7 +293,7 @@ function NoteRow({
               e.currentTarget.setSelectionRange(end, end);
             }}
           />
-        ) : canChange ? (
+        ) : editable ? (
           <UnstyledButton
             onClick={edit}
             aria-label={t('notes.changeOf', { text: note.text })}
@@ -291,6 +308,13 @@ function NoteRow({
             ? t('notes.atLine', { words: note.line.text })
             : t('notes.wholeSong')}
         </Text>
+        {note.kind === 'report' && (
+          <Text size="xs" c="dimmed">
+            {resolved
+              ? `${t('notes.forEditors')} · ${t('notes.resolvedMark')}`
+              : t('notes.forEditors')}
+          </Text>
+        )}
         {/* A row of its own: the line's words may be long, the playlist's name must show. */}
         {playlist && (
           <Text size="xs" c="dimmed" lineClamp={1}>

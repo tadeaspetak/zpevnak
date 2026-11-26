@@ -14,6 +14,9 @@ function ref(id: number, text: string): string {
 type SongLink = { id: number; title: string; artist: string | null };
 type PlaylistLink = { id: number; name: string };
 
+/** The query a song page opens "Nahlásit chybu" by (`url.reporting`). */
+export const REPORT_PARAM = 'report';
+
 /**
  * Every path in the app. Build links with these, never by hand: the client for its pages, the
  * server for the links in its emails.
@@ -50,6 +53,8 @@ export const url = {
     `${url.account('notes')}${filter ? `&filter=${filter}` : ''}`,
   /** `notes`: one's notes (D139); `users`: the admin's tab of everyone's accounts. */
   account: (tab?: 'notes' | 'users') => (tab ? `/account?tab=${tab}` : '/account'),
+  /** The song page at `path`, with the report dialog open (D143): where signing in leads back. */
+  reporting: (path: string) => `${path}?${REPORT_PARAM}=1`,
   logIn: (next?: string) => (next ? `/login?next=${encodeURIComponent(next)}` : '/login'),
   signUp: (next?: string) =>
     next ? `/signup?next=${encodeURIComponent(next)}` : '/signup',

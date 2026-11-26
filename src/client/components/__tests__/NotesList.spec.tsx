@@ -35,9 +35,12 @@ const note = (id: number, fields: Partial<NoteRecord>): NoteRecord => ({
   todo: false,
   doneAt: null,
   line: { index: 0, text: 'la la la' },
+  resolvedAt: null,
   createdAt: `2026-11-25T10:00:0${id}.000Z`,
   updatedAt: `2026-11-25T10:00:0${id}.000Z`,
   ...fields,
+  // A playlist's note when it names one, unless the test says what it is.
+  kind: fields.kind ?? (fields.playlistId ? 'playlist' : 'own'),
 });
 
 /** Where a link from the page went, and what it carried. */
@@ -303,5 +306,26 @@ describe('Moje poznámky, the account’s tab (D135, D139)', () => {
         { id: 1, text: 'poznámka 1', todo: true, done: true },
       ]),
     );
+  });
+
+  it('lists one’s reports, flagged; a fixed one kept, deleted but not rewritten (D143)', async () => {
+    await open([
+      note(1, { kind: 'report' }),
+      note(2, { kind: 'report', resolvedAt: '2026-11-26T10:00:00.000Z' }),
+    ]);
+    expect(screen.getAllByRole('img', { name: 'Hlášení chyby' })).toHaveLength(2);
+    expect(screen.getByText('Chyba v písničce, pro editory · Vyřešeno')).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'Upravit poznámku: poznámka 1' }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole('button', { name: 'Upravit poznámku: poznámka 2' }),
+    ).toBeNull();
+    expect(
+      screen.getByRole('button', { name: 'Smazat poznámku: poznámka 2' }),
+    ).toBeTruthy();
+    // Not one's own TODOs.
+    fireEvent.click(screen.getByText('TODO'));
+    expect(texts()).toEqual([]);
   });
 });

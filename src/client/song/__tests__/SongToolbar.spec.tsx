@@ -2,6 +2,7 @@ import { cleanup, fireEvent, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderApp } from '#tests/client/render.tsx';
 import type { SongRecord } from '../../data/store.ts';
+import { reportOffer } from '../reportOffer.ts';
 import { SongToolbar } from '../SongToolbar.tsx';
 
 const song = {
@@ -42,6 +43,14 @@ function toolbar(
       canEdit={canEdit}
       canDelete={canDelete}
       canAddToPlaylist={false}
+      report={reportOffer({
+        canFix: canEdit,
+        isPrivate: shown.status === 'private',
+        signedIn: true,
+        start: () => {},
+        path: '/song/41',
+        unconfirmed: () => {},
+      })}
       hidden={false}
       playlist={playlist}
     />,
@@ -85,7 +94,7 @@ describe('SongToolbar: the song’s tags (D118)', () => {
     expect(items.map((item) => [item.textContent, item.getAttribute('href')])).toEqual([
       ['Vánoční', '/tag/vanocni'],
       ['Lidová', '/tag/lidova'],
-      ['Nahlásit chybu', expect.stringMatching(/^mailto:/)],
+      ['Nahlásit chybu', null],
     ]);
   });
 
@@ -214,6 +223,7 @@ describe('SongToolbar: a key per playlist (D131)', () => {
         canEdit={false}
         canDelete={false}
         canAddToPlaylist={false}
+        report={null}
         hidden={false}
         playlist={band(true)}
       />,

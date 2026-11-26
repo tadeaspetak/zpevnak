@@ -1,7 +1,8 @@
 # Reports and song comments, through the note dialog
 
-**State:** next. Agreed in conversation on 2026-11-26 with the owner, who took the recommended
-pick on every question. Nothing built yet.
+**State:** ongoing: phase 1 shipped (D143). Agreed in conversation on 2026-11-26 with the
+owner, who took the recommended pick on every question, then settled the rest (no email, a tab
+per kind, an account to report).
 
 ## Why
 
@@ -107,10 +108,25 @@ Both are "write something at this line", so both should start where notes do.
 
 Each ships on its own, gates green.
 
-1. **Reports as notes.** The migration and visibility; create and resolve; the
+1. **Reports as notes (shipped, D143).** The migration and visibility; create and resolve; the
    dialog's third audience for whoever can't edit the song; reports on the song for editors
    and the author; "Nahlásit chybu" in ⋯ opens the dialog for the whole song (the long-press
    menu gains it too); signed out, it leads through signing in; the mailto goes from the song.
+   **As built:**
+   - **Resolved by whoever may change the song** (`canChangeSong`): editors, and its author
+     while it isn't approved. The author of an approved song sees reports on it but can't
+     resolve them: they can't fix it either. `notes.resolve` decides on the song's row.
+   - **A report has its own mark,** a flag, on the song and in Moje poznámky; there a fixed one
+     is struck through, "· Vyřešeno", deleted but not rewritten. Whoever may fix the song opens
+     a report to read it ("Nahlásil(a): …") and "Vyřešeno"; nobody but its reporter changes it.
+   - **Signing in to report:** "Nahlásit chybu" signed out leads to `/login?next=…?report=1`;
+     the song page opens the report once someone is signed in and drops the `report` from the
+     address. Signed in but unconfirmed, a toast says to confirm the email first.
+   - **Notes kept on a device from before** have no `kind`: read from their playlist when
+     loaded (`noteFromDevice`), as playlists get fields added since (`fromDevice`).
+   - **Along the way:** the e2e suite signed in 31 times from one address, one over the sign-in
+     limit, which explains the private-song test that failed now and then. The limit is now a
+     setting (`AUTH_LIMIT`, 30 by default), raised for the e2e server only.
 2. **Reports in the queue.** The "Hlášení" tab, the count on the queue icon, the way to the
    report on the song.
 3. **Song comments through the dialog.** The parser's source lines and the pure functions

@@ -5,8 +5,8 @@ import { fail, verifiedProcedure } from '../../trpc/trpc.ts';
 
 /**
  * Rewrites a note, makes it a TODO or not, marks a TODO done or not (D135). By whoever may
- * change it (`assertCanChangeNote`). A playlist's note can't be a TODO; a done TODO stays,
- * marked, until deleted.
+ * change it (`assertCanChangeNote`). Only one's own note can be a TODO; a done TODO stays,
+ * marked, until deleted. A report, while it's open (D143).
  */
 export const update = verifiedProcedure
   .input(
@@ -19,8 +19,12 @@ export const update = verifiedProcedure
   )
   .mutation(async ({ ctx, input }) => {
     const note = await assertCanChangeNote(ctx.db, input.id, ctx.user);
-    if (input.todo && note.playlistId !== null) {
+    if (input.todo && note.kind !== 'own') {
       fail('BAD_REQUEST', 'NOTE_TODO_PRIVATE');
+    }
+    // A report fixed is what was reported: kept as it was, to look back at (D143).
+    if (note.resolvedAt !== null) {
+      fail('BAD_REQUEST', 'NOTE_RESOLVED');
     }
     await ctx.db.raw(
       /* sql */ `

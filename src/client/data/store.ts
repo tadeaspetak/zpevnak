@@ -67,6 +67,20 @@ export function fromDevice(playlist: PlaylistRecord): PlaylistRecord {
   return { ...playlist, songKeys: playlist.songKeys ?? {} };
 }
 
+/**
+ * A note as an older version kept it (D143 added `kind` and `resolvedAt`): from before reports,
+ * so its kind is what its playlist said, and it was never resolved.
+ */
+export function noteFromDevice(
+  note: Omit<NoteRecord, 'kind' | 'resolvedAt'> & Partial<NoteRecord>,
+): NoteRecord {
+  return {
+    ...note,
+    kind: note.kind ?? (note.playlistId === null ? 'own' : 'playlist'),
+    resolvedAt: note.resolvedAt ?? null,
+  };
+}
+
 export async function loadStored() {
   try {
     const db = await database();
@@ -79,7 +93,7 @@ export async function loadStored() {
     return {
       songs,
       playlists: playlists.map(fromDevice),
-      notes,
+      notes: notes.map(noteFromDevice),
       sync: sync ?? { cursor: null, viewerId: null },
     };
   } catch {

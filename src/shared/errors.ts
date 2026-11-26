@@ -23,6 +23,8 @@ const ERROR_CODES = [
   'SONG_IN_OTHERS_PLAYLISTS',
   'SONG_NOT_PRIVATE',
   'NOTE_TODO_PRIVATE',
+  'NOTE_REPORT_PRIVATE',
+  'NOTE_RESOLVED',
 ] as const;
 export type ErrorCode = (typeof ERROR_CODES)[number];
 
