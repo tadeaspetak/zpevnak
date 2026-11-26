@@ -108,7 +108,8 @@ Agreed to leave, for now:
 ## State and loose ends (updated 2026-11-26)
 
 - **Home screen (D141):** offered on phones and tablets (Android: the browser's dialog;
-  iPhone/iPad: the steps). Only emulated so far: check on a real iPhone and Android phone.
+  iPhone/iPad and Firefox on Android: the steps, D142). Only emulated so far: check on a real
+  iPhone, Chrome on Android, and the owner's Firefox.
 - **zpevnak.cz (D140):** live since 2026-11-26 (bought at Wedos that morning, verified in
   Search Console, mapped on Cloud Run with `www`). The old address and `www` send pages on.
   Everyone signs in once more there; apps on a home screen are added again from zpevnak.cz.

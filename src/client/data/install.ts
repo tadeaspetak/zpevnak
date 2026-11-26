@@ -7,17 +7,18 @@ import { useSyncExternalStore } from 'react';
  * - `prompt`: the browser offers to install it itself (Chrome, Edge, Samsung on Android): one
  *   tap opens its own dialog.
  * - `ios`: an iPhone or iPad, where a page can't start it: the steps, Share → Přidat na plochu.
+ * - `firefox`: Firefox on Android, which can't either: the steps through its menu (D142).
  * - null: nothing to offer. A laptop (its pointer is a mouse, a touchscreen one's too), the app
- *   already installed and open, or a browser that says neither (Firefox: left out on purpose,
- *   its menu says it differently from one version to the next).
+ *   already installed and open, or a browser that says none of these.
  */
-export type InstallWay = 'prompt' | 'ios' | null;
+export type InstallWay = 'prompt' | 'ios' | 'firefox' | null;
 
 export function installWay(device: {
   standalone: boolean;
   touch: boolean;
   canPrompt: boolean;
   ios: boolean;
+  firefoxAndroid: boolean;
 }): InstallWay {
   if (device.standalone || !device.touch) {
     return null;
@@ -25,7 +26,10 @@ export function installWay(device: {
   if (device.canPrompt) {
     return 'prompt';
   }
-  return device.ios ? 'ios' : null;
+  if (device.ios) {
+    return 'ios';
+  }
+  return device.firefoxAndroid ? 'firefox' : null;
 }
 
 /** An iPhone, or an iPad, which says it's a Mac but has a touchscreen. */
@@ -34,6 +38,11 @@ export function isIos(userAgent: string, maxTouchPoints: number): boolean {
     /iPhone|iPad|iPod/.test(userAgent) ||
     (/Macintosh/.test(userAgent) && maxTouchPoints > 1)
   );
+}
+
+/** Firefox on an Android phone or tablet (Firefox on an iPhone is an iPhone's Safari inside). */
+export function isFirefoxAndroid(userAgent: string): boolean {
+  return /Android/.test(userAgent) && /Firefox\//.test(userAgent);
 }
 
 /** Chrome's own event (not in TypeScript's DOM types): its dialog, kept to open on a tap. */
@@ -70,6 +79,7 @@ export function useInstall() {
     touch: window.matchMedia('(pointer: coarse)').matches,
     canPrompt,
     ios: isIos(navigator.userAgent, navigator.maxTouchPoints),
+    firefoxAndroid: isFirefoxAndroid(navigator.userAgent),
   });
   const prompt = async () => {
     const shown = offer;

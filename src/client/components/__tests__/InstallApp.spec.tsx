@@ -4,6 +4,7 @@ import { renderApp } from '#tests/client/render.tsx';
 import { InstallButton, InstallHint } from '../InstallApp.tsx';
 
 const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Safari/604.1';
+const FIREFOX = 'Mozilla/5.0 (Android 14; Mobile; rv:133.0) Gecko/133.0 Firefox/133.0';
 const ANDROID =
   'Mozilla/5.0 (Linux; Android 14; Pixel 8) Chrome/131.0 Mobile Safari/537.36';
 
@@ -65,6 +66,15 @@ describe('adding the app to the home screen (D141)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Přidat na plochu' }));
     expect(await screen.findByText(/Ťukni na Sdílet/)).toBeTruthy();
     expect(screen.getByText(/Vyber „Přidat na plochu“/)).toBeTruthy();
+  });
+
+  it('shows the steps through its menu in Firefox on Android (D142)', async () => {
+    device({ userAgent: FIREFOX });
+    renderApp(<InstallButton />);
+    fireEvent.click(screen.getByRole('button', { name: 'Přidat na plochu' }));
+    expect(await screen.findByText(/Otevři nabídku ⋮/)).toBeTruthy();
+    expect(screen.getByText(/Vyber „Nainstalovat“ nebo „Přidat na plochu“/)).toBeTruthy();
+    expect(screen.queryByText(/Sdílet/)).toBeNull();
   });
 
   it('offers nothing when the app is already open from the home screen', () => {

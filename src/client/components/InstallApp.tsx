@@ -8,7 +8,8 @@ import { IconButton } from './IconButton.tsx';
 
 /**
  * "Přidat na plochu" where this device can (D141): on Android the browser's own dialog, on an
- * iPhone or iPad the steps through Share. Nothing where there is nothing to offer.
+ * iPhone or iPad the steps through Share, in Firefox on Android through its menu (D142).
+ * Nothing where there is nothing to offer.
  */
 export function InstallButton({
   fullWidth = false,
@@ -37,20 +38,28 @@ export function InstallButton({
       </Button>
       <Modal opened={steps} onClose={() => setSteps(false)} title={t('install.add')}>
         <Stack>
-          <List type="ordered" spacing="sm">
-            <List.Item>
-              {/* The icon beside its name, as it looks on the phone. */}
-              {t('install.iosShare')}{' '}
-              <IconShare2
-                size={18}
-                aria-hidden
-                style={{ verticalAlign: 'text-bottom' }}
-              />{' '}
-              {t('install.iosShareWhere')}
-            </List.Item>
-            <List.Item>{t('install.iosAdd')}</List.Item>
-            <List.Item>{t('install.iosConfirm')}</List.Item>
-          </List>
+          {way === 'firefox' ? (
+            <List type="ordered" spacing="sm">
+              <List.Item>{t('install.firefoxMenu')}</List.Item>
+              <List.Item>{t('install.firefoxAdd')}</List.Item>
+              <List.Item>{t('install.firefoxConfirm')}</List.Item>
+            </List>
+          ) : (
+            <List type="ordered" spacing="sm">
+              <List.Item>
+                {/* The icon beside its name, as it looks on the phone. */}
+                {t('install.iosShare')}{' '}
+                <IconShare2
+                  size={18}
+                  aria-hidden
+                  style={{ verticalAlign: 'text-bottom' }}
+                />{' '}
+                {t('install.iosShareWhere')}
+              </List.Item>
+              <List.Item>{t('install.iosAdd')}</List.Item>
+              <List.Item>{t('install.iosConfirm')}</List.Item>
+            </List>
+          )}
           <Group justify="flex-end">
             <Button variant="default" size="sm" onClick={() => setSteps(false)}>
               {t('common.close')}

@@ -624,3 +624,8 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   Android's browsers that offer it (`beforeinstallprompt`) open their own dialog on a tap; an
   iPhone or iPad, where a page can't, gets the steps through Share. Firefox on Android is left
   out on purpose: it offers no event, and its menu changes. (`useInstall`, `InstallApp.tsx`)
+  _Firefox on Android after all: D142._
+- **D142. Firefox on Android gets the steps too** (the owner's call, 2026-11-26; refines
+  D141, the owner plays from it). Like an iPhone it can't be asked to install, so the steps go
+  through its menu: ⋮ (bottom or top right), „Nainstalovat“ or „Přidat na plochu“ (both named:
+  its menu has said each in recent versions), confirm.

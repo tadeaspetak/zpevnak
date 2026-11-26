@@ -81,6 +81,10 @@ export const en: Record<keyof typeof cs, string> = {
   'install.title': 'Zpěvňák as an app',
   'install.why': 'From the home screen it opens full screen and works offline too.',
   'install.hide': 'Hide',
+  'install.firefoxMenu': 'Open the ⋮ menu (bottom or top right).',
+  'install.firefoxAdd': 'Choose “Install” or “Add to Home screen”.',
+  'install.firefoxConfirm':
+    'Confirm. Then you can open Zpěvňák from its icon on the home screen.',
   'install.iosShare': 'Tap Share',
   'install.iosShareWhere': 'on Safari’s bar, or in the ⋯ menu.',
   'install.iosAdd': 'Choose “Add to Home Screen”.',
