@@ -26,26 +26,23 @@ Both are "write something at this line", so both should start where notes do.
    song (as "Nahlásit chybu" today, D85), a TODO for any editor.
 2. **A report is seen by the editors and the song's author**, and by whoever wrote it. Not by
    players: mistakes don't clutter the song at a gig.
-3. **A new report sends an email, as today's link does:** nothing is lost compared to now.
+3. **No email on a report** (2026-11-26, replacing "an email, as today's link does"): editors
+   find reports in the queue, the song's author on their song.
 4. **A song comment is written through the same dialog**, as a third choice for whoever may
    change the song, but it is **an edit of the song's ChordPro**, not a note: it never shows
    in Moje poznámky, and it is saved, versioned and checked like any edit of the song (D86,
    D104, D106).
 5. **Reports first, song comments second.**
-6. **The editors' queue is designed with suggested changes in mind**
-   (`.planning/ongoing/song-history-credits-suggestions.md`, slice 3): a report is a light
-   suggestion, words instead of a changed text. Suggestions themselves aren't built here.
+6. **The editors' queue is a tab per kind** (2026-11-26): songs waiting, rejected, reports, and
+   later suggested changes (`.planning/ongoing/song-history-credits-suggestions.md`, slice 3)
+   as one more tab. Suggestions themselves aren't built here.
 
 ## Proposed, settle while building
 
 ### Reports
 
-- **Who gets the email.** Today's link reaches the app's author (the owner), not the song's
-  author: proposed, an email to every admin (today, the owner), with the song, the line's
-  words and the text, and a link to the song scrolled to the report. Whether the song's author
-  gets one too: open question 1.
 - **Who may report:** a signed-in, confirmed account (as every note, D135). A visitor without
-  an account keeps today's email link, so nobody loses the way they have now (open question 2).
+  an account: open question 1.
 - **Not on a private song:** it has no editors' review, and "Nahlásit chybu" isn't offered
   there today (D85). Whoever may change a private song edits it.
 - **On the song:** an editor and the song's author see open reports under their lines with
@@ -92,9 +89,8 @@ Both are "write something at this line", so both should start where notes do.
   their author. `toNoteRecord` gains `kind` and `resolvedAt`; `canChangeNote`
   (`src/client/data/notes.ts`) and `assertCanChangeNote` learn reports, together.
 - **Procedures:** `notes.create` takes the kind; `notes.resolve` (an editor, or the song's
-  author); the queue's reports through `songs.queue` with a `reports` status, or its own
-  `notes.reports` (settle with the suggestions plan's queue in view). The email through
-  `sendEmailInBackground`, a `songReported` template in both languages.
+  author); the queue's reports as their own procedure, `notes.reports`, beside `songs.queue`
+  (one per tab's kind).
 - **Song comments:** the parser records each line's source line (`source: number` on `Line`);
   pure functions beside `setTags` in `src/shared/chordpro/` add, replace and remove a
   `{comment}` at a source line, unit-tested on real shapes (inside a section, after a chorus
@@ -106,10 +102,10 @@ Both are "write something at this line", so both should start where notes do.
 
 Each ships on its own, gates green.
 
-1. **Reports as notes.** The migration and visibility; create, resolve and the email; the
+1. **Reports as notes.** The migration and visibility; create and resolve; the
    dialog's third audience for whoever can't edit the song; reports on the song for editors
    and the author; "Nahlásit chybu" in ⋯ opens the dialog for the whole song (the long-press
-   menu gains it too); the signed-out visitor keeps the email link.
+   menu gains it too); someone who can't write a report as open question 1 settles.
 2. **Reports in the queue.** The "Hlášení" tab, the count on the queue icon, the way to the
    report on the song.
 3. **Song comments through the dialog.** The parser's source lines and the pure functions
@@ -126,8 +122,6 @@ Each ships on its own, gates green.
   is refused; a resolved report leaves the song and the queue but stays in its author's list.
 - **The migration:** existing notes keep their audience (own, playlist) and nothing else
   changes; down and up again (every test run does).
-- **The email** goes in the background with the right link; a failure is logged and the report
-  stands.
 - **Song comments:** added after the right source line in every song shape; replacing and
   removing touch that line only; a save over a song that changed meanwhile is refused
   (`SONG_CHANGED`) and the typed text isn't lost; a note below the new comment stays on its
@@ -135,10 +129,6 @@ Each ships on its own, gates green.
 
 ## Open questions
 
-1. **Should the song's author also get the email** about a report on their song? (Proposed:
-   no, they see it on their song; an author who isn't an editor has no queue. The owner
-   decides.)
-2. **The signed-out visitor's email link:** keep it (proposed), or offer reporting only to
-   accounts?
-3. **The queue's shape for suggestions later:** one list of everything waiting for an editor,
-   or a tab per kind? Settled with the suggestions plan, before phase 2 is built.
+1. **Without an account:** today a visitor who isn't signed in can report by email (the ⋯
+   menu's "Nahlásit chybu" opens a mail to the owner). Keep that link for those who can't
+   write a report (signed out, or not yet confirmed), or lead them to sign in?
