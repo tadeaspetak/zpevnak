@@ -720,3 +720,17 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   `[*text]`, anything unknown. **Tags stay in the text** (D118): a tag says what the song is
   (Koledy, Pohádky, Folk); what someone does with a song (to finish, favourites, a band's set)
   is a playlist, never a tag, and an artist is never a tag either.
+- **D151. A song written the old songbook's way is offered this songbook's way** (the owner's
+  go, 2026-11-27; phase 3 of `.planning/ongoing/chordpro-directives.md`). The editor spots it
+  and offers it, like chords above the lyrics (D94), never a save: "Písnička je zapsaná po
+  staru. Upravit: …?" naming what would change, "Upravit" doing it and the tidy (D150) in one
+  step the browser's undo takes back, "Nechat" keeping the text. Headings in comments
+  (`{c: REF}`, `SLOKA`, `Intro`, `Mezihra`, `Outro`, `Bridge`) become their sections, the
+  instrumental ones labelled in Czech; a bare paragraph with words becomes a verse; a lone REF
+  once the song has a chorus is `{chorus}`, numbered choruses are "Refrén 1", "Refrén 2". `Ami`
+  is `Am`, `{c: capo 3}` is `{capo: 3}`, a band's running order leaves the title (`08 Hush`),
+  a directive left open is closed. Of tags, only the old songbook's own: a genre loses its
+  dashes (`- Folk -` is Folk), a status goes (Zpěvník, Novinky, !Dodělat, PS oblíbené, Po
+  anglicku), and so does one naming the song's artist. Bands stay until they become playlists.
+  What it can't be sure of stays as written: a paragraph of chords only, "verse 3 = 2", an
+  earlier chorus recalled. Never the words.

@@ -136,10 +136,11 @@ Agreed to leave, for now:
   If that proves not enough, consider pull-to-refresh.
 - **Importing the old songbook:** deliberately not done (D11). Songs get added one by one, which is
   also how they get checked; `~/dev/projects/songbook` has ~430 ChordPro files to draw from.
-  What their text keeps and how a save writes it: D150; helpers for bringing one over (`{c: REF}`
-  as a chorus, tags as playlists) are phases 3–4 of `.planning/ongoing/chordpro-directives.md`.
-- **Plans:** what a song's ChordPro holds in `.planning/ongoing/` (phases 1–2 done, D150;
-  helpers for songbook songs next); song history, credits and suggestions (slice 1 done, D86;
+  What their text keeps and how a save writes it: D150; the editor offers to rewrite one this
+  songbook's way (D151); the bands' tags and lists as playlists are phase 4 of
+  `.planning/ongoing/chordpro-directives.md`.
+- **Plans:** what a song's ChordPro holds in `.planning/ongoing/` (phases 1–3 done, D150–D151;
+  the bands as playlists next); song history, credits and suggestions (slice 1 done, D86;
   suggested changes would be one more tab in the queue, D144); after the first rehearsal (all
   but D-1). Done: private songs and roles, notes on songs, reports and song comments
   (D143–D146) (`.planning/done/`).

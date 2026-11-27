@@ -1,7 +1,7 @@
 # What a song's ChordPro holds
 
-**State:** ongoing. Agreed with Tadeáš on 2026-11-27. Phases 1 and 2 shipped (D150); phases 3
-and 4 are for when songs come over from the songbook.
+**State:** ongoing. Agreed with Tadeáš on 2026-11-27. Phases 1–3 shipped (D150, D151); phase 4
+waits for his and the friend's word.
 
 ## Why
 
@@ -94,7 +94,7 @@ save anyway.
 `seenAt` from its own read, dry run first) tidied the five and took out Lajla tov's `#` line. All
 five stay verified, each with an edit version; a second run found nothing left.
 
-### 3. A song from the songbook (on offer in the editor, like D94)
+### 3. A song from the songbook (on offer in the editor, like D94) (shipped, D151)
 
 Judgement calls, so offered, never on save:
 
@@ -105,6 +105,33 @@ Judgement calls, so offered, never on save:
 - Chords `Ami` → `Am` (119 songs; they work already, `shapes.ts` reads `mi`); a band in
   `{subtitle}` with no artist (`{st:JPBand}`); a number before the title (`03 Honky tonk woman`).
 - Tags by the table above.
+
+**As built** (`src/shared/chordpro/arrange.ts`, `arrangeSong`; the editor's "Písnička je zapsaná
+po staru. Upravit: …?", after the chords-above-lyrics offer and before the tidy notice;
+"Upravit" arranges and tidies in one step, one undo):
+
+- A bare paragraph with sung words becomes a verse; one of chords only stays as it is (an intro
+  without a heading can't be told from a riff).
+- A lone `{c: REF}` takes the paragraph after it only while the song has no chorus yet; after
+  that it is the chorus sung again (`{chorus}`), and only if that's the last chorus: a recalled
+  "REF 1" after "REF 2" stays a comment, as no directive repeats an earlier one. Numbered
+  choruses are labelled "Refrén 1", "Refrén 2".
+- A heading's other words stay as a comment in the section (`{c: intro keys}` → Předehra with
+  `{comment: keys}`; `REF 2x` → `{comment: 2x}`). Not a heading: "verse 3 = 2", "R. Někdo",
+  `{c: REF}` twice and then a line; they stay as written. "Bridge 2" before a bridge stays.
+- Tags: only the old songbook's dashed ones (genre without dashes, status gone) and one naming
+  the song's own artist. Bands and other artists' names stay: nothing in the text tells a band
+  from a category, so they go by hand in the tags field until phase 4.
+- `{st:JPBand}` with no artist: not arranged; the tidy makes it the artist, as the app read it,
+  and whoever brings the song over sees it under the title. The same holds for a real subtitle
+  with no artist ("What kind of woman is this").
+- `{key:Am` and `{tag:Waldemar Matuška)` are closed.
+
+Dry run (2026-11-27): 386 of the 432 songbook songs get the offer (sections 361, tags 220,
+chords 74, capo 17, title 14, unclosed 3); arranging twice changes nothing more; no song gains a
+parser warning; the sung words are the same in all but 4, and those 4 gain words that were a
+broken directive before or lose a literal `{soh}`. In production, 12 of 31 songs get the offer
+when edited (most for bare verses), none on their own.
 
 ### 4. The songbook's bands and lists as playlists
 

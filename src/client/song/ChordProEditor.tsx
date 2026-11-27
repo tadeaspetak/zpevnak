@@ -34,6 +34,7 @@ import {
 } from '#shared/chordpro/fromChordsOverLyrics.ts';
 import { parseSong } from '#shared/chordpro/parse.ts';
 import { setTags, spellAsKnown, tagKey, tagsIn } from '#shared/chordpro/tags.ts';
+import { arrangeSong } from '#shared/chordpro/arrange.ts';
 import { tidySource } from '#shared/chordpro/tidy.ts';
 import { usePrefs } from '../data/prefs.ts';
 import { useTags } from '../data/tags.ts';
@@ -82,6 +83,7 @@ export function ChordProEditor({
   const [view, setView] = useState<'source' | 'preview'>('source');
   const [cheatSheet, { toggle: toggleCheatSheet }] = useDisclosure(false);
   const [keepAsIs, setKeepAsIs] = useState(false);
+  const [keepArrangement, setKeepArrangement] = useState(false);
   const [titleAsked, setTitleAsked] = useState(false);
   const textarea = useRef<HTMLTextAreaElement>(null);
   const previewPane = useRef<HTMLDivElement>(null);
@@ -97,6 +99,11 @@ export function ChordProEditor({
   );
   // What a save will write differently (D150), said before it happens rather than after.
   const tidyChanges = useMemo(() => tidySource(deferred).changes, [deferred]);
+  // What the old songbook's way of writing would change (D151): on offer, unlike the tidy.
+  const arrangeChanges = useMemo(
+    () => (keepArrangement ? [] : arrangeSong(deferred).changes),
+    [keepArrangement, deferred],
+  );
   // Not on the untouched template: nobody has had a chance to fill it in yet.
   // Nor on an emptied one: it was cleared to paste a song in.
   const untouched = template !== undefined && value === template;
@@ -210,7 +217,10 @@ export function ChordProEditor({
       aria-label={t('editor.source')}
       value={value}
       onChange={(e) => onChange(e.currentTarget.value)}
-      onPaste={() => setKeepAsIs(false)}
+      onPaste={() => {
+        setKeepAsIs(false);
+        setKeepArrangement(false);
+      }}
       onSelect={followCaret}
       // Side by side, each pane is as tall as the window and scrolls on its own; on a phone,
       // the source grows with the song and the page scrolls.
@@ -299,7 +309,29 @@ export function ChordProEditor({
         </Notice>
       )}
       {/* One notice at a time: converting comes first, and changes what there is to tidy. */}
-      {!offerConversion && tidyChanges.length > 0 && (
+      {!offerConversion && arrangeChanges.length > 0 && (
+        <Notice
+          icon={<IconWand size={18} />}
+          text={t('editor.arrangeOffer', {
+            changes: [
+              ...arrangeChanges.map((kind) => t(`arrange.${kind}`)),
+              ...(tidyChanges.length > 0 ? [t('arrange.tidy')] : []),
+            ].join(', '),
+          })}
+        >
+          <Button size="sm" variant="default" onClick={() => setKeepArrangement(true)}>
+            {t('editor.keepAsIs')}
+          </Button>
+          <Button
+            size="sm"
+            // Tidied in the same step: one change to look over, and one undo.
+            onClick={() => replaceAll(tidySource(arrangeSong(value).source).source)}
+          >
+            {t('editor.arrange')}
+          </Button>
+        </Notice>
+      )}
+      {!offerConversion && arrangeChanges.length === 0 && tidyChanges.length > 0 && (
         <Notice
           icon={<IconSparkles size={18} />}
           text={t('editor.tidyOnSave', {

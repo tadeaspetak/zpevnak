@@ -58,6 +58,30 @@ describe('ChordProEditor', () => {
     expect(screen.queryByRole('button', { name: 'Uklidit hned' })).toBeNull();
   });
 
+  it('offers to write a song from the old songbook this songbook’s way, tidied (D151)', () => {
+    const source = open('{t: Píseň}\n\n[Ami]la la\n\n{c:REF}\nlo [C]lo\n');
+    expect(
+      screen.getByText(
+        'Písnička je zapsaná po staru. Upravit: sloky, refrény a předehry jako sekce, Ami jako Am, úklid zápisu?',
+      ),
+    ).toBeTruthy();
+    // One notice at a time: the tidy waits.
+    expect(screen.queryByRole('button', { name: 'Uklidit hned' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Upravit' }));
+    expect(source.value).toBe(
+      '{title: Píseň}\n\n{start_of_verse}\n[Am]la la\n{end_of_verse}\n\n{start_of_chorus}\nlo [C]lo\n{end_of_chorus}\n',
+    );
+    expect(screen.queryByRole('button', { name: 'Upravit' })).toBeNull();
+  });
+
+  it('keeps the old way when told to, and offers the tidy instead', () => {
+    const source = open('{t: Píseň}\n\nla la\n');
+    fireEvent.click(screen.getByRole('button', { name: 'Nechat' }));
+    expect(source.value).toBe('{t: Píseň}\n\nla la\n');
+    expect(screen.queryByRole('button', { name: 'Upravit' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Uklidit hned' })).toBeTruthy();
+  });
+
   it('says nothing about tidying a tidy song, nor the template', () => {
     open('{title: Píseň}\n[C]la la [G]la lo\n');
     expect(screen.queryByRole('button', { name: 'Uklidit hned' })).toBeNull();
