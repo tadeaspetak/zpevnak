@@ -1,5 +1,6 @@
 import {
   Alert,
+  Autocomplete,
   Button,
   Collapse,
   Group,
@@ -35,8 +36,10 @@ import {
 import { parseSong } from '#shared/chordpro/parse.ts';
 import { setTags, spellAsKnown, tagKey, tagsIn } from '#shared/chordpro/tags.ts';
 import { arrangeSong } from '#shared/chordpro/arrange.ts';
+import { artistIn, setArtist } from '#shared/chordpro/artist.ts';
 import { tidySource } from '#shared/chordpro/tidy.ts';
 import { usePrefs } from '../data/prefs.ts';
+import { useArtists } from '../data/artists.ts';
 import { useTags } from '../data/tags.ts';
 import { useWide } from '../hooks/useBreakpoints.ts';
 import { useI18n } from '../i18n/index.tsx';
@@ -88,6 +91,10 @@ export function ChordProEditor({
   const textarea = useRef<HTMLTextAreaElement>(null);
   const previewPane = useRef<HTMLDivElement>(null);
   const knownTags = useTags();
+  const knownArtists = useArtists();
+  const artist = useMemo(() => artistIn(value), [value]);
+  // What's typed, while it is: the text keeps no space at a name's end, the field must.
+  const [typedArtist, setTypedArtist] = useState<string | null>(null);
   // From the text as typed, not the deferred copy: the input must show a tag the moment it's
   // added.
   const tags = useMemo(() => tagsIn(value), [value]);
@@ -207,6 +214,19 @@ export function ChordProEditor({
     el?.focus();
   };
   const convert = () => replaceAll(fromChordsOverLyrics(value));
+
+  // As typed, so the text follows the field; the catalog's spelling once the field is left.
+  const changeArtist = (next: string) => {
+    setTypedArtist(next);
+    onChange(setArtist(value, next));
+  };
+  const spellArtistAsKnown = () => {
+    setTypedArtist(null);
+    const [known = artist] = spellAsKnown([artist], knownArtists);
+    if (known !== artist) {
+      onChange(setArtist(value, known));
+    }
+  };
 
   const changeTags = (next: string[]) =>
     onChange(setTags(value, spellAsKnown(next, knownTags)));
@@ -378,6 +398,15 @@ export function ChordProEditor({
           </ul>
         </Alert>
       )}
+      <Autocomplete
+        label={t('editor.artist')}
+        description={t('editor.artistHint')}
+        placeholder={t('editor.artistPlaceholder')}
+        value={typedArtist ?? artist}
+        onChange={changeArtist}
+        onBlur={spellArtistAsKnown}
+        data={knownArtists.map((a) => a.name).filter((name) => name !== artist)}
+      />
       <TagsInput
         label={t('editor.tags')}
         description={t('editor.tagsHint')}

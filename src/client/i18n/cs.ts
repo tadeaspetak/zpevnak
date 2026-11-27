@@ -383,6 +383,10 @@ export const cs = {
     'Akordy nad textem, třeba z jiného webu, stačí vložit: nabídne se převod.',
   'editor.addMissing': 'Přidat „{title}“ jako novou písničku',
   'editor.cheatSheet': 'Jak na ChordPro',
+  'editor.artist': 'Interpret',
+  'editor.artistHint':
+    'V textu písničky jako {artist: …}. Napoví, jak ho píšou ostatní písničky.',
+  'editor.artistPlaceholder': 'Třeba Nerez',
   'editor.tags': 'Štítky',
   'editor.tagsHint': 'V textu písničky jako {tag: Vánoční}. Potvrď Enterem nebo čárkou.',
   'editor.tagsPlaceholder': 'Třeba Vánoční',

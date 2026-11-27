@@ -51,7 +51,7 @@ printed to the server log.
   playlist or private song (`roles.ts`: `MemberRole`, `editsAsMember`), every path (`urls.ts`, emails included), the
   rejection reasons' wording (`rejectionReasons.ts`), validators and limits
   (`validators/index.ts`), the ChordPro parser, tags (`chordpro/tags.ts`: one tag is every
-  spelling with one `tagKey`; `setTags` edits the `{tag}` lines), transposing a song's text
+  spelling with one `tagKey`; `setTags` edits the `{tag}` lines), the artist line (`chordpro/artist.ts`: `setArtist`, D152), transposing a song's text
   (`transposeSource`, the same mapping as the view), playlist edits (`playlistOps.ts`:
   `applyOp`, `toggleOp`), where a note on a song sits (`notes.ts`: `notePlaces`, `placeOf`,
   found again after an edit by its line's words), a comment written into a song from the song

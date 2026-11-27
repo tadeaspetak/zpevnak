@@ -388,6 +388,10 @@ export const en: Record<keyof typeof cs, string> = {
     'Chords above the lyrics, say from another site? Just paste them: you’ll be offered a conversion.',
   'editor.addMissing': 'Add “{title}” as a new song',
   'editor.cheatSheet': 'ChordPro in a nutshell',
+  'editor.artist': 'Artist',
+  'editor.artistHint':
+    'In the song’s text as {artist: …}. Suggests how other songs write it.',
+  'editor.artistPlaceholder': 'For example Nerez',
   'editor.tags': 'Tags',
   'editor.tagsHint':
     'In the song’s text as {tag: Christmas}. Confirm with Enter or a comma.',

@@ -734,3 +734,10 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   dashes (`- Folk -` is Folk), a status goes (Zpěvník, Novinky, !Dodělat, PS oblíbené, Po
   anglicku), and so does one naming the song's artist. Bands stay until they become playlists.
   What it can't be sure of stays as written: "verse 3 = 2", an earlier chorus recalled. Never the words.
+- **D152. The artist has a field, as tags do** (the owner's idea, 2026-11-27, after "Ledecký" and
+  "Janek Ledecký" split one artist in two). Above Štítky in the editor, "Interpret" reads and
+  writes the song's `{artist}` line (the text stays the only truth, D4): typed, the line follows
+  as typed; it suggests the artists of the songs the viewer can find, matching anywhere in the
+  name, so "Ledecký" offers "Janek Ledecký"; left, a name that differs from a known one only in
+  capitals and accents is written the catalog's way. Anything may still be written. Several
+  artist lines become one once the field is used; an emptied one stays `{artist: }`.

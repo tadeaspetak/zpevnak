@@ -2,7 +2,9 @@ import { act, cleanup, fireEvent, renderHook, screen } from '@testing-library/re
 import { createRef, useState } from 'react';
 import { renderApp } from '#tests/client/render.tsx';
 import { describe, expect, it } from 'vitest';
+import { putSong } from '../../data/catalog.ts';
 import { usePrefs } from '../../data/prefs.ts';
+import type { SongRecord } from '../../data/store.ts';
 import { cs } from '../../i18n/cs.ts';
 import { ChordProEditor, type ChordProEditorHandle } from '../ChordProEditor.tsx';
 
@@ -19,6 +21,14 @@ function Editor({ initial, template }: { initial: string; template?: string }) {
   );
 }
 const handle = createRef<ChordProEditorHandle>();
+
+const SONG = {
+  title: 'Jiná',
+  status: 'verified',
+  createdBy: null,
+  source: '{title: Jiná}\nla la',
+  updatedAt: '2026-11-27T10:00:00.000Z',
+} as unknown as SongRecord;
 
 function open(initial: string, template?: string) {
   localStorage.setItem('zpevnak.locale', 'cs');
@@ -135,6 +145,34 @@ describe('ChordProEditor', () => {
 });
 
 describe('ChordProEditor: tags (D118)', () => {
+  it('writes the artist typed into its field into the text, as typed (D152)', () => {
+    const source = open('{title: Píseň}\n{key: D}\n\nla la');
+    const artist = screen.getByRole('combobox', { name: 'Interpret' });
+    act(() => artist.focus());
+    fireEvent.change(artist, { target: { value: 'Janek ' } });
+    // The space stays in the field, though the text keeps none at a name's end.
+    expect(artist).toHaveProperty('value', 'Janek ');
+    fireEvent.change(artist, { target: { value: 'Janek Ledecký' } });
+    expect(source.value).toBe(
+      '{title: Píseň}\n{artist: Janek Ledecký}\n{key: D}\n\nla la',
+    );
+  });
+
+  it('suggests the catalog’s artists, and writes a known one its way', () => {
+    act(() => {
+      putSong({ ...SONG, id: 1, artist: 'Janek Ledecký' });
+      putSong({ ...SONG, id: 2, artist: 'Janek Ledecký' });
+    });
+    const source = open('{title: Píseň}\n{artist: }\n\nla la');
+    const artist = screen.getByRole('combobox', { name: 'Interpret' });
+    act(() => artist.focus());
+    fireEvent.change(artist, { target: { value: 'Ledecký' } });
+    expect(screen.getByRole('option', { name: 'Janek Ledecký' })).toBeTruthy();
+    fireEvent.change(artist, { target: { value: 'janek ledecky' } });
+    act(() => artist.blur());
+    expect(source.value).toBe('{title: Píseň}\n{artist: Janek Ledecký}\n\nla la');
+  });
+
   it('writes a tag typed into the tags field into the text, after the header', () => {
     const source = open('{title: Píseň}\n{key: D}\n\nla la [D]la');
     const tags = screen.getByRole('combobox', { name: 'Štítky' });
