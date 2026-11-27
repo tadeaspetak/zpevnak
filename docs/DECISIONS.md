@@ -726,11 +726,11 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   staru. Upravit: …?" naming what would change, "Upravit" doing it and the tidy (D150) in one
   step the browser's undo takes back, "Nechat" keeping the text. Headings in comments
   (`{c: REF}`, `SLOKA`, `Intro`, `Mezihra`, `Outro`, `Bridge`) become their sections, the
-  instrumental ones labelled in Czech; a bare paragraph with words becomes a verse; a lone REF
+  instrumental ones labelled in Czech; a bare paragraph with words becomes a verse, one of chords only a Předehra, Mezihra or Dohra by
+  where it stands among the sung parts (not in a song of chords only); a lone REF
   once the song has a chorus is `{chorus}`, numbered choruses are "Refrén 1", "Refrén 2". `Ami`
   is `Am`, `{c: capo 3}` is `{capo: 3}`, a band's running order leaves the title (`08 Hush`),
   a directive left open is closed. Of tags, only the old songbook's own: a genre loses its
   dashes (`- Folk -` is Folk), a status goes (Zpěvník, Novinky, !Dodělat, PS oblíbené, Po
   anglicku), and so does one naming the song's artist. Bands stay until they become playlists.
-  What it can't be sure of stays as written: a paragraph of chords only, "verse 3 = 2", an
-  earlier chorus recalled. Never the words.
+  What it can't be sure of stays as written: "verse 3 = 2", an earlier chorus recalled. Never the words.

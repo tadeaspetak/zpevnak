@@ -110,6 +110,12 @@ function isSung(line: string): boolean {
   return /\p{L}/u.test(trimmed.replace(/\[[^\]]*\]/g, ''));
 }
 
+/** A line of chords and bar marks only: `[C] [G] | [Am]`. */
+function isChordsOnly(line: string): boolean {
+  const trimmed = line.trim();
+  return /^\[/.test(trimmed) && /^(?:\[[^\]]*\]|[\s|/.%-]|x?\d+x?)+$/i.test(trimmed);
+}
+
 /** The old songbook's statuses and lists: what someone does with a song, not what it is. */
 const STATUS_TAGS = /^(?:!.*|zpěvník|novinky|ps oblíbené|po anglicku|vzpomínka na .*)$/i;
 
@@ -303,6 +309,24 @@ function arrangeSections(lines: string[]): string[] {
   );
   const numbered = chorusNumbers.size > 1;
 
+  // Where the song is sung: a part of chords only before it is a Předehra, after it a Dohra,
+  // between, a Mezihra. A song of chords only (a band's chart) has none of that.
+  const sung = chunks.map(
+    (c) =>
+      c.type !== 'blank' &&
+      c.lines.some((l) => isSung(l) || readDirective(l.trim())?.name === 'chorus'),
+  );
+  const instrumental = (at: number): Heading => {
+    const before = sung.slice(0, at).some(Boolean);
+    const after = sung.slice(at + 1).some(Boolean);
+    const [kind, label]: [Kind, string] = !before
+      ? ['intro', 'Předehra']
+      : after
+        ? ['interlude', 'Mezihra']
+        : ['outro', 'Dohra'];
+    return { kind, label, number: null, note: null };
+  };
+
   const out: string[] = [];
   // The chorus a `{chorus}` here would repeat: its number, '' for one without.
   let lastChorus: string | null = null;
@@ -436,6 +460,10 @@ function arrangeSections(lines: string[]): string[] {
       out.push(
         ...section({ kind: 'verse', label: null, number: null, note: null }, chunk.lines),
       );
+      continue;
+    }
+    if (sung.some(Boolean) && chunk.lines.every(isChordsOnly)) {
+      out.push(...section(instrumental(i), chunk.lines));
       continue;
     }
     out.push(...chunk.lines);

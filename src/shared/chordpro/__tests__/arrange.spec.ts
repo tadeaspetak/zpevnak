@@ -155,11 +155,44 @@ describe('arrangeSong', () => {
     );
   });
 
+  it('names a part of chords only by where it is in a sung song', () => {
+    expect(
+      arrangeSong(
+        text('[C] [G]', '', 'la [C]la', '', '[Am] | [F]', '', 'lo lo', '', '[C]'),
+      ).source,
+    ).toBe(
+      text(
+        '{start_of_intro: Předehra}',
+        '[C] [G]',
+        '{end_of_intro}',
+        '',
+        '{start_of_verse}',
+        'la [C]la',
+        '{end_of_verse}',
+        '',
+        '{start_of_interlude: Mezihra}',
+        '[Am] | [F]',
+        '{end_of_interlude}',
+        '',
+        '{start_of_verse}',
+        'lo lo',
+        '{end_of_verse}',
+        '',
+        '{start_of_outro: Dohra}',
+        '[C]',
+        '{end_of_outro}',
+      ),
+    );
+    // A band's chart, chords only, has nothing sung to place them by.
+    const chart = text('{c: SLOKA}', '[A] [D]', '', '[E] [A]');
+    expect(arrangeSong(arrangeSong(chart).source).source).toBe(
+      text('{start_of_verse}', '[A] [D]', '{end_of_verse}', '', '[E] [A]'),
+    );
+  });
+
   it('leaves alone what it can’t be sure of', () => {
     const source = text(
       '{c: klavír, rocknroll}',
-      '',
-      '[C] [G] [Am]',
       '',
       '{c: verse 3 = 2}',
       '',

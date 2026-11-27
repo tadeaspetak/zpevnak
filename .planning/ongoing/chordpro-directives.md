@@ -110,8 +110,10 @@ Judgement calls, so offered, never on save:
 po staru. Upravit: …?", after the chords-above-lyrics offer and before the tidy notice;
 "Upravit" arranges and tidies in one step, one undo):
 
-- A bare paragraph with sung words becomes a verse; one of chords only stays as it is (an intro
-  without a heading can't be told from a riff).
+- A bare paragraph with sung words becomes a verse. One of chords only becomes Předehra before
+  the first sung part, Dohra after the last, Mezihra between (added after the first deploy, when
+  the audit of production found four songs with such lines left between verses); in a song of
+  chords only (a band's chart) it stays as it is.
 - A lone `{c: REF}` takes the paragraph after it only while the song has no chorus yet; after
   that it is the chorus sung again (`{chorus}`), and only if that's the last chorus: a recalled
   "REF 1" after "REF 2" stays a comment, as no directive repeats an earlier one. Numbered
