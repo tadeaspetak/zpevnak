@@ -1,17 +1,12 @@
 {title: Lajla tov (Dobrou noc)}
 {artist: Zuzana Navarová & KOA}
 {key: Dm}
-{subtitle:Zuzana Navarová & KOA}
 
-# Only the chords below get a diagram; the rest are standard shapes.
 # Aaddb9* = alternative Aaddb9 voicing, used in the bridges.
 {define: Dsus2 base-fret 1 frets x x 0 2 3 0 fingers 0 0 0 2 3 0}
 {define: Am7 base-fret 1 frets x 0 2 0 1 0 fingers 0 0 2 0 1 0}
 {define: Aaddb9 base-fret 1 frets x 0 2 3 2 0}
 {define: Aaddb9* base-fret 5 frets 1 x x 2 1 2}
-{+diagrams.show: user}
-{+pdf.chorus.recall.quote: true}
-{columns: 2}
 
 {comment: Intro}
 [Dsus2] [Am7] [Gm7] [Gm] [Aaddb9]
@@ -51,8 +46,6 @@ Jo, to se [Dsus2]ptáci vznesli vysoko
 a ticho [Am7]šumělo a vonělo
 a koňak [Gm7]bryndal na mý peřiny [Gm]
 {end_of_verse}
-
-{column_break}
 
 {start_of_verse}
 Jo, to mi v [Dsus2]srdci bylo divoko

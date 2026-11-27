@@ -95,10 +95,6 @@
   column-gap: 3rem;
 }
 
-.columnBreak {
-  break-after: column;
-}
-
 .measure {
   position: absolute;
   visibility: hidden;
@@ -200,27 +196,11 @@
   height: 0.6em;
 }
 
-.comment_plain,
-.comment_italic,
-.comment_box {
+.comment {
   margin: 0 0 0.15em;
   font-size: 0.85em;
-  color: var(--mantine-color-dimmed);
-}
-
-.comment_plain {
   font-weight: 600;
-}
-
-.comment_italic {
-  font-style: italic;
-}
-
-.comment_box {
-  display: inline-block;
-  border: 1px solid var(--mantine-color-default-border);
-  border-radius: var(--mantine-radius-sm);
-  padding: 0 0.4em;
+  color: var(--mantine-color-dimmed);
 }
 
 .tab {

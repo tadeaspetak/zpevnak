@@ -55,7 +55,8 @@ printed to the server log.
   (`transposeSource`, the same mapping as the view), playlist edits (`playlistOps.ts`:
   `applyOp`, `toggleOp`), where a note on a song sits (`notes.ts`: `notePlaces`, `placeOf`,
   found again after an edit by its line's words), a comment written into a song from the song
-  view (`chordpro/comments.ts`: `addComment`, `replaceComment`, `removeComment`, D145). Never
+  view (`chordpro/comments.ts`: `addComment`, `replaceComment`, `removeComment`, D145), the
+  one way a save writes a song's text (`chordpro/tidy.ts`: `tidySource`, D150). Never
   re-derive one of these in a page or a procedure.
 - **Offline first.** The whole catalog (songs, playlists and notes the viewer can see) lives in
   IndexedDB (`src/client/data/`) and is searched on the device with MiniSearch. `songs.sync`
@@ -153,6 +154,11 @@ How a song's ChordPro is laid out, so songs read alike (the first pass: 2026-11-
   Czech: `{start_of_intro: Předehra}`, `{start_of_interlude: Mezihra}`, `{start_of_outro: Dohra}`.
 - No indents, single spaces, a space after a comma, a chord on the syllable it's sung on
   (`jistě [Am]rozezná`, not `jistě[Am] rozezná`). Repeat marks as the song has them (`/: … :/`).
+- Only what describes the song (D150): no columns, page breaks, fonts, `{+pdf…}` or other apps'
+  settings. A save takes those out and writes the rest one way (`tidySource`); the editor says
+  what it will tidy first.
+- Tags say what the song is (Koledy, Pohádky, Folk). Not an artist, not someone's status
+  ("Dodělat", "oblíbené") nor a band's set: those are playlists.
 - Fix the shape, never the words. A change to the words (a typo, two spellings of one word made
   one) is named to the owner, who approves the song.
 

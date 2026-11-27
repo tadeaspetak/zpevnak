@@ -16,6 +16,7 @@ import {
   IconChevronDown,
   IconClipboardText,
   IconHistory,
+  IconSparkles,
   IconWand,
 } from '@tabler/icons-react';
 import {
@@ -33,6 +34,7 @@ import {
 } from '#shared/chordpro/fromChordsOverLyrics.ts';
 import { parseSong } from '#shared/chordpro/parse.ts';
 import { setTags, spellAsKnown, tagKey, tagsIn } from '#shared/chordpro/tags.ts';
+import { tidySource } from '#shared/chordpro/tidy.ts';
 import { usePrefs } from '../data/prefs.ts';
 import { useTags } from '../data/tags.ts';
 import { useWide } from '../hooks/useBreakpoints.ts';
@@ -93,6 +95,8 @@ export function ChordProEditor({
     () => !keepAsIs && looksLikeChordsOverLyrics(deferred),
     [keepAsIs, deferred],
   );
+  // What a save will write differently (D150), said before it happens rather than after.
+  const tidyChanges = useMemo(() => tidySource(deferred).changes, [deferred]);
   // Not on the untouched template: nobody has had a chance to fill it in yet.
   // Nor on an emptied one: it was cleared to paste a song in.
   const untouched = template !== undefined && value === template;
@@ -291,6 +295,23 @@ export function ChordProEditor({
           </Button>
           <Button size="sm" onClick={convert}>
             {t('editor.convert')}
+          </Button>
+        </Notice>
+      )}
+      {/* One notice at a time: converting comes first, and changes what there is to tidy. */}
+      {!offerConversion && tidyChanges.length > 0 && (
+        <Notice
+          icon={<IconSparkles size={18} />}
+          text={t('editor.tidyOnSave', {
+            changes: tidyChanges.map((kind) => t(`tidy.${kind}`)).join(', '),
+          })}
+        >
+          <Button
+            size="sm"
+            variant="default"
+            onClick={() => replaceAll(tidySource(value).source)}
+          >
+            {t('editor.tidyNow')}
           </Button>
         </Notice>
       )}

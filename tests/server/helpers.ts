@@ -105,8 +105,9 @@ export function tokenFromLastEmail(): string {
   return decodeURIComponent(match[1]);
 }
 
+/** A song as a save stores it: already tidy (D150), so what is sent is what is kept. */
 export const SONG = (title = 'Test Song', artist = 'Someone') =>
-  `{title: ${title}}\n{artist: ${artist}}\n\n{sov}\n[A]la la [D]la\n{eov}\n`;
+  `{title: ${title}}\n{artist: ${artist}}\n\n{start_of_verse}\n[A]la la [D]la\n{end_of_verse}\n`;
 
 /** When a song was last changed, as a client that has just loaded it would send it (D106). */
 export async function seenAt(songId: number): Promise<string> {

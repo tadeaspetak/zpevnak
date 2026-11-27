@@ -2,8 +2,9 @@
  * ChordPro parser: https://www.chordpro.org/chordpro/
  *
  * Covers what the songbook actually uses. Layout and PDF settings (`{+pdf...}`, fonts,
- * `{new_page}`) are accepted and ignored: they describe a printed page, and the app lays out
- * for the screen it is on. Anything not understood is kept out of the song and reported as a
+ * `{columns}`) and other apps' settings are accepted and ignored: they describe a printed page or
+ * another app, and the app lays out for the screen it is on. A save takes them out of the text
+ * (`tidySource`, D150). Anything else not understood is kept out of the song and reported as a
  * warning, so an editor sees it rather than the text silently disappearing.
  */
 import { parseChord, type NoteSystem } from './chord.ts';
@@ -63,14 +64,14 @@ const QUIET_METADATA = new Set([
   'arranger',
   'copyright',
   'duration',
-  'sorttitle',
-  'genre',
 ]);
 
 /** Print-only directives. The screen layout replaces them. */
 const PRINT_ONLY = new Set([
-  // How many columns is the reader's screen's business, not the song's (D108).
+  // How many columns is the reader's screen's business, not the song's (D108), and where
+  // they break is the text's (D129): a section never splits.
   'columns',
+  'column_break',
   'new_page',
   'new_physical_page',
   'pagetype',
@@ -78,10 +79,34 @@ const PRINT_ONLY = new Set([
   'diagrams',
   'grid',
   'no_grid',
-  'metronome',
+  // For a printed index: the app sorts by the reader's language.
+  'sorttitle',
+  'sortartist',
 ]);
 
+/** Other apps' own settings: SongBook's zoom. (`x_…` is ChordPro's room for the rest.) */
+const OTHER_APPS = new Set(['zoom-iphone']);
+
 const FORMATTING_RE = /(font|size|colou?r)$/;
+
+/** Rendered as images in ChordPro (music notation, drawings): nothing a screen of text shows. */
+const DELEGATES = new Set(['abc', 'ly', 'svg', 'textblock']);
+
+/**
+ * Why a directive is no part of the song, or null if it is: `layout` describes a printed page,
+ * `otherApp` another app's setting. The parser passes over these quietly, and a save takes them
+ * out of the text (D150).
+ */
+export function droppedDirective(name: string): 'layout' | 'otherApp' | null {
+  if (name.startsWith('x_') || OTHER_APPS.has(name)) {
+    return 'otherApp';
+  }
+  if (name.startsWith('+')) {
+    // The one setting that changes how the song is read: which B its chords mean.
+    return name === '+notes.system' ? null : 'layout';
+  }
+  return PRINT_ONLY.has(name) || FORMATTING_RE.test(name) ? 'layout' : null;
+}
 
 export type Directive = { name: string; value: string };
 
@@ -136,7 +161,7 @@ export function isHeaderLine(line: string): boolean {
 }
 
 /** `label="Verse 1"` or a bare `Verse 1`. */
-function readLabel(value: string): string | null {
+export function readLabel(value: string): string | null {
   const attr = /label\s*=\s*"([^"]*)"/.exec(value);
   const label = attr ? attr[1] : value;
   return label?.trim() || null;
@@ -217,6 +242,11 @@ function readDefinition(value: string): ChordDefinition | DefinitionProblem {
   return { name, baseFret, frets, fingers };
 }
 
+/** A length, `3:05`, rather than a time signature, `3/4`. */
+export function isDuration(value: string): boolean {
+  return /^\d{1,2}:\d{2}$/.test(value.trim());
+}
+
 function readNoteSystem(value: string): NoteSystem | null {
   const v = value.trim().toLowerCase();
   if (v === 'german' || v === 'scandinavian') {
@@ -253,6 +283,8 @@ export function parseSong(source: string): Song {
   let current: SectionBlock | null = null;
   let explicit = false;
   let lastChorus: SectionBlock | null = null;
+  // Inside `{start_of_abc}` and the like: their lines are notation, not lyrics.
+  let delegate: string | null = null;
 
   const warn = (warning: ParseWarning) => warnings.push(warning);
 
@@ -292,6 +324,12 @@ export function parseSong(source: string): Song {
     const directive = line.trimStart().startsWith('{')
       ? readDirective(line.trim())
       : null;
+    if (delegate !== null) {
+      if (directive?.name === `end_of_${delegate}`) {
+        delegate = null;
+      }
+      return;
+    }
     if (!directive) {
       if (current?.kind === 'tab' || current?.kind === 'grid') {
         current.lines.push({ type: 'tab', text: line, source: lineNo });
@@ -305,26 +343,35 @@ export function parseSong(source: string): Song {
         }
         return;
       }
-      target().lines.push({
-        type: 'lyrics',
-        segments: parseLyricsLine(line),
-        source: lineNo,
-      });
+      const segments = parseLyricsLine(line);
+      for (const { chord } of segments) {
+        // ChordPro's annotation, `[*text]`: text above the line, not a chord.
+        if (chord?.startsWith('*')) {
+          warn({ line: lineNo, code: 'annotation', text: chord.slice(1) });
+        }
+      }
+      target().lines.push({ type: 'lyrics', segments, source: lineNo });
       return;
     }
 
     const { name, value } = directive;
 
-    if (name.startsWith('+') || name.startsWith('x_')) {
-      if (/^\+notes\.system$/.test(name)) {
-        declaredSystem = readNoteSystem(value);
-      }
+    if (name === '+notes.system') {
+      declaredSystem = readNoteSystem(value);
+      return;
+    }
+    if (droppedDirective(name)) {
       return;
     }
 
     const env = /^(start|end)_of_([a-z0-9_]+)$/.exec(name);
     if (env) {
       const [, edge, envName = ''] = env;
+      if (edge === 'start' && DELEGATES.has(envName)) {
+        warn({ line: lineNo, code: 'unsupported', directive: name });
+        delegate = envName;
+        return;
+      }
       if (edge === 'start') {
         if (explicit && current) {
           warn({ line: lineNo, code: 'startInsideSection', directive: name });
@@ -383,24 +430,32 @@ export function parseSong(source: string): Song {
       case 'tempo':
         meta.tempo = value || null;
         return;
-      case 'time':
-        meta.time = value || null;
+      // An older name for it, written by some apps; a save writes `{tempo}` (D150).
+      case 'metronome':
+        meta.tempo ??= value || null;
         return;
+      case 'time':
+        // `2:30` is how long the song is, not its metre: a save writes it as `{duration}`.
+        if (!isDuration(value)) {
+          meta.time = value || null;
+        }
+        return;
+      // Genre is what tags are for here (D118): a save writes it as `{tag}` (D150).
+      case 'genre':
       case 'tag':
         if (value) {
           meta.tags.push(value);
         }
         return;
+      // One look for every comment: the sheet stays quiet, and a save writes them all as
+      // `{comment}` (D150).
       case 'comment':
       case 'comment_italic':
-      case 'comment_box': {
-        const style =
-          name === 'comment' ? 'plain' : name === 'comment_italic' ? 'italic' : 'box';
+      case 'comment_box':
         if (value) {
-          target().lines.push({ type: 'comment', text: value, style, source: lineNo });
+          target().lines.push({ type: 'comment', text: value, source: lineNo });
         }
         return;
-      }
       case 'chorus':
         closeImplicit();
         blocks.push({
@@ -412,10 +467,6 @@ export function parseSong(source: string): Song {
         if (!lastChorus) {
           warn({ line: lineNo, code: 'chorusBeforeAny' });
         }
-        return;
-      case 'column_break':
-        closeImplicit();
-        blocks.push({ type: 'columnBreak' });
         return;
       case 'define':
       case 'chord': {
@@ -444,7 +495,7 @@ export function parseSong(source: string): Song {
       }
     }
 
-    if (QUIET_METADATA.has(name) || PRINT_ONLY.has(name) || FORMATTING_RE.test(name)) {
+    if (QUIET_METADATA.has(name)) {
       return;
     }
     warn({ line: lineNo, code: 'unsupported', directive: name });

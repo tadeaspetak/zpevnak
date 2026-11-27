@@ -12,7 +12,7 @@ export type Segment = {
  */
 export type Line = { source: number } & (
   | { type: 'lyrics'; segments: Segment[] }
-  | { type: 'comment'; text: string; style: 'plain' | 'italic' | 'box' }
+  | { type: 'comment'; text: string }
   | { type: 'tab'; text: string }
 );
 
@@ -30,8 +30,7 @@ export type Block =
       line: number;
     }
   /** `{chorus}`: repeat the last chorus. `chorus` is a copy of it, null if none came before. */
-  | { type: 'chorusRecall'; label: string | null; chorus: Block | null; line: number }
-  | { type: 'columnBreak' };
+  | { type: 'chorusRecall'; label: string | null; chorus: Block | null; line: number };
 
 export type ChordDefinition = {
   name: string;
@@ -64,6 +63,7 @@ export type ParseWarning =
     }
   | { line: number; code: 'unsupported'; directive: string }
   | { line: number; code: 'capoNotNumber'; value: string }
+  | { line: number; code: 'annotation'; text: string }
   | { line: number; code: 'chorusBeforeAny' | 'sectionNeverClosed' | 'chordNoName' }
   | { line: number; code: 'chordNoFrets' | 'chordBadFrets'; chord: string };
 

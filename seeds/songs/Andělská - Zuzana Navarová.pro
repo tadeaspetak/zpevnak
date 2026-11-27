@@ -1,10 +1,6 @@
-{title:Andělská}
-{subtitle:Zuzana Navarová}
-{artist:Zuzana Navarová}
-{key:A}
-{columns: 2}
-{+diagrams.show: user}
-{+pdf.diagrams.vcells: 5}
+{title: Andělská}
+{artist: Zuzana Navarová}
+{key: A}
 {define: Aadd9 base-fret 1 frets x 0 2 4 2 x}
 {define: Dmaj7/A base-fret 3 frets x 0 2 4 1 x}
 {define: Amaj7 base-fret 2 frets x 0 5 1 x 0}
@@ -47,8 +43,6 @@ Snad [F#m]na dně se perlama [F#m7+/F]zaleskne
 pak [F#m7/E]vyměním veselé [F#m6/D#]za teskné. Písně [Dmaj7]
 [Hm]Tu ru tu [E]tu
 {end_of_verse}
-
-{column_break}
 
 {start_of_verse}
 [Aadd9]A pak hoře se [Dmaj7/A]skutálí do jedné [Amaj7]básně [Dmaj7/A]

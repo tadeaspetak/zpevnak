@@ -117,7 +117,7 @@ describe('parseSong', () => {
     expect(s.blocks[0]).toMatchObject({
       type: 'section',
       kind: 'other',
-      lines: [{ type: 'comment', text: 'Intro', style: 'plain' }, { type: 'lyrics' }],
+      lines: [{ type: 'comment', text: 'Intro' }, { type: 'lyrics' }],
     });
   });
 
@@ -157,7 +157,7 @@ describe('parseSong', () => {
     ]);
   });
 
-  it('reads column breaks, and leaves the number of columns to the reader (D108)', () => {
+  it('leaves columns and where they break to the reader (D108, D129, D150)', () => {
     const s = song(
       '{columns: 2}',
       '{sov}',
@@ -169,7 +169,38 @@ describe('parseSong', () => {
       '{eov}',
     );
     expect(s.warnings).toEqual([]);
-    expect(s.blocks.map((b) => b.type)).toEqual(['section', 'columnBreak', 'section']);
+    expect(s.blocks.map((b) => b.type)).toEqual(['section', 'section']);
+  });
+
+  it('shows every comment alike, whichever directive wrote it (D150)', () => {
+    const s = song('{ci: pomalu}', '{cb: 2x}', '{highlight: stop}');
+    const block = s.blocks[0];
+    expect(block?.type === 'section' && block.lines).toEqual([
+      { type: 'comment', text: 'pomalu', source: 1 },
+      { type: 'comment', text: '2x', source: 2 },
+      { type: 'comment', text: 'stop', source: 3 },
+    ]);
+  });
+
+  it('reads a genre as a tag, a length as no metre, a metronome as the tempo', () => {
+    const s = song('{genre: Folk}', '{time: 3:05}', '{metronome: 100}');
+    expect(s.meta).toMatchObject({ tags: ['Folk'], time: null, tempo: '100' });
+    expect(song('{time: 3/4}').meta.time).toBe('3/4');
+    expect(song('{tempo: 90}', '{metronome: 100}').meta.tempo).toBe('90');
+  });
+
+  it('leaves out music notation and drawings, with a warning', () => {
+    const s = song('{start_of_abc}', 'X:1', 'K:G', '{end_of_abc}', 'la [D]la');
+    expect(s.warnings).toEqual([
+      { line: 1, code: 'unsupported', directive: 'start_of_abc' },
+    ]);
+    expect(lyricsText(s)).toBe('la la');
+  });
+
+  it('warns about an annotation, which is not a chord', () => {
+    expect(song('[*Ritardando]la la').warnings).toEqual([
+      { line: 1, code: 'annotation', text: 'Ritardando' },
+    ]);
   });
 
   it('ignores print settings and comments without warning', () => {
@@ -186,10 +217,15 @@ describe('parseSong', () => {
   });
 
   it('warns about directives it does not understand, with the line number', () => {
-    const s = song('{title: x}', '{zoom-iphone: 2}');
+    const s = song('{title: x}', '{solo: Eb C}', '{define-ukulele: C frets 0 0 0 3}');
     expect(s.warnings).toEqual([
-      { line: 2, code: 'unsupported', directive: 'zoom-iphone' },
+      { line: 2, code: 'unsupported', directive: 'solo' },
+      { line: 3, code: 'unsupported', directive: 'define-ukulele' },
     ]);
+  });
+
+  it('passes over other apps’ settings quietly', () => {
+    expect(song('{zoom-iphone: 2}', '{x_app_pedal: on}').warnings).toEqual([]);
   });
 
   it('warns about unbalanced environments', () => {

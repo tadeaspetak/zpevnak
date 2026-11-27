@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { canChangeSong } from '#shared/songs.ts';
 import { idSchema, seenAtSchema, songSourceSchema } from '#shared/validators/index.ts';
-import { readHeader } from '../../songs/header.ts';
+import { readForSave } from '../../songs/header.ts';
 import { assertUnchanged, loadSongRow, loadSong } from '../../songs/load.ts';
 import { recordVersion } from '../../songs/versions.ts';
 import { fail, verifiedProcedure } from '../../trpc/trpc.ts';
@@ -19,7 +19,7 @@ import { fail, verifiedProcedure } from '../../trpc/trpc.ts';
 export const update = verifiedProcedure
   .input(z.object({ id: idSchema, source: songSourceSchema, seenAt: seenAtSchema }))
   .mutation(async ({ ctx, input }) => {
-    const { title, artist } = readHeader(input.source);
+    const { title, artist, source } = readForSave(input.source);
     await ctx.db.transaction(async (trx) => {
       // Locked: an editor approving it meanwhile is seen here, not overwritten.
       const row = await loadSongRow(trx, input.id, ctx.user, { forUpdate: true });
@@ -35,7 +35,7 @@ export const update = verifiedProcedure
         );
       }
       assertUnchanged(row, input.seenAt);
-      const changed = input.source !== row.source;
+      const changed = source !== row.source;
       const resubmit = row.status === 'rejected' && changed;
       await trx.raw(
         /* sql */ `
@@ -44,7 +44,7 @@ export const update = verifiedProcedure
               ${resubmit ? /* sql */ `, status = 'pending', rejection_reason = NULL, rejection_note = NULL` : ''}
           WHERE id = :id
         `,
-        { id: input.id, source: input.source, title, artist },
+        { id: input.id, source, title, artist },
       );
       if (changed) {
         await recordVersion(trx, input.id, 'edit', ctx.user.id);

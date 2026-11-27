@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { idSchema, seenAtSchema, songSourceSchema } from '#shared/validators/index.ts';
-import { readHeader } from '../../songs/header.ts';
+import { readForSave } from '../../songs/header.ts';
 import { assertUnchanged, loadSongRow, loadSong } from '../../songs/load.ts';
 import { recordVersion } from '../../songs/versions.ts';
 import { editorProcedure, fail } from '../../trpc/trpc.ts';
@@ -28,8 +28,7 @@ export const verify = editorProcedure
       }
       // And only the text the editor read: not one an author's save replaced meanwhile.
       assertUnchanged(row, input.seenAt);
-      const source = input.source ?? row.source;
-      const { title, artist } = readHeader(source);
+      const { title, artist, source } = readForSave(input.source ?? row.source);
       await trx.raw(
         /* sql */ `
           UPDATE songs

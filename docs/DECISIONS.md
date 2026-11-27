@@ -341,7 +341,7 @@ From the first UX walk of the song view and a playlist session (2026-11-10): _In
   the fit check (D88) already decides better than a line in the source. Every song on a wide
   screen goes into two columns when it fits and the reader has them on (the switch is always in
   Display). `{columns: n}` is accepted and ignored; `{column_break}` stays, as the author's word
-  on where a song splits well. (2026-11-10)
+  on where a song splits well. (2026-11-10) _`{column_break}` goes too, with the rest of a printed page: D150._
 - **D109. The playlist bar goes away with the toolbar,** on the same tap or scroll (D93), for
   just the song: swipes and the arrow keys still go to the previous and next song. Out of the
   way it no longer counts against two columns (D88): the check runs again once a bar has slid,
@@ -417,7 +417,7 @@ From the first UX walk of the song view and a playlist session (2026-11-10): _In
   Search matches them (a row per matching tag, and the tag a song was found by); a tag's page
   (`/tag/vanocni`) lists its songs A–Z, and a song opened there goes back to it, as one opened
   from search results does (D60). Tags show as chips on home and in the song's ⋯ menu, never on
-  the sheet (D20). (2026-11-22)
+  the sheet (D20). (2026-11-22) _Kept in the text after a look at every directive, and what a tag is for: D150._
 - **D119. A transposed key can become the song's own.** Whoever may edit the song (D78) finds
   "Uložit v tónině {key}" in the ⋯ menu while it's transposed: the text is rewritten in that key
   (chords and `{key}`, in the song's notation; tabs as written; `{define}` diagrams dropped, the
@@ -698,3 +698,25 @@ pan-y`, and Safari's own gesture stopped): the text reflows instead of spilling 
   instead of the notes. Each opens its own dialog: its title, who will see it, the text, and a
   button saying what happens. No choice of kind inside the dialog: picking the wrong one is
   closing it and picking again.
+- **D150. What a song's ChordPro holds, and a save writes it one way** (the owner's calls,
+  2026-11-27, after going through the whole ChordPro 6 spec against the songbook's 432 songs and
+  production's 29; `.planning/ongoing/chordpro-directives.md`). The text keeps what describes
+  the song: title, artist, key, capo, tempo, time, duration, tags, composer and the like,
+  sections (verse, chorus, bridge, tab, grid, intro, interlude, outro), `{chorus}`, comments,
+  `{define}`, `{+notes.system}`. A printed page's settings (columns, `{column_break}`, page
+  breaks, fonts, `{+pdf…}`, `{+diagrams…}`, sort titles) and other apps' (`{zoom-iphone}`,
+  SongBook's `{soh}`/`{eoh}`, `{x_…}`) are no part of it: the reader's screen decides columns
+  and keeps a section whole (D108, D129), every chord gets a diagram (D132), a repeated chorus
+  is shown whole (D122). An export, if one is ever built, adds them. Every save (new, edit,
+  approve) writes the text one way (`tidySource`): those settings out, short forms written out
+  (`{c}` as `{comment}`), every comment plain (italic and boxed ones look the same now), a
+  subtitle that repeats the artist dropped and one standing for it made `{artist}`,
+  `{meta: x …}` as `{x: …}`, `{genre}` as a tag, `{time: 3:05}` as `{duration}`, `{metronome}`
+  as `{tempo}`, markup out of the lyrics, a verse's number and a chorus's "Ref" out, one space
+  after the colon. Never the words, the chords, or what the sheet shows. The editor says before
+  saving what will be tidied, in one line, with "Uklidit hned" to see it done in the text.
+  Refused with a warning, as before: images, music notation (abc, LilyPond, svg, textblock,
+  now left out of the sheet), `{new_song}`, selectors (`{define-ukulele}`), annotations
+  `[*text]`, anything unknown. **Tags stay in the text** (D118): a tag says what the song is
+  (Koledy, Pohádky, Folk); what someone does with a song (to finish, favourites, a band's set)
+  is a playlist, never a tag, and an artist is never a tag either.

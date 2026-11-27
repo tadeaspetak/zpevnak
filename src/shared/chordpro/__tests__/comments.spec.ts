@@ -90,7 +90,6 @@ describe('song comments (D145)', () => {
     expect(changed.split('\n')[7]).toBe('{ci: rychle}');
     expect(lines(changed).find((l) => l.type === 'comment')).toMatchObject({
       text: 'rychle',
-      style: 'italic',
     });
   });
 

@@ -188,3 +188,63 @@ describe('song versions (D86)', () => {
     expect(await versionsOf(song.id)).toMatchObject([{ kind: 'create', savedBy: null }]);
   });
 });
+
+describe('a save writes the text the one way (D150)', () => {
+  const UNTIDY = '{t: Kočky}\n{st: Nerez}\n{columns: 2}\n\n{sov}\n[A]la la\n{eov}\n';
+  const TIDY =
+    '{title: Kočky}\n{artist: Nerez}\n\n{start_of_verse}\n[A]la la\n{end_of_verse}\n';
+
+  it('stores a new song, an edit and an approval tidied', async () => {
+    const { author, editor, song } = await setup();
+    const created = await callerFor(author).songs.create({ source: UNTIDY });
+    expect(created).toMatchObject({ source: TIDY, title: 'Kočky', artist: 'Nerez' });
+
+    const updated = await callerFor(author).songs.update({
+      id: song.id,
+      source: UNTIDY.replace('la la', 'lo lo'),
+      seenAt: await seenAt(song.id),
+    });
+    expect(updated.source).toBe(TIDY.replace('la la', 'lo lo'));
+
+    const verified = await callerFor(editor).songs.verify({
+      id: created.id,
+      seenAt: await seenAt(created.id),
+      source: UNTIDY.replace('la la', 'li li'),
+    });
+    expect(verified.source).toBe(TIDY.replace('la la', 'li li'));
+    expect(
+      (await versionsOf(created.id)).map((v: { source: string }) => v.source),
+    ).toEqual([TIDY, TIDY.replace('la la', 'li li')]);
+  });
+
+  it('records nothing for a tidy song saved as it was, sent untidy or not', async () => {
+    const { author } = await setup();
+    const song = await callerFor(author).songs.create({ source: UNTIDY });
+    for (const source of [TIDY, UNTIDY]) {
+      await callerFor(author).songs.update({
+        id: song.id,
+        source,
+        seenAt: await seenAt(song.id),
+      });
+    }
+    expect(await versionsOf(song.id)).toHaveLength(1);
+  });
+
+  it('tidies a song stored before, once saved, as an edit', async () => {
+    const { author, song } = await setup();
+    await db.raw(/* sql */ `UPDATE songs SET source = :source WHERE id = :id`, {
+      source: UNTIDY,
+      id: song.id,
+    });
+    const saved = await callerFor(author).songs.update({
+      id: song.id,
+      source: UNTIDY,
+      seenAt: await seenAt(song.id),
+    });
+    expect(saved.source).toBe(TIDY);
+    expect((await versionsOf(song.id)).map((v: { kind: string }) => v.kind)).toEqual([
+      'create',
+      'edit',
+    ]);
+  });
+});

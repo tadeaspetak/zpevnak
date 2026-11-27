@@ -1,4 +1,5 @@
 import { parseSong } from '#shared/chordpro/parse.ts';
+import { tidySource } from '#shared/chordpro/tidy.ts';
 import { fail } from '../trpc/trpc.ts';
 
 type Header = { title: string; artist: string | null };
@@ -10,7 +11,12 @@ export function parseHeader(source: string): Header | null {
   return title ? { title, artist: song.artist?.trim() || null } : null;
 }
 
-/** `parseHeader` for a save: a song without a title is refused. */
-export function readHeader(source: string): Header {
-  return parseHeader(source) ?? fail('BAD_REQUEST', 'SONG_HAS_NO_TITLE');
+/**
+ * A song's text as a save stores it, written the one way the songbook writes it (D150), and the
+ * title and artist read from it. A song without a title is refused.
+ */
+export function readForSave(source: string): Header & { source: string } {
+  const tidied = tidySource(source).source;
+  const header = parseHeader(tidied) ?? fail('BAD_REQUEST', 'SONG_HAS_NO_TITLE');
+  return { ...header, source: tidied };
 }

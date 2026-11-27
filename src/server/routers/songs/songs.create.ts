@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { songSourceSchema } from '#shared/validators/index.ts';
-import { readHeader } from '../../songs/header.ts';
+import { readForSave } from '../../songs/header.ts';
 import { loadSong } from '../../songs/load.ts';
 import { recordVersion } from '../../songs/versions.ts';
 import { verifiedProcedure } from '../../trpc/trpc.ts';
@@ -12,7 +12,7 @@ import { verifiedProcedure } from '../../trpc/trpc.ts';
 export const create = verifiedProcedure
   .input(z.object({ source: songSourceSchema, isPrivate: z.boolean().default(false) }))
   .mutation(async ({ ctx, input }) => {
-    const { title, artist } = readHeader(input.source);
+    const { title, artist, source } = readForSave(input.source);
     const id: number = await ctx.db.transaction(async (trx) => {
       const { rows } = await trx.raw(
         /* sql */ `
@@ -23,7 +23,7 @@ export const create = verifiedProcedure
         {
           title,
           artist,
-          source: input.source,
+          source,
           userId: ctx.user.id,
           status: input.isPrivate ? 'private' : 'pending',
         },

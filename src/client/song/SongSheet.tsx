@@ -101,7 +101,7 @@ function LineView({
   const at = placeProps(placed);
   if (line.type === 'comment') {
     return (
-      <p className={classes[`comment_${line.style}`]} {...at}>
+      <p className={classes.comment} {...at}>
         {line.text}
       </p>
     );
@@ -339,9 +339,6 @@ export function SongSheet({
   );
 
   const blocks: ReactNode = song.blocks.map((block, i) => {
-    if (block.type === 'columnBreak') {
-      return <div key={i} className={classes.columnBreak} aria-hidden />;
-    }
     if (block.type === 'chorusRecall') {
       return block.chorus?.type === 'section' ? (
         <SectionView

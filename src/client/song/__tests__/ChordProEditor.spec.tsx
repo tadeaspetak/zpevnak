@@ -46,6 +46,26 @@ describe('ChordProEditor', () => {
     expect(screen.queryByRole('button', { name: 'Převést' })).toBeNull();
   });
 
+  it('says what a save will tidy, and tidies it there and then when asked (D150)', () => {
+    const source = open('{t: Píseň}\n{columns: 2}\n{tag:Koledy}\n[C]la la\n');
+    expect(
+      screen.getByText(
+        'Při uložení se zápis uklidí: rozvržení pro tisk pryč, zkratky vypsané celé, mezery a malá písmena v direktivách.',
+      ),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Uklidit hned' }));
+    expect(source.value).toBe('{title: Píseň}\n{tag: Koledy}\n[C]la la\n');
+    expect(screen.queryByRole('button', { name: 'Uklidit hned' })).toBeNull();
+  });
+
+  it('says nothing about tidying a tidy song, nor the template', () => {
+    open('{title: Píseň}\n[C]la la [G]la lo\n');
+    expect(screen.queryByRole('button', { name: 'Uklidit hned' })).toBeNull();
+    cleanup();
+    open(cs['editor.template'].replace('{songTitle}', ''));
+    expect(screen.queryByRole('button', { name: 'Uklidit hned' })).toBeNull();
+  });
+
   it('says what is wrong in the reader’s language, by line', () => {
     open('{title: Píseň}\n{capo: druhý}\n');
     expect(

@@ -46,7 +46,6 @@ function bodyStart(lines: string[]): number {
     return (
       COMMENT_DIRECTIVES.has(directive.name) ||
       directive.name === 'chorus' ||
-      directive.name === 'column_break' ||
       /^start_of_/.test(directive.name)
     );
   });
