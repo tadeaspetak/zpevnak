@@ -133,7 +133,9 @@ Dry run (2026-11-27): 386 of the 432 songbook songs get the offer (sections 361,
 chords 74, capo 17, title 14, unclosed 3); arranging twice changes nothing more; no song gains a
 parser warning; the sung words are the same in all but 4, and those 4 gain words that were a
 broken directive before or lose a literal `{soh}`. In production, 12 of 31 songs get the offer
-when edited (most for bare verses), none on their own.
+when edited (most for bare verses), none on their own. Tadeáš tried it on three, then asked for the rest
+to be done (2026-11-27): the other nine went through `songs.update` as him, dry run first, each a
+version; now none of production's 29 gets the offer or the tidy.
 
 ### 4. The songbook's bands and lists as playlists
 
