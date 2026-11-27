@@ -1,7 +1,7 @@
 # What a song's ChordPro holds
 
-**State:** ongoing. Agreed with Tadeáš on 2026-11-27. Phase 1 shipped (D150); phase 2 waits for
-his go on production; phases 3 and 4 are for when songs come over from the songbook.
+**State:** ongoing. Agreed with Tadeáš on 2026-11-27. Phases 1 and 2 shipped (D150); phases 3
+and 4 are for when songs come over from the songbook.
 
 ## Why
 
@@ -80,7 +80,7 @@ Dry run (2026-11-27): 422 of the 432 songbook songs and 5 of production's 29 cha
 twice changes nothing more; the sheet reads the same for all but 11 (dropped labels, and
 Greensleeves no longer shows a literal `{soh}love{eoh}`).
 
-### 2. Production's songs, once
+### 2. Production's songs, once (done 2026-11-27)
 
 Through the app's procedures as Tadeáš (CLAUDE.md), read first, dry run, then apply. What
 changes: Andělská, Lajla tov, Son of a Preacher Man lose their print layout; two duplicate
@@ -89,6 +89,10 @@ with his word: Andělská's `{comment: COMMENT}` and `{comment: Goment}` (test l
 `Nerez` tag (an artist tag, and not hers); Lajla tov's `# Only the chords below get a diagram`
 line (true only under the stripped `{+diagrams.show: user}`). Until then each tidies on its next
 save anyway.
+
+**As done:** Tadeáš fixed Andělská's comments and tag himself; the script (`songs.update` as him,
+`seenAt` from its own read, dry run first) tidied the five and took out Lajla tov's `#` line. All
+five stay verified, each with an edit version; a second run found nothing left.
 
 ### 3. A song from the songbook (on offer in the editor, like D94)
 
@@ -115,5 +119,5 @@ friend's and Tadeáš's word on who owns them.
 
 ## Open questions
 
-- Phase 2: apply to production? (Tadeáš)
+- ~~Phase 2: apply to production?~~ Yes (Tadeáš, 2026-11-27); done.
 - Phase 4: whose are the band playlists? (Tadeáš and the friend)

@@ -65,7 +65,12 @@ export const theme = createTheme({
     Badge: Badge.extend({ defaultProps: { variant: 'default' } }),
     // An alert's colour says what kind of message it is: never the brand orange, which in dark
     // mode reads as an error and matches the buttons. Neutral unless a call site says otherwise.
-    Alert: Alert.extend({ defaultProps: { color: 'gray' } }),
+    Alert: Alert.extend({
+      defaultProps: { color: 'gray' },
+      // Mantine clips the message for an ellipsis no alert here uses; it cut off the focus
+      // ring of a button inside one ("Převést", "Opravit").
+      styles: { message: { overflow: 'visible' } },
+    }),
     // A dialog's subject is its title: a heading, not body text.
     Modal: Modal.extend({
       styles: {

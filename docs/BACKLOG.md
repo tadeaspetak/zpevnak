@@ -138,8 +138,8 @@ Agreed to leave, for now:
   also how they get checked; `~/dev/projects/songbook` has ~430 ChordPro files to draw from.
   What their text keeps and how a save writes it: D150; helpers for bringing one over (`{c: REF}`
   as a chorus, tags as playlists) are phases 3–4 of `.planning/ongoing/chordpro-directives.md`.
-- **Plans:** what a song's ChordPro holds in `.planning/ongoing/` (phase 1 done, D150;
-  production's songs wait for the owner's go); song history, credits and suggestions (slice 1 done, D86;
+- **Plans:** what a song's ChordPro holds in `.planning/ongoing/` (phases 1–2 done, D150;
+  helpers for songbook songs next); song history, credits and suggestions (slice 1 done, D86;
   suggested changes would be one more tab in the queue, D144); after the first rehearsal (all
   but D-1). Done: private songs and roles, notes on songs, reports and song comments
   (D143–D146) (`.planning/done/`).
